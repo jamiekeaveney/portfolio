@@ -16,7 +16,7 @@ const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 const rmMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
 let reducedMotion = rmMQ.matches;
 rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
-rmMQ.addListener?.(e => (reducedMotion = e.matches)); 
+rmMQ.addListener?.(e => (reducedMotion = e.matches));
 
 const has = (s) => !!nextPage.querySelector(s);
 
@@ -34,18 +34,19 @@ gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 function initOnceFunctions() {
   initLenis();
-
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
 
   // Runs once on first load
   resetWCurrent();
+  // if (has('[data-something]')) initSomething();
 }
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs before the enter animation
+  // if (has('[data-something]')) initSomething();
 }
 
 function initAfterEnterFunctions(next) {
@@ -54,6 +55,7 @@ function initAfterEnterFunctions(next) {
   // Runs after enter animation completes
   reinitWebflowIX2();
   resetWCurrent();
+  // if (has('[data-something]')) initSomething();
 
   if (hasLenis) {
     lenis.resize();
@@ -74,7 +76,7 @@ function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
   tl.call(() => {
-    resetPage(next)
+    resetPage(next);
   }, null, 0);
 
   return tl;
@@ -82,9 +84,9 @@ function runPageOnceAnimation(next) {
 
 function runPageLeaveAnimation(current, next) {
   const tl = gsap.timeline({
-    onComplete: () => { current.remove() }
+    onComplete: () => { current.remove(); }
   });
-  
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
@@ -95,22 +97,22 @@ function runPageLeaveAnimation(current, next) {
   return tl;
 }
 
-function runPageEnterAnimation(next){
+function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady")
+    tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-  
+
   tl.add("startEnter", 0.6);
-  
+
   tl.fromTo(next, {
     autoAlpha: 0,
-  },{
+  }, {
     autoAlpha: 1,
   }, "startEnter");
 
@@ -135,38 +137,33 @@ barba.hooks.beforeEnter(data => {
     left: 0,
     right: 0,
   });
-  
+
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
   }
-  
+
   syncWebflowPageIdFromNextHtml(data.next.html);
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
 barba.hooks.afterLeave(() => {
-  if(hasScrollTrigger){
+  if (hasScrollTrigger) {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
 });
 
 barba.hooks.enter(data => {
   initBarbaNavUpdate(data);
-})
+});
 
 barba.hooks.afterEnter(data => {
   // Run page functions
   initAfterEnterFunctions(data.next.container);
-  
+
   // Settle
-  if(hasLenis){
-    lenis.resize();
-    lenis.start();    
-  }
-  
-  if(hasScrollTrigger){
-    ScrollTrigger.refresh(); 
+  if (hasLenis) {
+    lenis.start();
   }
 });
 
@@ -178,7 +175,7 @@ barba.init({
     {
       name: "default",
       sync: true,
-      
+
       // First load
       async once(data) {
         initOnceFunctions();
@@ -219,8 +216,9 @@ const themeConfig = {
 function applyThemeFrom(container) {
   const pageTheme = container?.dataset?.pageTheme || "light";
   const config = themeConfig[pageTheme] || themeConfig.light;
-  
+
   document.body.dataset.pageTheme = pageTheme;
+
   const transitionEl = document.querySelector('[data-theme-transition]');
   if (transitionEl) {
     transitionEl.dataset.themeTransition = config.transition;
@@ -252,13 +250,13 @@ function initLenis() {
   gsap.ticker.lagSmoothing(0);
 }
 
-function resetPage(container){
+function resetPage(container) {
   window.scrollTo(0, 0);
   gsap.set(container, { clearProps: "position,top,left,right" });
-  
-  if(hasLenis){
+
+  if (hasLenis) {
     lenis.resize();
-    lenis.start();    
+    lenis.start();
   }
 }
 
@@ -298,6 +296,65 @@ function initBarbaNavUpdate(data) {
     var newClassList = next.getAttribute('class') || '';
     curr.setAttribute('class', newClassList);
   });
+}
+
+
+
+// -----------------------------------------
+// WEBFLOW HELPERS
+// -----------------------------------------
+
+function syncWebflowPageIdFromNextHtml(nextHtml) {
+  if (!nextHtml) return;
+
+  try {
+    const parsed = new DOMParser().parseFromString(nextHtml, "text/html");
+    const nextPageId = parsed.documentElement.getAttribute("data-wf-page");
+
+    if (nextPageId) {
+      document.documentElement.setAttribute("data-wf-page", nextPageId);
+    }
+  } catch (_) {}
+}
+
+function resetWCurrent(overridePath) {
+  document.querySelectorAll(".w--current").forEach((el) => {
+    el.classList.remove("w--current");
+  });
+
+  const path = (overridePath || window.location.pathname).replace(/\/$/, "");
+
+  document.querySelectorAll("a[href]").forEach((a) => {
+    try {
+      const url = new URL(a.getAttribute("href"), window.location.origin);
+      const hrefPath = url.pathname.replace(/\/$/, "");
+
+      if (hrefPath === path) {
+        a.classList.add("w--current");
+      }
+    } catch (_) {}
+  });
+}
+
+function reinitWebflowIX2() {
+  if (!window.Webflow) return;
+
+  try {
+    window.Webflow.destroy();
+  } catch (_) {}
+
+  try {
+    window.Webflow.ready();
+  } catch (_) {}
+
+  try {
+    const ix2 = window.Webflow.require("ix2");
+    if (ix2 && ix2.init) ix2.init();
+  } catch (_) {}
+
+  try {
+    document.dispatchEvent(new Event("readystatechange"));
+  } catch (_) {}
 }
 
 
