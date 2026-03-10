@@ -34,31 +34,31 @@ gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 function initOnceFunctions() {
   initLenis();
+
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
-  
+
   // Runs once on first load
-  // if (has('[data-something]')) initSomething();
+  resetWCurrent();
 }
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
-  
+
   // Runs before the enter animation
-  // if (has('[data-something]')) initSomething();
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
-  
+
   // Runs after enter animation completes
-  // if (has('[data-something]')) initSomething();
-  
-  
-  if(hasLenis){
+  reinitWebflowIX2();
+  resetWCurrent();
+
+  if (hasLenis) {
     lenis.resize();
   }
-  
+
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }

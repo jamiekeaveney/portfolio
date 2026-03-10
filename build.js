@@ -7,6 +7,7 @@ const projectRoot = __dirname;
 const inputFiles = [
   "assets/js/core/helpers.js",
   "assets/js/core/sitewide.js",
+  "assets/js/core/webflow.js",
   "assets/js/features/page-transitions.js",
   "assets/js/core/page-transition-boilerplate.js"
 ];
