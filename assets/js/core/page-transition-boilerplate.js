@@ -140,6 +140,7 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
   
+  syncWebflowPageIdFromNextHtml(data.next.html);
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
