@@ -140,6 +140,9 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
 
+  syncWebflowPageIdFromNextHtml(data.next.html);
+  destroyAndInitIX2();
+
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
@@ -158,14 +161,15 @@ barba.hooks.afterEnter(data => {
   // Run page functions
   initAfterEnterFunctions(data.next.container);
 
+  // Finish Webflow reinit after page logic / layout settles
+  readyWebflow();
+  resetWCurrent(data.next.url && data.next.url.path ? data.next.url.path : window.location.pathname);
+  rerunBarbaScripts(data.next.html);
+
   // Settle
   if (hasLenis) {
     lenis.start();
   }
-});
-
-barba.hooks.after(data => {
-  resetWebflow(data);
 });
 
 barba.init({
@@ -180,7 +184,6 @@ barba.init({
       // First load
       async once(data) {
         initOnceFunctions();
-
         return runPageOnceAnimation(data.next.container);
       },
 
@@ -219,6 +222,7 @@ function applyThemeFrom(container) {
   const config = themeConfig[pageTheme] || themeConfig.light;
 
   document.body.dataset.pageTheme = pageTheme;
+
   const transitionEl = document.querySelector('[data-theme-transition]');
   if (transitionEl) {
     transitionEl.dataset.themeTransition = config.transition;
@@ -336,6 +340,30 @@ function resetWCurrent(overridePath) {
   });
 }
 
+function destroyAndInitIX2() {
+  if (!window.Webflow) return;
+
+  try {
+    window.Webflow.destroy();
+  } catch (_) {}
+
+  try {
+    window.Webflow.require("ix2")?.init?.();
+  } catch (_) {}
+
+  try {
+    document.dispatchEvent(new Event("readystatechange"));
+  } catch (_) {}
+}
+
+function readyWebflow() {
+  if (!window.Webflow) return;
+
+  try {
+    window.Webflow.ready();
+  } catch (_) {}
+}
+
 function rerunBarbaScripts(nextHtml) {
   if (!nextHtml) return;
 
@@ -367,36 +395,6 @@ function rerunBarbaScripts(nextHtml) {
       document.body.appendChild(script);
       script.remove();
     });
-  } catch (_) {}
-}
-
-function reinitWebflowIX2() {
-  if (!window.Webflow) return;
-
-  try {
-    window.Webflow.destroy();
-  } catch (_) {}
-
-  try {
-    window.Webflow.ready();
-  } catch (_) {}
-
-  try {
-    const ix2 = window.Webflow.require("ix2");
-    if (ix2 && ix2.init) ix2.init();
-  } catch (_) {}
-}
-
-function resetWebflow(data) {
-  if (!data || !data.next) return;
-
-  syncWebflowPageIdFromNextHtml(data.next.html);
-  reinitWebflowIX2();
-  resetWCurrent(data.next.url && data.next.url.path ? data.next.url.path : window.location.pathname);
-  rerunBarbaScripts(data.next.html);
-
-  try {
-    document.dispatchEvent(new Event("readystatechange"));
   } catch (_) {}
 }
 
