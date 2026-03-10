@@ -1,0 +1,11 @@
+{
+  "name": "portfolio",
+  "version": "1.0.1",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "terser": "^5.39.0"
+  }
+}
