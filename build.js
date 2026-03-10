@@ -7,6 +7,8 @@ const projectRoot = __dirname;
 const inputFiles = [
   "assets/js/core/helpers.js",
   "assets/js/core/sitewide.js",
+  "assets/js/features/scroll-1.js",
+  "assets/js/features/slider.js",
   "assets/js/features/page-transitions.js",
   "assets/js/core/page-transition-boilerplate.js"
 ];

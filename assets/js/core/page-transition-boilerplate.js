@@ -45,6 +45,8 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
+  destroySlider();
+
   // Runs before the enter animation
   // if (has('[data-something]')) initSomething();
 }
@@ -53,6 +55,8 @@ function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs after enter animation completes
+  if (has(".scroll-1_component")) initScroll1();
+  if (has(".slider")) initSlider();
   // if (has('[data-something]')) initSomething();
 
   if (hasLenis) {
