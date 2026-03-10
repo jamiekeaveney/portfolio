@@ -53,8 +53,6 @@ function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs after enter animation completes
-  reinitWebflowIX2();
-  resetWCurrent();
   // if (has('[data-something]')) initSomething();
 
   if (hasLenis) {
@@ -142,7 +140,6 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
 
-  syncWebflowPageIdFromNextHtml(data.next.html);
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
@@ -165,6 +162,10 @@ barba.hooks.afterEnter(data => {
   if (hasLenis) {
     lenis.start();
   }
+});
+
+barba.hooks.after(data => {
+  resetWebflow(data);
 });
 
 barba.init({
@@ -218,7 +219,6 @@ function applyThemeFrom(container) {
   const config = themeConfig[pageTheme] || themeConfig.light;
 
   document.body.dataset.pageTheme = pageTheme;
-
   const transitionEl = document.querySelector('[data-theme-transition]');
   if (transitionEl) {
     transitionEl.dataset.themeTransition = config.transition;
@@ -336,6 +336,40 @@ function resetWCurrent(overridePath) {
   });
 }
 
+function rerunBarbaScripts(nextHtml) {
+  if (!nextHtml) return;
+
+  try {
+    const parsed = new DOMParser().parseFromString(nextHtml, "text/html");
+    const scripts = parsed.querySelectorAll("[data-barba-script]");
+
+    scripts.forEach((scriptEl) => {
+      let codeString = scriptEl.textContent || "";
+
+      if (codeString.includes("DOMContentLoaded")) {
+        codeString = codeString.replace(
+          /window\.addEventListener\("DOMContentLoaded",\s*\(\s*event\s*\)\s*=>\s*{\s*/,
+          ""
+        );
+        codeString = codeString.replace(/\s*}\s*\);\s*$/, "");
+      }
+
+      const script = document.createElement("script");
+      script.type = "text/javascript";
+
+      const src = scriptEl.getAttribute("src");
+      if (src) script.src = src;
+
+      if (codeString.trim()) {
+        script.text = codeString;
+      }
+
+      document.body.appendChild(script);
+      script.remove();
+    });
+  } catch (_) {}
+}
+
 function reinitWebflowIX2() {
   if (!window.Webflow) return;
 
@@ -351,6 +385,15 @@ function reinitWebflowIX2() {
     const ix2 = window.Webflow.require("ix2");
     if (ix2 && ix2.init) ix2.init();
   } catch (_) {}
+}
+
+function resetWebflow(data) {
+  if (!data || !data.next) return;
+
+  syncWebflowPageIdFromNextHtml(data.next.html);
+  reinitWebflowIX2();
+  resetWCurrent(data.next.url && data.next.url.path ? data.next.url.path : window.location.pathname);
+  rerunBarbaScripts(data.next.html);
 
   try {
     document.dispatchEvent(new Event("readystatechange"));
