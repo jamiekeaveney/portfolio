@@ -127,7 +127,7 @@ function runPageLeaveAnimation(current, next) {
   // Change background colour quickly on desktop
   tl.to(current, {
     backgroundColor: "var(--_theme---swatches--cta-card)",
-    duration: 0.25,
+    duration: 0.1,
     ease: "none"
   }, 0);
 
