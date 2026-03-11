@@ -9,6 +9,7 @@ history.scrollRestoration = "manual";
 let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
+let mobileNavLinkCloseInitialized = false;
 
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
@@ -17,6 +18,8 @@ const rmMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
 let reducedMotion = rmMQ.matches;
 rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
 rmMQ.addListener?.(e => (reducedMotion = e.matches));
+
+const mobileTransitionMQ = window.matchMedia("(max-width: 991px)");
 
 const has = (s) => !!nextPage.querySelector(s);
 
@@ -34,6 +37,8 @@ gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 function initOnceFunctions() {
   initLenis();
+  initMobileNavLinkClose();
+
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
 
@@ -100,24 +105,42 @@ function runPageLeaveAnimation(current, next) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
+  if (isMobileTransition()) {
+    closeMobileNav();
+
+    tl.set(current, {
+      zIndex: 2
+    });
+
+    tl.to(current, {
+      autoAlpha: 0,
+      duration: 0.35,
+      ease: "power2.out"
+    });
+
+    return tl;
+  }
+
   tl.set(current, {
     zIndex: 2
   });
 
-  tl.fromTo(current, {
-    backgroundColor: "var(--_theme---swatches--black)",
-    y: "0vh"
-  }, {
+  tl.to(current, {
     backgroundColor: "var(--_theme---swatches--cta-card)",
+    duration: 0.25,
+    ease: "none"
+  }, 0);
+
+  tl.to(current, {
     y: "-25vh",
-    duration: 1.5,
+    duration: 1.25,
     ease: "parallax"
   }, 0);
 
   if (transitionContent) {
     tl.to(transitionContent, {
       opacity: 0.2,
-      duration: 1.5,
+      duration: 1.25,
       ease: "parallax"
     }, 0);
   }
@@ -136,6 +159,27 @@ function runPageEnterAnimation(next) {
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
+  if (isMobileTransition()) {
+    tl.set(next, {
+      autoAlpha: 0,
+      zIndex: 3
+    });
+
+    tl.to(next, {
+      autoAlpha: 1,
+      duration: 0.35,
+      clearProps: "all",
+      ease: "power2.out"
+    });
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+
+    return new Promise(resolve => {
+      tl.call(resolve, null, "pageReady");
+    });
+  }
+
   tl.add("startEnter", 0);
 
   tl.set(next, {
@@ -146,7 +190,7 @@ function runPageEnterAnimation(next) {
     y: "100vh"
   }, {
     y: "0vh",
-    duration: 1.5,
+    duration: 1.25,
     clearProps: "all",
     ease: "parallax"
   }, "startEnter");
@@ -179,6 +223,10 @@ barba.hooks.beforeEnter(data => {
 
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
+  }
+
+  if (isMobileTransition()) {
+    closeMobileNav();
   }
 
   syncWebflowPageIdFromNextHtml(data.next.html);
@@ -344,6 +392,35 @@ function initBarbaNavUpdate(data) {
     // Class list sync
     var newClassList = next.getAttribute('class') || '';
     curr.setAttribute('class', newClassList);
+  });
+}
+
+function isMobileTransition() {
+  return mobileTransitionMQ.matches;
+}
+
+function getMobileNavCheckbox() {
+  return document.querySelector(".nav_checkbox, #nav-toggle");
+}
+
+function closeMobileNav() {
+  const navCheckbox = getMobileNavCheckbox();
+  if (navCheckbox && navCheckbox.checked) {
+    navCheckbox.checked = false;
+  }
+}
+
+function initMobileNavLinkClose() {
+  if (mobileNavLinkCloseInitialized) return;
+  mobileNavLinkCloseInitialized = true;
+
+  document.addEventListener("click", (event) => {
+    if (!isMobileTransition()) return;
+
+    const link = event.target.closest(".nav__mobile-panel a[href], .nav__mobile-panel [data-barba-update]");
+    if (!link) return;
+
+    closeMobileNav();
   });
 }
 
