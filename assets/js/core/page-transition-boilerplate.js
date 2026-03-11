@@ -9,7 +9,6 @@ history.scrollRestoration = "manual";
 let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
-let mobileNavLinkCloseInitialized = false;
 let mobileMenuNavigation = false;
 
 const hasLenis = typeof window.Lenis !== "undefined";
@@ -38,7 +37,6 @@ gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 function initOnceFunctions() {
   initLenis();
-  initMobileNavLinkClose();
 
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
@@ -108,8 +106,6 @@ function runPageLeaveAnimation(current, next) {
   }
 
   if (shouldUseInstantMobileTransition()) {
-    closeMobileNav();
-
     tl.set(current, {
       zIndex: 2
     });
@@ -218,8 +214,20 @@ function runPageEnterAnimation(next) {
 // BARBA HOOKS + INIT
 // -----------------------------------------
 
-barba.hooks.before(() => {
+barba.hooks.before(data => {
   document.documentElement.classList.add("is-transitioning");
+
+  mobileMenuNavigation = false;
+
+  if (!isMobileTransition()) return;
+
+  const trigger = data && data.trigger;
+  if (!trigger) return;
+
+  if (trigger.closest(".nav__mobile-panel")) {
+    mobileMenuNavigation = true;
+    closeMobileNav();
+  }
 });
 
 barba.hooks.beforeEnter(data => {
@@ -233,10 +241,6 @@ barba.hooks.beforeEnter(data => {
 
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
-  }
-
-  if (shouldUseInstantMobileTransition()) {
-    closeMobileNav();
   }
 
   syncWebflowPageIdFromNextHtml(data.next.html);
@@ -423,21 +427,6 @@ function closeMobileNav() {
   if (navCheckbox && navCheckbox.checked) {
     navCheckbox.checked = false;
   }
-}
-
-function initMobileNavLinkClose() {
-  if (mobileNavLinkCloseInitialized) return;
-  mobileNavLinkCloseInitialized = true;
-
-  document.addEventListener("click", (event) => {
-    if (!isMobileTransition()) return;
-
-    const link = event.target.closest(".nav__mobile-panel a[href], .nav__mobile-panel [data-barba-update]");
-    if (!link) return;
-
-    mobileMenuNavigation = true;
-    closeMobileNav();
-  });
 }
 
 
