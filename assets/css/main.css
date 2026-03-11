@@ -1,0 +1,175 @@
+/* ==========================================================================
+   State + Trigger utilities
+   ========================================================================== */
+
+[data-state] {
+  --_state---true: 1;
+  --_state---false: 0;
+}
+
+[data-trigger] {
+  --_transform---on: 0;
+  --_transform---off: 1;
+}
+
+/* Presentational states */
+.is-active,
+[data-state~="current"]:is(.w--current, :has(.w--current)),
+[data-state~="external"]:is([target="_blank"], :has([target="_blank"])) {
+  --_state---true: 0;
+  --_state---false: 1;
+}
+
+/* Structural states */
+[data-state~="checked"]:is(:checked, :has(:checked)),
+[data-state~="open"]:is(.w--open, :has(.w--open)),
+[data-state~="expanded"]:is([aria-expanded="true"], :has([aria-expanded="true"])) {
+  --_state---true: 0;
+  --_state---false: 1;
+  --_state---active: 1;
+}
+
+@media (max-width: 991px) {
+  [data-trigger~="group"]:has([data-state~="current"].w--current)
+    [data-trigger~="hover-other"]:not(.w--current) {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+}
+
+@media (min-width: 992px) {
+  [data-trigger~="group"]:has(
+      [data-state~="current"].w--current:not([data-current="no-desktop"])
+    )
+    [data-trigger~="hover-other"]:not(.w--current) {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+}
+
+.wf-design-mode [data-trigger~="preview"],
+[data-trigger~="focus"]:is(:focus-visible, :has(:focus-visible)),
+[data-trigger~="group"]:has(
+    [data-trigger~="focus-other"]:focus-visible,
+    [data-trigger~="focus-other"] :focus-visible
+  )
+  [data-trigger~="focus-other"]:not(:focus-visible, :has(:focus-visible)) {
+  --_trigger---on: 0;
+  --_trigger---off: 1;
+}
+
+[data-trigger~="focus-other"]:is(:focus-visible, :has(:focus-visible)) {
+  --_transform---on: 1;
+  --_transform---off: 0;
+}
+
+@media (hover: hover) {
+  [data-trigger~="hover"]:hover {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+
+  [data-trigger~="group"]:has([data-trigger~="hover-other"]:hover)
+    [data-trigger~="hover-other"]:not(:hover) {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+
+  [data-trigger~="hover-other"]:hover {
+    --_trigger---on: 1 !important;
+    --_trigger---off: 0 !important;
+  }
+
+  [data-trigger~="hover"]:hover,
+  [data-trigger~="hover-other"]:hover {
+    --_transform---on: 1;
+    --_transform---off: 0;
+  }
+
+  [data-trigger~="hover"]:is(:focus-visible, :has(:focus-visible)) {
+    --_transform---on: 1;
+    --_transform---off: 0;
+  }
+}
+
+@media (hover: none) {
+  [data-trigger~="mobile"] {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+
+  [data-trigger~="hover"],
+  [data-trigger~="hover-other"] {
+    --_transform---on: 0;
+    --_transform---off: 1;
+  }
+}
+
+/* ==========================================================================
+   Helpers
+   ========================================================================== */
+
+.single-line-wrap {
+  overflow: hidden;
+  display: block;
+}
+
+.single-line {
+  display: block;
+  will-change: transform;
+}
+
+.single-letter {
+  display: inline-block;
+  will-change: transform;
+}
+
+svg[viewBox] {
+  overflow: visible !important;
+}
+
+/* ==========================================================================
+   Page transitions
+   ========================================================================== */
+
+/* Block all interaction and show busy cursor during transitions */
+html.is-transitioning,
+html.is-transitioning * {
+  cursor: progress !important;
+}
+
+/* ==========================================================================
+   Pinned project footer
+   ========================================================================== */
+
+.pinned-section.start-transition .case-name-loading {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  user-select: text;
+}
+
+.pinned-section.start-transition .case-name {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ==========================================================================
+   Scroll-1 target
+   ========================================================================== */
+
+.scroll-1_target_item.is-active .light-grey-text.services {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  user-select: text;
+}
+
+  @media (max-width: 767px) {
+    .sticky-trigger,
+    .loader {
+      height: 100dvh;
+    }
+  }
