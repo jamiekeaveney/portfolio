@@ -10,6 +10,7 @@ let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
 let mobileNavLinkCloseInitialized = false;
+let mobileMenuNavigation = false;
 
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
@@ -106,14 +107,14 @@ function runPageLeaveAnimation(current, next) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  if (isMobileTransition()) {
+  if (shouldUseInstantMobileTransition()) {
     closeMobileNav();
 
     tl.set(current, {
       zIndex: 2
     });
 
-    // Hide current page immediately on mobile/tablet
+    // Hide current page immediately on mobile menu navigation
     tl.set(current, {
       autoAlpha: 0
     }, 0);
@@ -165,7 +166,7 @@ function runPageEnterAnimation(next) {
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
-  if (isMobileTransition()) {
+  if (shouldUseInstantMobileTransition()) {
     tl.set(next, {
       autoAlpha: 1,
       zIndex: 3
@@ -234,7 +235,7 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
 
-  if (isMobileTransition()) {
+  if (shouldUseInstantMobileTransition()) {
     closeMobileNav();
   }
 
@@ -272,6 +273,7 @@ barba.hooks.afterEnter(data => {
 
 barba.hooks.after(() => {
   document.documentElement.classList.remove("is-transitioning");
+  mobileMenuNavigation = false;
 });
 
 barba.init({
@@ -408,6 +410,10 @@ function isMobileTransition() {
   return mobileTransitionMQ.matches;
 }
 
+function shouldUseInstantMobileTransition() {
+  return isMobileTransition() && mobileMenuNavigation;
+}
+
 function getMobileNavCheckbox() {
   return document.querySelector(".nav_checkbox, #nav-toggle");
 }
@@ -429,6 +435,7 @@ function initMobileNavLinkClose() {
     const link = event.target.closest(".nav__mobile-panel a[href], .nav__mobile-panel [data-barba-update]");
     if (!link) return;
 
+    mobileMenuNavigation = true;
     closeMobileNav();
   });
 }
