@@ -85,71 +85,68 @@ function runPageOnceAnimation(next) {
 }
 
 function runPageLeaveAnimation(current, next) {
-  const transitionWrap = document.querySelector("[data-transition-wrap]");
-  const transitionDark = transitionWrap.querySelector("[data-transition-dark]");
+  const transitionContent = current.querySelector("[data-transition-content]");
 
   const tl = gsap.timeline({
     onComplete: () => {
-      current.remove(); 
+      current.remove();
     }
-  })
-  
-  CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
-  
+  });
+
+  CustomEase.create("parallax", "0.19, 1, 0.22, 1");
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
-  
-  tl.set(transitionWrap, {
+
+  tl.set(current, {
     zIndex: 2
   });
-  
-  tl.fromTo(transitionDark, {
-    autoAlpha: 0
-  },{
-    autoAlpha: 0.8,
-    duration: 1.2,
+
+  tl.fromTo(current, {
+    backgroundColor: "var(--_theme---swatches--black)",
+    y: "0vh"
+  }, {
+    backgroundColor: "var(--_theme---swatches--cta-card)",
+    y: "-25vh",
+    duration: 1.5,
     ease: "parallax"
   }, 0);
-  
-  tl.fromTo(current,{
-    y: "0vh"
-  },{
-    y: "-25vh",
-    duration: 1.2,
-    ease: "parallax",
-  }, 0);
-  
-  tl.set(transitionDark, {
-    autoAlpha: 0,
-  });
+
+  if (transitionContent) {
+    tl.to(transitionContent, {
+      opacity: 0.2,
+      duration: 1.5,
+      ease: "parallax"
+    }, 0);
+  }
 
   return tl;
 }
 
-function runPageEnterAnimation(next){
+function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady")
+    tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-  
+
   tl.add("startEnter", 0);
-  
+
   tl.set(next, {
     zIndex: 3
   });
-  
+
   tl.fromTo(next, {
     y: "100vh"
   }, {
     y: "0vh",
-    duration: 1.2,
+    duration: 1.5,
     clearProps: "all",
     ease: "parallax"
   }, "startEnter");
