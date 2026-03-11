@@ -124,10 +124,12 @@ function runPageLeaveAnimation(current, next) {
     zIndex: 2
   });
 
-  // Change background colour immediately on desktop
-  tl.set(current, {
-    backgroundColor: "var(--_theme---swatches--cta-card)"
-  }, 0.5);
+  // Change background colour quickly on desktop
+  tl.to(current, {
+    backgroundColor: "var(--_theme---swatches--cta-card)",
+    duration: 0.25,
+    ease: "none"
+  }, 0);
 
   tl.to(current, {
     y: "-25vh",
