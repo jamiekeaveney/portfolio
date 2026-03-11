@@ -91,73 +91,118 @@ function runPageOnceAnimation(next) {
 
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
-  const transitionDark = transitionWrap.querySelector("[data-transition-dark]");
+  const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
 
   const tl = gsap.timeline({
     onComplete: () => {
-      current.remove(); 
+      current.remove();
     }
-  })
-  
+  });
+
   CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
-  
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
-  
-  tl.set(transitionWrap, {
-    zIndex: 2
-  });
-  
-  tl.fromTo(transitionDark, {
-    autoAlpha: 0
-  },{
-    autoAlpha: 0.8,
+
+  if (isMobileTransition()) {
+    closeMobileNav();
+
+    tl.set(current, {
+      zIndex: 2
+    });
+
+    // Hide current page immediately on mobile/tablet
+    tl.set(current, {
+      autoAlpha: 0
+    }, 0);
+
+    return tl;
+  }
+
+  if (transitionWrap) {
+    tl.set(transitionWrap, {
+      zIndex: 2
+    });
+  }
+
+  if (transitionDark) {
+    tl.fromTo(transitionDark, {
+      autoAlpha: 0
+    }, {
+      autoAlpha: 0.8,
+      duration: 1.2,
+      ease: "parallax"
+    }, 0);
+  }
+
+  tl.fromTo(current, {
+    y: "0vh"
+  }, {
+    y: "-25vh",
     duration: 1.2,
     ease: "parallax"
   }, 0);
-  
-  tl.fromTo(current,{
-    y: "0vh"
-  },{
-    y: "-25vh",
-    duration: 1.2,
-    ease: "parallax",
-  }, 0);
-  
-  tl.set(transitionDark, {
-    autoAlpha: 0,
-  });
+
+  if (transitionDark) {
+    tl.set(transitionDark, {
+      autoAlpha: 0
+    });
+  }
 
   return tl;
 }
 
-function runPageEnterAnimation(next){
+function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady")
+    tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-  
+
+  if (isMobileTransition()) {
+    tl.set(next, {
+      autoAlpha: 1,
+      zIndex: 3
+    });
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+
+    return new Promise(resolve => {
+      tl.call(resolve, null, "pageReady");
+    });
+  }
+
   tl.add("startEnter", 0);
-  
+
   tl.set(next, {
-    zIndex: 3
+    zIndex: 3,
+    borderTopLeftRadius: "0.75rem",
+    borderTopRightRadius: "0.75rem"
   });
-  
+
   tl.fromTo(next, {
     y: "100vh"
   }, {
     y: "0vh",
     duration: 1.2,
-    clearProps: "all",
+    clearProps: "transform",
     ease: "parallax"
   }, "startEnter");
+
+  tl.to(next, {
+    borderTopLeftRadius: "0rem",
+    borderTopRightRadius: "0rem",
+    duration: 0.25,
+    ease: "none",
+    clearProps: "borderTopLeftRadius,borderTopRightRadius"
+  }, 0.95);
 
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
