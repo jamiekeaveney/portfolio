@@ -161,15 +161,8 @@ function runPageEnterAnimation(next) {
 
   if (isMobileTransition()) {
     tl.set(next, {
-      autoAlpha: 0,
-      zIndex: 3
-    });
-
-    tl.to(next, {
       autoAlpha: 1,
-      duration: 0,
-      clearProps: "all",
-      ease: "power2.out"
+      zIndex: 3
     });
 
     tl.add("pageReady");
