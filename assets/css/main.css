@@ -134,7 +134,9 @@ svg[viewBox] {
 
 /* Block all interaction and show busy cursor during transitions */
 html.is-transitioning,
-html.is-transitioning * {
+html.is-transitioning body,
+html.is-transitioning a,
+html.is-transitioning button {
   cursor: progress !important;
 }
 

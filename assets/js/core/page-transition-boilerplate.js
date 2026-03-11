@@ -164,6 +164,10 @@ function runPageEnterAnimation(next) {
 // BARBA HOOKS + INIT
 // -----------------------------------------
 
+barba.hooks.before(() => {
+  document.documentElement.classList.add("is-transitioning");
+});
+
 barba.hooks.beforeEnter(data => {
   // Position new container on top
   gsap.set(data.next.container, {
@@ -207,6 +211,10 @@ barba.hooks.afterEnter(data => {
   if (hasLenis) {
     lenis.start();
   }
+});
+
+barba.hooks.after(() => {
+  document.documentElement.classList.remove("is-transitioning");
 });
 
 barba.init({
