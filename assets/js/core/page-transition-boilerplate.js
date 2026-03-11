@@ -98,7 +98,7 @@ function runPageLeaveAnimation(current, next) {
     }
   });
 
-  CustomEase.create("parallax", "0.19, 1, 0.22, 1");
+  CustomEase.create("parallax", "1, 0, 0, 1");
 
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
