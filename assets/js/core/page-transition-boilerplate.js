@@ -112,11 +112,10 @@ function runPageLeaveAnimation(current, next) {
       zIndex: 2
     });
 
-    tl.to(current, {
-      autoAlpha: 0,
-      duration: 0.35,
-      ease: "power2.out"
-    });
+    // Hide current page immediately on mobile/tablet
+    tl.set(current, {
+      autoAlpha: 0
+    }, 0);
 
     return tl;
   }
@@ -125,10 +124,9 @@ function runPageLeaveAnimation(current, next) {
     zIndex: 2
   });
 
-  tl.to(current, {
-    backgroundColor: "var(--_theme---swatches--cta-card)",
-    duration: 0.25,
-    ease: "none"
+  // Change background colour immediately on desktop
+  tl.set(current, {
+    backgroundColor: "var(--_theme---swatches--cta-card)"
   }, 0);
 
   tl.to(current, {
