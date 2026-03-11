@@ -98,7 +98,7 @@ function runPageLeaveAnimation(current, next) {
     }
   });
 
-  CustomEase.create("parallax", "1, 0, 0, 1");
+  CustomEase.create("parallax", "0.19, 1, 0.22, 1");
 
   if (reducedMotion) {
     // Immediate swap behavior if user prefers reduced motion
@@ -127,7 +127,7 @@ function runPageLeaveAnimation(current, next) {
   // Change background colour quickly on desktop
   tl.to(current, {
     backgroundColor: "var(--_theme---swatches--cta-card)",
-    duration: 0,
+    duration: 0.25,
     ease: "none"
   }, 0);
 
@@ -167,7 +167,7 @@ function runPageEnterAnimation(next) {
 
     tl.to(next, {
       autoAlpha: 1,
-      duration: 0.35,
+      duration: 0,
       clearProps: "all",
       ease: "power2.out"
     });
