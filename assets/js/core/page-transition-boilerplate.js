@@ -49,6 +49,9 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
+  // Destroy previous slider instance before creating a new one
+  destroySlider();
+
   // Runs before the enter animation
   if (has(".slider")) initSlider();
   // if (has('[data-something]')) initSomething();
