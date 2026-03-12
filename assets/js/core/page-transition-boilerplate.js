@@ -95,18 +95,19 @@ function runPageOnceAnimation(next) {
   }
 
   /* ----------------------------------------------------------------
-     Random step values
+     Random step values — 3 steps, not 4.
+     Step 1: enter with first value (e.g. 25)
+     Step 2: flip to second value (e.g. 69)
+     Step 3: flip to 100, then exit
      ---------------------------------------------------------------- */
   const a = gsap.utils.random([2, 3, 4]);
   const b = gsap.utils.random([5, 6]);
   const c = gsap.utils.random([1, 5]);
   const d = gsap.utils.random([7, 8, 9]);
-  const steps = [0, parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
+  const steps = [parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
 
   /* ----------------------------------------------------------------
-     TIMING — derived from CSS durations + max stagger per state.
-     Percent always has --d:2, "100" has 3 digits (max --d:2).
-     Pad absorbs rAF drift.
+     TIMING
      ---------------------------------------------------------------- */
   const stagger  = 0.07;
   const pad      = 0.02;
@@ -157,38 +158,34 @@ function runPageOnceAnimation(next) {
   };
 
   /* ----------------------------------------------------------------
-     TIMELINE
+     TIMELINE — 3 steps
      ---------------------------------------------------------------- */
 
-  /* — SETUP —
-     Loader is already visible via CSS. Ensure a clean primed state
-     so the enter animation can fire from a known position. */
+  /* — SETUP — */
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
 
-    /* Redundant with CSS defaults but guarantees state after
-       any prior animation teardown (e.g. back-button replay). */
     gsap.set(wrap, {
       display: "block",
       autoAlpha: 1,
       pointerEvents: "auto"
     });
 
-    top.innerHTML = makeDigits(0);
+    /* Pre-fill top with step 1 digits — they're hidden by is-primed
+       and will slide in when is-entering fires. */
+    top.innerHTML = makeDigits(steps[0]);
     bot.innerHTML = "";
     bar.style.width = "0%";
 
     block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.classList.add("is-primed");
 
-    /* Kill transitions during setup so nothing visually twitches. */
     block.style.transition = "none";
     bar.style.transition = "none";
     setY(0);
 
-    /* Re-enable transitions after two rAFs (layout + paint). */
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         block.style.transition = "";
@@ -197,34 +194,30 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* — ENTER (00 slides in from below) — */
+  /* — STEP 1: ENTER — digits slide in already showing the first
+     random value (e.g. "25"), bar + block Y animate simultaneously. */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
+    bar.style.width = steps[0] + "%";
+    setY(steps[0]);
   });
   tl.to({}, { duration: enterWait });
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
-  /* — FLIP to step 1 — */
+  /* — STEP 2: FLIP to second value — */
   tl.to({}, { duration: 0.08 });
   tl.call(() => { setStep(steps[1]); });
   tl.to({}, { duration: flipWaitFor(steps[1]) });
   tl.call(() => { commitStep(steps[1]); });
 
-  /* — FLIP to step 2 — */
+  /* — STEP 3: FLIP to 100 — */
   tl.to({}, { duration: 0.02 });
   tl.call(() => { setStep(steps[2]); });
   tl.to({}, { duration: flipWaitFor(steps[2]) });
   tl.call(() => { commitStep(steps[2]); });
-
-  /* — FLIP to 100 — */
-  tl.to({}, { duration: 0.02 });
-  tl.call(() => { setStep(steps[3]); });
-  tl.to({}, { duration: flipWaitFor(steps[3]) });
-  /* Commit BEFORE exit — guarantees flip has fully resolved. */
-  tl.call(() => { commitStep(steps[3]); });
   tl.call(() => { block.classList.add("is-exiting"); });
   tl.to({}, { duration: exitWait });
 
