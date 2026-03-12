@@ -26,10 +26,6 @@ const has = (s) => !!nextPage.querySelector(s);
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
-// Scroll offset captured just before each transition so the
-// leave animation can start from the correct visual position.
-let _leaveScrollY = 0;
-
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
 gsap.defaults({ ease: "osmo", duration: durationDefault });
 
@@ -123,13 +119,6 @@ function runPageLeaveAnimation(current, next) {
     return tl;
   }
 
-  // The current container was locked at y: -_leaveScrollY in
-  // beforeEnter.  Animate from that position upward by 25 vh
-  // so the parallax-up effect starts exactly where the user
-  // was looking.
-  const startY = -_leaveScrollY;
-  const endY = startY - window.innerHeight * 0.25;
-
   tl.set(transitionWrap, {
     zIndex: 2
   });
@@ -143,9 +132,9 @@ function runPageLeaveAnimation(current, next) {
   }, 0);
 
   tl.fromTo(current, {
-    y: startY
+    y: "0vh"
   }, {
-    y: endY,
+    y: "-25vh",
     duration: 1.2,
     ease: "parallax",
   }, 0);
@@ -235,20 +224,7 @@ barba.hooks.before(data => {
 });
 
 barba.hooks.beforeEnter(data => {
-  // 1. Capture scroll offset before anything changes
-  _leaveScrollY = window.scrollY || window.pageYOffset || 0;
-
-  // 2. Lock the leaving page at its current visual position
-  //    so the scroll-to-zero below won't cause a visible jump.
-  gsap.set(data.current.container, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    y: -_leaveScrollY,
-  });
-
-  // 3. Position new container on top
+  // Position new container on top
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
@@ -260,25 +236,18 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
 
-  // 4. Reset scroll to zero BEFORE IX2 reinit.
-  //    With scroll at 0, IX2 scroll-triggered animations
-  //    initialise in their starting state (e.g. words hidden,
-  //    video at default size) rather than snapping to end.
-  window.scrollTo(0, 0);
-  if (lenis) {
-    try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (_) {}
-  }
-
-  // 5. Kill old page ScrollTriggers before incoming page init
+  // Kill old page ScrollTriggers before incoming page init
   if (hasScrollTrigger) {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
 
-  // 6. Reinit IX2 for the new page
+  // Reset scroll BEFORE IX2 init so scroll-triggered Webflow animations
+  // are evaluated from the top of the incoming page rather than the old page position
+  resetScrollPosition();
+
   syncWebflowPageIdFromNextHtml(data.next.html);
   destroyAndInitIX2();
 
-  // 7. Page-specific setup
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
@@ -403,6 +372,14 @@ function resetPage(container) {
   }
 }
 
+function resetScrollPosition() {
+  if (hasLenis && lenis && typeof lenis.scrollTo === "function") {
+    lenis.scrollTo(0, { immediate: true, force: true });
+  } else {
+    window.scrollTo(0, 0);
+  }
+}
+
 function debounceOnWidthChange(fn, ms) {
   let last = innerWidth,
     timer;
@@ -509,8 +486,6 @@ function destroyAndInitIX2() {
     window.Webflow.require("ix2")?.init?.();
   } catch (_) {}
 
-  // Dispatch readystatechange so IX2 finishes its full
-  // initialisation cycle (binds scroll observers, etc.).
   try {
     document.dispatchEvent(new Event("readystatechange"));
   } catch (_) {}
