@@ -95,16 +95,14 @@ function runPageOnceAnimation(next) {
   }
 
   /* ----------------------------------------------------------------
-     Random step values — 3 steps, not 4.
-     Step 1: enter with first value (e.g. 25)
-     Step 2: flip to second value (e.g. 69)
+     Random step values — 3 steps.
+     Step 1: enter with 00
+     Step 2: flip to a value well beyond halfway (60–89)
      Step 3: flip to 100, then exit
      ---------------------------------------------------------------- */
-  const a = gsap.utils.random([2, 3, 4]);
-  const b = gsap.utils.random([5, 6]);
-  const c = gsap.utils.random([1, 5]);
-  const d = gsap.utils.random([7, 8, 9]);
-  const steps = [parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
+  const tens = gsap.utils.random([6, 7, 8]);
+  const ones = gsap.utils.random([1, 3, 5, 7, 9]);
+  const steps = [0, parseInt("" + tens + ones, 10), 100];
 
   /* ----------------------------------------------------------------
      TIMING
@@ -173,9 +171,9 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    /* Pre-fill top with step 1 digits — they're hidden by is-primed
-       and will slide in when is-entering fires. */
-    top.innerHTML = makeDigits(steps[0]);
+    /* Pre-fill top with 00 — hidden by is-primed,
+       slides in when is-entering fires. */
+    top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
 
@@ -194,20 +192,18 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* — STEP 1: ENTER — digits slide in already showing the first
-     random value (e.g. "25"), bar + block Y animate simultaneously. */
+  /* — STEP 1: ENTER — 00 slides in from below.
+     Bar stays at 0%, block stays at bottom. */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
-    bar.style.width = steps[0] + "%";
-    setY(steps[0]);
   });
   tl.to({}, { duration: enterWait });
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
-  /* — STEP 2: FLIP to second value — */
+  /* — STEP 2: FLIP to random value (60–89) — */
   tl.to({}, { duration: 0.08 });
   tl.call(() => { setStep(steps[1]); });
   tl.to({}, { duration: flipWaitFor(steps[1]) });
