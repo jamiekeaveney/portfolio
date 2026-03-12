@@ -82,6 +82,205 @@ function runPageOnceAnimation(next) {
     resetPage(next);
   }, null, 0);
 
+  if (reducedMotion || shouldUseInstantMobileTransition()) {
+    return tl;
+  }
+
+  const loader = document.querySelector(".loader");
+  if (!loader) {
+    return tl;
+  }
+
+  const panel = loader.querySelector(".loader__panel");
+  const bar = loader.querySelector(".loader__bar");
+  const block = loader.querySelector(".loader__block");
+  const hundreds = loader.querySelector(".loader__digit-wrap--hundreds");
+  const tens = loader.querySelector(".loader__digit-wrap--tens");
+  const ones = loader.querySelector(".loader__digit-wrap--ones");
+  const percent = loader.querySelector(".loader__percent");
+
+  if (!panel || !bar || !block || !hundreds || !tens || !ones || !percent) {
+    return tl;
+  }
+
+  const randomTens1 = gsap.utils.random([2, 3, 4]);
+  const randomTens2 = gsap.utils.random([5, 6]);
+  const randomOnes1 = gsap.utils.random([1, 5]);
+  const randomOnes2 = gsap.utils.random([7, 8, 9]);
+
+  const value1 = parseInt("" + randomTens1 + randomOnes1, 10);
+  const value2 = parseInt("" + randomTens2 + randomOnes2, 10);
+
+  function getTravel(value) {
+    const panelStyle = window.getComputedStyle(panel);
+    const padTop = parseFloat(panelStyle.paddingTop) || 0;
+    const padBottom = parseFloat(panelStyle.paddingBottom) || 0;
+    const blockHeight = block.getBoundingClientRect().height;
+    const travel = Math.max(0, window.innerHeight - padTop - padBottom - blockHeight);
+    return -(travel * value / 100);
+  }
+
+  function getState(value) {
+    if (value === 100) {
+      return {
+        hundreds: -100,
+        tens: -1000,
+        ones: -1000,
+        blockY: getTravel(100),
+        barWidth: "100%"
+      };
+    }
+
+    return {
+      hundreds: 0,
+      tens: Math.floor(value / 10) * -100,
+      ones: (value % 10) * -100,
+      blockY: getTravel(value),
+      barWidth: value + "%"
+    };
+  }
+
+  const state1 = getState(value1);
+  const state2 = getState(value2);
+  const state3 = getState(100);
+
+  tl.set(loader, {
+    display: "block",
+    autoAlpha: 1,
+    pointerEvents: "auto"
+  });
+
+  tl.set(bar, {
+    width: "0%"
+  });
+
+  tl.set(block, {
+    y: 0
+  });
+
+  tl.set(hundreds, {
+    yPercent: 0
+  });
+
+  tl.set(tens, {
+    yPercent: 0
+  });
+
+  tl.set(ones, {
+    yPercent: 0
+  });
+
+  tl.set(percent, {
+    yPercent: 100
+  });
+
+  tl.to(percent, {
+    yPercent: 0,
+    duration: 0.9,
+    ease: "expo.inOut"
+  });
+
+  tl.to(bar, {
+    width: state1.barWidth,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(block, {
+    y: state1.blockY,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(hundreds, {
+    yPercent: state1.hundreds,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(tens, {
+    yPercent: state1.tens,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(ones, {
+    yPercent: state1.ones,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(bar, {
+    width: state2.barWidth,
+    duration: 1.2,
+    ease: "expo.inOut"
+  });
+
+  tl.to(block, {
+    y: state2.blockY,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(hundreds, {
+    yPercent: state2.hundreds,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(tens, {
+    yPercent: state2.tens,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(ones, {
+    yPercent: state2.ones,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(bar, {
+    width: state3.barWidth,
+    duration: 1.2,
+    ease: "expo.inOut"
+  });
+
+  tl.to(block, {
+    y: state3.blockY,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(hundreds, {
+    yPercent: state3.hundreds,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(tens, {
+    yPercent: state3.tens,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(ones, {
+    yPercent: state3.ones,
+    duration: 1.2,
+    ease: "expo.inOut"
+  }, "<");
+
+  tl.to(loader, {
+    autoAlpha: 0,
+    duration: 0.25,
+    ease: "power2.out"
+  });
+
+  tl.set(loader, {
+    display: "none",
+    pointerEvents: "none"
+  });
+
   return tl;
 }
 
@@ -205,7 +404,6 @@ function runPageEnterAnimation(next) {
     tl.call(resolve, null, "pageReady");
   });
 }
-
 
 
 // -----------------------------------------
