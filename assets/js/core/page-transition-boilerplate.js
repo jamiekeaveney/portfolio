@@ -77,34 +77,46 @@ function initAfterEnterFunctions(next) {
 
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
-
   tl.call(() => {
     resetPage(next);
   }, null, 0);
-
   if (reducedMotion || shouldUseInstantMobileTransition()) {
     return tl;
   }
-
   const wrap = document.querySelector('[data-loader="wrap"]');
   if (!wrap) return tl;
-
   const panel = wrap.querySelector(".loader-panel");
   const bar = wrap.querySelector("[data-loader-bar]");
   const block = wrap.querySelector("[data-loader-block]");
   const top = wrap.querySelector("[data-loader-top]");
   const bot = wrap.querySelector("[data-loader-bot]");
-
   if (!panel || !bar || !block || !top || !bot) {
     return tl;
   }
-
   const a = gsap.utils.random([2, 3, 4]);
   const b = gsap.utils.random([5, 6]);
   const c = gsap.utils.random([1, 5]);
   const d = gsap.utils.random([7, 8, 9]);
-
   const steps = [0, parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
+
+  /* ----------------------------------------------------------------
+     TIMING — computed from CSS custom-property durations + stagger.
+     The percent symbol always has --d:2, and "100" has 3 digits
+     (max --d:2), so the worst-case stagger delay is 2 × 0.07 = 0.14s.
+     A 0.02s pad absorbs any rounding / rAF drift.
+     ---------------------------------------------------------------- */
+  const stagger   = 0.07;
+  const pad       = 0.02;
+  const enterDur  = 0.58;
+  const flipDur   = 0.68;
+  const exitDur   = 0.58;
+
+  // Max stagger indices: enter/exit → percent at --d:2 = 0.14s
+  //                      flip → digits only; 2-digit max --d:1, 3-digit max --d:2
+  const enterWait = enterDur + 2 * stagger + pad;          // 0.72s
+  const flipWait2 = flipDur  + 1 * stagger + pad;          // 0.77s  (2-digit steps)
+  const flipWait3 = flipDur  + 2 * stagger + pad;          // 0.84s  (3-digit / 100)
+  const exitWait  = exitDur  + 2 * stagger + pad;          // 0.72s
 
   const makeDigits = (n) =>
     (n < 10 ? "0" + n : String(n))
@@ -117,13 +129,11 @@ function runPageOnceAnimation(next) {
       block.style.transform = "";
       return;
     }
-
     const styles = getComputedStyle(panel);
     const padTop = parseFloat(styles.paddingTop) || 0;
     const padBottom = parseFloat(styles.paddingBottom) || 0;
     const blockHeight = block.getBoundingClientRect().height;
     const travel = Math.max(0, panel.clientHeight - padTop - padBottom - blockHeight);
-
     block.style.transform = `translate3d(0, ${-(travel * pct / 100)}px, 0)`;
   };
 
@@ -140,32 +150,31 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-flipping");
   };
 
-  const enterWait = 0.58 + 0.14;
-  const flipWait = 0.68 + 0.07;
-  const exitWait = 0.58 + 0.14;
+  /* Helper: choose flip wait based on digit count of the target value */
+  const flipWaitFor = (value) => (value >= 100 ? flipWait3 : flipWait2);
 
+  /* ----------------------------------------------------------------
+     TIMELINE
+     ---------------------------------------------------------------- */
+
+  /* — SETUP — */
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-
     gsap.set(wrap, {
       display: "block",
       autoAlpha: 1,
       pointerEvents: "auto"
     });
-
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
-
     block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.classList.add("is-primed");
-
     block.style.transition = "none";
     bar.style.transition = "none";
     setY(0);
-
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         block.style.transition = "";
@@ -174,73 +183,53 @@ function runPageOnceAnimation(next) {
     });
   });
 
+  /* — ENTER (00 slides in) — */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
   });
-
   tl.to({}, { duration: enterWait });
-
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
+  /* — FLIP to step 1 — */
   tl.to({}, { duration: 0.08 });
+  tl.call(() => { setStep(steps[1]); });
+  tl.to({}, { duration: flipWaitFor(steps[1]) });
+  tl.call(() => { commitStep(steps[1]); });
 
-  tl.call(() => {
-    setStep(steps[1]);
-  });
-
-  tl.to({}, { duration: flipWait });
-
-  tl.call(() => {
-    commitStep(steps[1]);
-  });
-
+  /* — FLIP to step 2 — */
   tl.to({}, { duration: 0.02 });
+  tl.call(() => { setStep(steps[2]); });
+  tl.to({}, { duration: flipWaitFor(steps[2]) });
+  tl.call(() => { commitStep(steps[2]); });
 
-  tl.call(() => {
-    setStep(steps[2]);
-  });
-
-  tl.to({}, { duration: flipWait });
-
-  tl.call(() => {
-    commitStep(steps[2]);
-  });
-
+  /* — FLIP to 100 — */
   tl.to({}, { duration: 0.02 });
-
-  tl.call(() => {
-    setStep(steps[3]);
-  });
-
-  tl.to({}, { duration: flipWait });
-
-  tl.call(() => {
-    commitStep(steps[3]);
-    block.classList.add("is-exiting");
-  });
-
+  tl.call(() => { setStep(steps[3]); });
+  tl.to({}, { duration: flipWaitFor(steps[3]) });
+  /* Commit 100 FIRST, then start exit on the next call.
+     This guarantees the flip has fully resolved before exit begins. */
+  tl.call(() => { commitStep(steps[3]); });
+  tl.call(() => { block.classList.add("is-exiting"); });
   tl.to({}, { duration: exitWait });
 
+  /* — FADE OUT & TEARDOWN — */
   tl.to(wrap, {
     autoAlpha: 0,
     duration: 0.25,
     ease: "power2.out"
   });
-
   tl.call(() => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
-
     gsap.set(wrap, {
       display: "none",
       autoAlpha: 0,
       pointerEvents: "none"
     });
-
     block.classList.remove("is-primed", "is-entering", "is-flipping", "is-exiting");
     block.style.transform = "";
     bar.style.width = "0%";
