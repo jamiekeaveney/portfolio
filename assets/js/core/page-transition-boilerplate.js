@@ -43,26 +43,25 @@ function initOnceFunctions() {
 
   // Runs once on first load
   resetWCurrent();
-  // if (has('[data-something]')) initSomething();
+  // if (document.querySelector('[data-something]')) initSomething(document);
 }
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
-  // Destroy previous slider instance before creating a new one
-  destroySlider();
-
   // Runs before the enter animation
-  if (has(".slider")) initSlider();
-  // if (has('[data-something]')) initSomething();
+  // Keep this mostly for features that truly need to exist
+  // before the incoming page is visible.
+  // if (has('[data-something]')) initSomething(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs after enter animation completes
-  if (has(".scroll-1_component")) initScroll1();
-  // if (has('[data-something]')) initSomething();
+  if (has(".slider")) initSlider(nextPage);
+  if (has(".scroll-1_component")) initScroll1(nextPage);
+  // if (has('[data-something]')) initSomething(nextPage);
 
   if (hasLenis) {
     lenis.resize();

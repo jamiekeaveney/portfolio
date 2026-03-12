@@ -2,28 +2,39 @@
 // SLIDER
 // -----------------------------------------
 
-let sliderInstance = null;
+const sliderInstances = new Map();
 
-function initSlider() {
-  if (sliderInstance) return;
+function initSlider(container = nextPage || document) {
+  if (!container) return;
   if (window.matchMedia("(max-width: 991px)").matches) return;
 
-  const root = nextPage.querySelector(".slider");
-  const track = nextPage.querySelector(".slide-track");
+  const roots = container.querySelectorAll(".slider");
+  if (!roots.length) return;
 
-  if (!root || !track) return;
+  roots.forEach((root) => {
+    if (sliderInstances.has(root)) return;
 
-  sliderInstance = createSliderInstance(root, track);
-  sliderInstance.init();
+    const track = root.querySelector(".slide-track");
+    if (!track) return;
+
+    const instance = createSliderInstance(root, track, container);
+    instance.init();
+    sliderInstances.set(root, instance);
+  });
 }
 
-function destroySlider() {
-  if (!sliderInstance) return;
-  sliderInstance.destroy();
-  sliderInstance = null;
+function destroySlider(container = document) {
+  if (!container) return;
+
+  [...sliderInstances.entries()].forEach(([root, instance]) => {
+    if (!container.contains(root)) return;
+
+    instance.destroy();
+    sliderInstances.delete(root);
+  });
 }
 
-function createSliderInstance(root, track) {
+function createSliderInstance(root, track, container) {
   const BP = 991;
   const mq = window.matchMedia(`(max-width:${BP}px)`);
   const cfg = {
@@ -54,12 +65,18 @@ function createSliderInstance(root, track) {
     prog: null,
     rafId: null,
     resizeRaf: null,
-    originals: []
+    originals: [],
+    listeners: []
   };
 
   const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
   const now = () => performance.now();
   const seq = () => s.pitch * s.total;
+
+  function addListener(el, event, handler, options) {
+    el.addEventListener(event, handler, options);
+    s.listeners.push({ el, event, handler, options });
+  }
 
   function cssVarPercent(el, name) {
     const raw = getComputedStyle(el).getPropertyValue(name).trim();
@@ -196,8 +213,13 @@ function createSliderInstance(root, track) {
     }
 
     const link = e.target.closest(".slide")?.querySelector("a[href]");
-    if (link) {
-      e.preventDefault();
+    if (!link) return;
+
+    e.preventDefault();
+
+    if (window.barba && typeof window.barba.go === "function") {
+      window.barba.go(link.href);
+    } else {
       window.location.href = link.href;
     }
   }
@@ -228,6 +250,9 @@ function createSliderInstance(root, track) {
   }
 
   function init() {
+    if (s.root.hasAttribute("data-slider-ran")) return;
+    s.root.setAttribute("data-slider-ran", "");
+
     s.track.style.willChange = "transform";
 
     const p = cssVarPercent(s.root, "--work-page--slider-parallax");
@@ -253,23 +278,25 @@ function createSliderInstance(root, track) {
     s.x = s.tx = start;
     s.track.style.transform = `translate3d(${start}px,0,0)`;
 
-    s.prog = nextPage.querySelector("[data-slider-progress]");
+    s.prog = container.querySelector("[data-slider-progress]");
     s.ui = 0;
 
-    s.root.addEventListener("wheel", onWheel, { passive: false });
-    s.root.addEventListener("pointerdown", onPointerDown);
-    s.root.addEventListener("pointermove", onPointerMove);
-    s.root.addEventListener("pointerup", onPointerUp);
-    s.root.addEventListener("pointercancel", onPointerUp);
-    s.root.addEventListener("pointerleave", onPointerUp);
-    s.root.addEventListener("dragstart", onDragStart);
-    s.track.addEventListener("click", onClick);
-    window.addEventListener("resize", onResize);
+    addListener(s.root, "wheel", onWheel, { passive: false });
+    addListener(s.root, "pointerdown", onPointerDown);
+    addListener(s.root, "pointermove", onPointerMove);
+    addListener(s.root, "pointerup", onPointerUp);
+    addListener(s.root, "pointercancel", onPointerUp);
+    addListener(s.root, "pointerleave", onPointerUp);
+    addListener(s.root, "dragstart", onDragStart);
+    addListener(s.track, "click", onClick);
+    addListener(window, "resize", onResize);
 
     if (mq.addEventListener) {
       mq.addEventListener("change", onBreakpointChange);
+      s.listeners.push({ el: mq, event: "change", handler: onBreakpointChange, isMQ: true });
     } else {
       mq.addListener(onBreakpointChange);
+      s.listeners.push({ el: mq, handler: onBreakpointChange, isMQ: true, legacyMQ: true });
     }
 
     loop();
@@ -279,21 +306,20 @@ function createSliderInstance(root, track) {
     cancelAnimationFrame(s.rafId);
     cancelAnimationFrame(s.resizeRaf);
 
-    s.root.removeEventListener("wheel", onWheel);
-    s.root.removeEventListener("pointerdown", onPointerDown);
-    s.root.removeEventListener("pointermove", onPointerMove);
-    s.root.removeEventListener("pointerup", onPointerUp);
-    s.root.removeEventListener("pointercancel", onPointerUp);
-    s.root.removeEventListener("pointerleave", onPointerUp);
-    s.root.removeEventListener("dragstart", onDragStart);
-    s.track.removeEventListener("click", onClick);
-    window.removeEventListener("resize", onResize);
+    s.listeners.forEach(({ el, event, handler, options, isMQ, legacyMQ }) => {
+      if (isMQ) {
+        if (legacyMQ) {
+          el.removeListener(handler);
+        } else {
+          el.removeEventListener(event, handler);
+        }
+        return;
+      }
 
-    if (mq.addEventListener) {
-      mq.removeEventListener("change", onBreakpointChange);
-    } else {
-      mq.removeListener(onBreakpointChange);
-    }
+      el.removeEventListener(event, handler, options);
+    });
+
+    s.listeners.length = 0;
 
     s.track.classList.remove("dragging");
     s.track.style.transform = "";
@@ -304,6 +330,8 @@ function createSliderInstance(root, track) {
     const originalCount = s.originals.length;
     const currentSlides = [...s.track.querySelectorAll(".slide")];
     currentSlides.slice(originalCount).forEach((el) => el.remove());
+
+    s.root.removeAttribute("data-slider-ran");
   }
 
   return { init, destroy };
