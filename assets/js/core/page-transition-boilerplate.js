@@ -26,6 +26,10 @@ const has = (s) => !!nextPage.querySelector(s);
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
+// Stores the scroll offset captured in beforeEnter so the
+// leave animation can start from the correct visual position.
+let _leaveScrollY = 0;
+
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
 gsap.defaults({ ease: "osmo", duration: durationDefault });
 
@@ -49,9 +53,10 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs before the enter animation
-  // Use this for features that should already be alive
-  // while the incoming page is animating in.
+  // Runs before the enter animation.
+  // Use this for anything that needs to be ready before
+  // the incoming page is visible (e.g. cloning slide elements,
+  // setting initial layout values).
   if (has(".slider")) initSlider(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 }
@@ -59,8 +64,9 @@ function initBeforeEnterFunctions(next) {
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs after enter animation completes
-  // Use this for most page-level scripts.
+  // Runs after enter animation completes.
+  // Use this for scroll-driven features, resize observers,
+  // or anything that depends on the page being settled in the DOM.
   if (has(".scroll-1_component")) initScroll1(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 
@@ -71,6 +77,13 @@ function initAfterEnterFunctions(next) {
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
+}
+
+function destroyPageFunctions(container) {
+  // Tear down anything initialised on the leaving page.
+  // Called in afterLeave so features stay visually intact
+  // through the entire leave animation.
+  destroySlider(container);
 }
 
 
@@ -102,22 +115,20 @@ function runPageLeaveAnimation(current, next) {
   CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
 
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
 
   if (shouldUseInstantMobileTransition()) {
-    tl.set(current, {
-      zIndex: 2
-    });
-
-    // Hide current page immediately on mobile menu navigation
-    tl.set(current, {
-      autoAlpha: 0
-    }, 0);
-
+    tl.set(current, { zIndex: 2 });
+    tl.set(current, { autoAlpha: 0 }, 0);
     return tl;
   }
+
+  // The current container was locked in place at y: -_leaveScrollY
+  // inside beforeEnter.  Start from that position and animate
+  // upward by 25 vh so the parallax motion is seamless.
+  const startY = -_leaveScrollY;
+  const endY = startY - window.innerHeight * 0.25;
 
   tl.set(transitionWrap, {
     zIndex: 2
@@ -132,9 +143,9 @@ function runPageLeaveAnimation(current, next) {
   }, 0);
 
   tl.fromTo(current, {
-    y: "0vh"
+    y: startY
   }, {
-    y: "-25vh",
+    y: endY,
     duration: 1.2,
     ease: "parallax",
   }, 0);
@@ -150,7 +161,6 @@ function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
 
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
@@ -224,7 +234,21 @@ barba.hooks.before(data => {
 });
 
 barba.hooks.beforeEnter(data => {
-  // Position new container on top
+  // ---- 1. Capture scroll position --------------------------
+  _leaveScrollY = window.scrollY || window.pageYOffset || 0;
+
+  // ---- 2. Lock the leaving page in place -------------------
+  // Fix it at its current visual position so the scroll-to-zero
+  // below doesn't cause a visible jump.
+  gsap.set(data.current.container, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    y: -_leaveScrollY,
+  });
+
+  // ---- 3. Position the incoming page off-screen ------------
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
@@ -232,24 +256,35 @@ barba.hooks.beforeEnter(data => {
     right: 0,
   });
 
+  // ---- 4. Reset scroll to zero BEFORE IX2 reinit -----------
+  // With scroll at 0, IX2 scroll-triggered animations will
+  // initialise in their starting state (elements hidden /
+  // default size) rather than replaying their entrance.
+  window.scrollTo(0, 0);
+
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
+    try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (_) {}
   }
 
-  // Kill old page ScrollTriggers before incoming page init
-  if (hasScrollTrigger) {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }
-
+  // ---- 5. Reinitialise IX2 for the new page ----------------
   syncWebflowPageIdFromNextHtml(data.next.html);
   destroyAndInitIX2();
 
+  // ---- 6. Page-specific setup ------------------------------
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
 barba.hooks.afterLeave(data => {
-  destroySlider(data.current.container);
+  // The leave animation has completed and the old container
+  // has been removed from the DOM.  Clean up per-page features
+  // (slider RAF loops, listeners, etc.) and kill ScrollTriggers.
+  destroyPageFunctions(data.current.container);
+
+  if (hasScrollTrigger) {
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  }
 });
 
 barba.hooks.enter(data => {
@@ -472,6 +507,10 @@ function destroyAndInitIX2() {
 
   try {
     window.Webflow.require("ix2")?.init?.();
+  } catch (_) {}
+
+  try {
+    document.dispatchEvent(new Event("readystatechange"));
   } catch (_) {}
 }
 
