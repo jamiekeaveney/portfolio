@@ -96,15 +96,14 @@ function runPageOnceAnimation(next) {
 
   /* ----------------------------------------------------------------
      Random step values — 3 steps.
-     Step 1: enter showing first value (21–45). Bar + Y start at 0.
-     Step 2: flip to second value (57–69). Bar + Y catch up.
-     Step 3: flip to 100, then exit.
+     Step 1: enter with 00
+     Step 2: flip to a value beyond halfway (61–73)
+     Step 3: flip to 100, then exit
      ---------------------------------------------------------------- */
-  const a = gsap.utils.random([2, 3, 4]);
-  const b = gsap.utils.random([5, 6]);
-  const c = gsap.utils.random([1, 5]);
-  const d = gsap.utils.random([7, 8, 9]);
-  const steps = [parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
+  const tens = gsap.utils.random([6, 7]);
+  const ones = gsap.utils.random([1, 3]);
+  const mid  = parseInt("" + tens + ones, 10);
+  const steps = [0, Math.min(mid, 73), 100];
 
   /* ----------------------------------------------------------------
      TIMING
@@ -173,7 +172,7 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    /* Pre-fill top with step 1 value — hidden by is-primed,
+    /* Pre-fill top with 00 — hidden by is-primed,
        slides in when is-entering fires. */
     top.innerHTML = makeDigits(steps[0]);
     bot.innerHTML = "";
@@ -194,8 +193,7 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* — STEP 1: ENTER — digits slide in showing first value (e.g. "25").
-     Bar + block Y animate from 0 to match simultaneously. */
+  /* — STEP 1: ENTER — 00 slides in from below. */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
@@ -207,7 +205,7 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-entering");
   });
 
-  /* — STEP 2: FLIP to second value (57–69) — */
+  /* — STEP 2: FLIP to random value (61–73) — */
   tl.to({}, { duration: 0.08 });
   tl.call(() => { setStep(steps[1]); });
   tl.to({}, { duration: flipWaitFor(steps[1]) });
