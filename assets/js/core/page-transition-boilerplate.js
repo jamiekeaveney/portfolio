@@ -76,8 +76,12 @@ function initAfterEnterFunctions(next) {
 // -----------------------------------------
 
 function runPageOnceAnimation(next) {
-  const tl = gsap.timeline();
-  const FADE_DURATION = 0.25;
+  const tl = gsap.timeline({
+    defaults: {
+      ease: "expo.inOut",
+      duration: 1.2
+    }
+  });
 
   tl.call(() => {
     resetPage(next);
@@ -93,10 +97,11 @@ function runPageOnceAnimation(next) {
   const panel = wrap.querySelector(".loader-panel");
   const bar = wrap.querySelector("[data-loader-bar]");
   const block = wrap.querySelector("[data-loader-block]");
-  const top = wrap.querySelector("[data-loader-top]");
-  const bot = wrap.querySelector("[data-loader-bot]");
+  const firstWrap = wrap.querySelector(".loader-number-wrap--first");
+  const secondWrap = wrap.querySelector(".loader-number-wrap--second");
+  const thirdWrap = wrap.querySelector(".loader-number-wrap--third");
 
-  if (!panel || !bar || !block || !top || !bot) {
+  if (!panel || !bar || !block || !firstWrap || !secondWrap || !thirdWrap) {
     return tl;
   }
 
@@ -105,54 +110,28 @@ function runPageOnceAnimation(next) {
   const randomNumbers3 = gsap.utils.random([1, 5]);
   const randomNumbers4 = gsap.utils.random([7, 8, 9]);
 
-  const steps = [
-    0,
-    parseInt("" + randomNumbers1 + randomNumbers3, 10),
-    parseInt("" + randomNumbers2 + randomNumbers4, 10),
-    100
-  ];
+  const value1 = parseInt("" + randomNumbers1 + randomNumbers3, 10);
+  const value2 = parseInt("" + randomNumbers2 + randomNumbers4, 10);
 
-  const mkDigs = (n) => {
-    const s = n < 10 ? "0" + n : String(n);
+  function getBlockY(value) {
+    if (window.innerWidth < 992) return 0;
 
-    return s
-      .split("")
-      .concat("%")
-      .map((c, i) => {
-        const cls = c === "%" ? "loader-digit loader-digit--percent" : "loader-digit";
-        return `<span class="${cls}" style="--d:${i}">${c}</span>`;
-      })
-      .join("");
-  };
-
-  const posY = (pct) => {
-    if (window.innerWidth < 992) {
-      block.style.transform = "";
-      return;
-    }
-
-    const panelRect = panel.getBoundingClientRect();
     const styles = getComputedStyle(panel);
     const padTop = parseFloat(styles.paddingTop) || 0;
     const padBottom = parseFloat(styles.paddingBottom) || 0;
+    const panelHeight = panel.getBoundingClientRect().height;
     const blockHeight = block.getBoundingClientRect().height;
-    const total = Math.max(0, panelRect.height - padTop - padBottom - blockHeight);
+    const travel = Math.max(0, panelHeight - padTop - padBottom - blockHeight);
 
-    block.style.transform = `translate3d(0, ${-(total * pct / 100)}px, 0)`;
-  };
+    return -(travel * value / 100);
+  }
 
-  const setStep = (value) => {
-    bot.innerHTML = mkDigs(value);
-    block.classList.add("is-flipping");
-    posY(value);
-    bar.style.width = value + "%";
-  };
-
-  const commitStep = (value) => {
-    top.innerHTML = mkDigs(value);
-    bot.innerHTML = "";
-    block.classList.remove("is-flipping");
-  };
+  function setCharIndices() {
+    const chars = wrap.querySelectorAll(".loader-number");
+    chars.forEach((char, index) => {
+      char.style.setProperty("--i", index);
+    });
+  }
 
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
@@ -165,79 +144,110 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    top.innerHTML = mkDigs(0);
-    bot.innerHTML = "";
-    bar.style.width = "0%";
-
-    block.classList.remove("is-entering", "is-flipping", "is-exiting");
-
-    block.style.transition = "none";
-    bar.style.transition = "none";
-    posY(0);
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        block.style.transition = "";
-        bar.style.transition = "";
-      });
+    gsap.set(bar, {
+      width: "0%"
     });
+
+    gsap.set(block, {
+      y: 0
+    });
+
+    gsap.set(firstWrap, {
+      yPercent: 100
+    });
+
+    gsap.set(secondWrap, {
+      yPercent: 10
+    });
+
+    gsap.set(thirdWrap, {
+      yPercent: 10
+    });
+
+    block.classList.remove("is-entering", "is-exiting");
+    setCharIndices();
   });
 
   tl.call(() => {
     block.classList.add("is-entering");
   });
 
-  tl.to({}, { duration: 0.76 });
+  tl.to({}, { duration: 0.72 });
 
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
-  tl.to({}, { duration: 0.16 });
-
-  tl.call(() => {
-    setStep(steps[1]);
+  tl.to(bar, {
+    width: value1 + "%"
   });
 
-  tl.to({}, { duration: 0.72 });
+  tl.to(secondWrap, {
+    yPercent: (randomNumbers1 - 1) * -10
+  }, "<");
 
-  tl.call(() => {
-    commitStep(steps[1]);
+  tl.to(thirdWrap, {
+    yPercent: (randomNumbers3 - 1) * -10
+  }, "<");
+
+  tl.to(block, {
+    y: getBlockY(value1)
+  }, "<");
+
+  tl.to({}, { duration: 0.02 });
+
+  tl.to(bar, {
+    width: value2 + "%"
   });
 
-  tl.to({}, { duration: 0.015 });
+  tl.to(secondWrap, {
+    yPercent: (randomNumbers2 - 1) * -10
+  }, "<");
 
-  tl.call(() => {
-    setStep(steps[2]);
+  tl.to(thirdWrap, {
+    yPercent: (randomNumbers4 - 1) * -10
+  }, "<");
+
+  tl.to(block, {
+    y: getBlockY(value2)
+  }, "<");
+
+  tl.to({}, { duration: 0.02 });
+
+  tl.to(bar, {
+    width: "100%"
   });
 
-  tl.to({}, { duration: 0.72 });
+  tl.to(secondWrap, {
+    yPercent: -90
+  }, "<");
+
+  tl.to(thirdWrap, {
+    yPercent: -90
+  }, "<");
+
+  tl.to(firstWrap, {
+    yPercent: 0
+  }, "<");
+
+  tl.to(block, {
+    y: getBlockY(100)
+  }, "<");
 
   tl.call(() => {
-    commitStep(steps[2]);
-  });
-
-  tl.to({}, { duration: 0.015 });
-
-  tl.call(() => {
-    setStep(steps[3]);
-  });
-
-  tl.to({}, { duration: 0.72 });
-
-  tl.call(() => {
-    commitStep(steps[3]);
-  });
-
-  tl.call(() => {
+    setCharIndices();
     block.classList.add("is-exiting");
   });
 
-  tl.to({}, { duration: 0.82 });
+  tl.to({}, { duration: 0.72 });
+
+  tl.call(() => {
+    block.classList.remove("is-exiting");
+  });
 
   tl.to(wrap, {
     autoAlpha: 0,
-    duration: FADE_DURATION,
+    duration: 0.25,
     ease: "power2.out"
   });
 
@@ -245,18 +255,12 @@ function runPageOnceAnimation(next) {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
+  });
 
-    gsap.set(wrap, {
-      display: "none",
-      autoAlpha: 0,
-      pointerEvents: "none"
-    });
-
-    block.classList.remove("is-entering", "is-flipping", "is-exiting");
-    block.style.transform = "";
-    bar.style.width = "0%";
-    top.innerHTML = "";
-    bot.innerHTML = "";
+  tl.set(wrap, {
+    display: "none",
+    pointerEvents: "none",
+    clearProps: "opacity,visibility"
   });
 
   return tl;
