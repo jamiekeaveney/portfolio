@@ -76,159 +76,106 @@ function initAfterEnterFunctions(next) {
 // -----------------------------------------
 
 function runPageOnceAnimation(next) {
-  const tl = gsap.timeline();
-  tl.call(() => {
-    resetPage(next);
-  }, null, 0);
-  if (reducedMotion || shouldUseInstantMobileTransition()) {
-    return tl;
-  }
-  const wrap = document.querySelector('[data-loader="wrap"]');
+  var tl = gsap.timeline();
+  tl.call(() => { resetPage(next); }, null, 0);
+  if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
+
+  var wrap = document.querySelector('[data-loader="wrap"]');
   if (!wrap) return tl;
-  const panel = wrap.querySelector(".loader-panel");
-  const bar = wrap.querySelector("[data-loader-bar]");
-  const block = wrap.querySelector("[data-loader-block]");
-  const top = wrap.querySelector("[data-loader-top]");
-  const bot = wrap.querySelector("[data-loader-bot]");
-  if (!panel || !bar || !block || !top || !bot) {
-    return tl;
-  }
+  var panel = wrap.querySelector(".loader-panel");
+  var bar   = wrap.querySelector("[data-loader-bar]");
+  var block = wrap.querySelector("[data-loader-block]");
+  var top   = wrap.querySelector("[data-loader-top]");
+  var bot   = wrap.querySelector("[data-loader-bot]");
+  if (!panel || !bar || !block || !top || !bot) return tl;
 
-  /* ----------------------------------------------------------------
-     3-step values:
-     Step 1 — enter with 00
-     Step 2 — flip to a value in the 55–75 range
-     Step 3 — flip to 100, then exit
-     ---------------------------------------------------------------- */
-  const mid = gsap.utils.random(55, 75, 1);
-  const steps = [0, mid, 100];
+  /* Steps: 00 → mid (55–75) → 100 */
+  var mid = gsap.utils.random(55, 75, 1);
 
-  /* ----------------------------------------------------------------
-     TIMING
-     ---------------------------------------------------------------- */
-  const stagger  = 0.07;
-  const pad      = 0.02;
-  const enterDur = 0.58;
-  const flipDur  = 0.68;
-  const exitDur  = 0.58;
+  /* Timing — duration + max stagger + pad */
+  var enterWait = 0.58 + 0.14 + 0.02;
+  var flipWait2 = 0.68 + 0.07 + 0.02;
+  var flipWait3 = 0.68 + 0.14 + 0.02;
+  var exitWait  = 0.58 + 0.14 + 0.02;
 
-  const enterWait = enterDur + 2 * stagger + pad;
-  const flipWait2 = flipDur  + 1 * stagger + pad;
-  const flipWait3 = flipDur  + 2 * stagger + pad;
-  const exitWait  = exitDur  + 2 * stagger + pad;
-
-  const flipWaitFor = (value) => (value >= 100 ? flipWait3 : flipWait2);
-
-  /* ----------------------------------------------------------------
-     Helpers
-     ---------------------------------------------------------------- */
-  const makeDigits = (n) =>
-    (n < 10 ? "0" + n : String(n))
+  var makeDigits = function(n) {
+    return (n < 10 ? "0" + n : "" + n)
       .split("")
-      .map((char, i) => `<span class="loader-digit" style="--d:${i}">${char}</span>`)
+      .map(function(c, i) { return '<span class="loader-digit" style="--d:' + i + '">' + c + "</span>"; })
       .join("");
-
-  const setY = (pct) => {
-    if (window.innerWidth < 992) {
-      block.style.transform = "";
-      return;
-    }
-    const styles = getComputedStyle(panel);
-    const padTop = parseFloat(styles.paddingTop) || 0;
-    const padBottom = parseFloat(styles.paddingBottom) || 0;
-    const blockHeight = block.getBoundingClientRect().height;
-    const travel = Math.max(0, panel.clientHeight - padTop - padBottom - blockHeight);
-    block.style.transform = `translate3d(0, ${-(travel * pct / 100)}px, 0)`;
   };
 
-  const setStep = (value) => {
-    bot.innerHTML = makeDigits(value);
+  var setY = function(pct) {
+    if (window.innerWidth < 992) { block.style.transform = ""; return; }
+    var s = getComputedStyle(panel);
+    var travel = Math.max(0, panel.clientHeight - (parseFloat(s.paddingTop) || 0) - (parseFloat(s.paddingBottom) || 0) - block.getBoundingClientRect().height);
+    block.style.transform = "translate3d(0," + -(travel * pct / 100) + "px,0)";
+  };
+
+  var setStep = function(v) {
+    bot.innerHTML = makeDigits(v);
     block.classList.add("is-flipping");
-    bar.style.width = value + "%";
-    setY(value);
+    bar.style.width = v + "%";
+    setY(v);
   };
 
-  const commitStep = (value) => {
-    top.innerHTML = makeDigits(value);
+  var commitStep = function(v) {
+    top.innerHTML = makeDigits(v);
     bot.innerHTML = "";
     block.classList.remove("is-flipping");
   };
 
-  /* ----------------------------------------------------------------
-     TIMELINE
-     ---------------------------------------------------------------- */
-
-  /* — SETUP — */
-  tl.call(() => {
+  /* Setup */
+  tl.call(function() {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-
-    gsap.set(wrap, {
-      display: "block",
-      autoAlpha: 1,
-      pointerEvents: "auto"
-    });
-
+    gsap.set(wrap, { display: "block", autoAlpha: 1, pointerEvents: "auto" });
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
-
     block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.classList.add("is-primed");
-
     block.style.transition = "none";
     bar.style.transition = "none";
     setY(0);
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
         block.style.transition = "";
         bar.style.transition = "";
       });
     });
   });
 
-  /* — STEP 1: ENTER with 00 — */
-  tl.call(() => {
+  /* Step 1 — enter 00 */
+  tl.call(function() {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
   });
   tl.to({}, { duration: enterWait });
-  tl.call(() => {
-    block.classList.remove("is-entering");
-  });
+  tl.call(function() { block.classList.remove("is-entering"); });
 
-  /* — STEP 2: FLIP to mid value (55–75) — */
+  /* Step 2 — flip to mid */
   tl.to({}, { duration: 0.08 });
-  tl.call(() => { setStep(steps[1]); });
-  tl.to({}, { duration: flipWaitFor(steps[1]) });
-  tl.call(() => { commitStep(steps[1]); });
+  tl.call(function() { setStep(mid); });
+  tl.to({}, { duration: flipWait2 });
+  tl.call(function() { commitStep(mid); });
 
-  /* — STEP 3: FLIP to 100 — */
+  /* Step 3 — flip to 100, exit */
   tl.to({}, { duration: 0.02 });
-  tl.call(() => { setStep(steps[2]); });
-  tl.to({}, { duration: flipWaitFor(steps[2]) });
-  tl.call(() => { commitStep(steps[2]); });
-  tl.call(() => { block.classList.add("is-exiting"); });
+  tl.call(function() { setStep(100); });
+  tl.to({}, { duration: flipWait3 });
+  tl.call(function() { commitStep(100); });
+  tl.call(function() { block.classList.add("is-exiting"); });
   tl.to({}, { duration: exitWait });
 
-  /* — FADE OUT & TEARDOWN — */
-  tl.to(wrap, {
-    autoAlpha: 0,
-    duration: 0.25,
-    ease: "power2.out"
-  });
-  tl.call(() => {
+  /* Fade out & teardown */
+  tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
+  tl.call(function() {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
-
-    gsap.set(wrap, {
-      display: "none",
-      autoAlpha: 0,
-      pointerEvents: "none"
-    });
+    gsap.set(wrap, { display: "none", autoAlpha: 0, pointerEvents: "none" });
     block.classList.remove("is-primed", "is-entering", "is-flipping", "is-exiting");
     block.style.transform = "";
     bar.style.width = "0%";
