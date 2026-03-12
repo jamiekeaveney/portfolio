@@ -140,6 +140,10 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-flipping");
   };
 
+  const enterWait = 0.58 + 0.14;
+  const flipWait = 0.68 + 0.07;
+  const exitWait = 0.58 + 0.14;
+
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
@@ -171,54 +175,54 @@ function runPageOnceAnimation(next) {
   });
 
   tl.call(() => {
-    block.classList.add("is-entering");
     block.classList.remove("is-primed");
+    block.classList.add("is-entering");
   });
 
-  tl.to({}, { duration: 0.64 });
+  tl.to({}, { duration: enterWait });
 
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
-  tl.to({}, { duration: 0.12 });
+  tl.to({}, { duration: 0.08 });
 
   tl.call(() => {
     setStep(steps[1]);
   });
 
-  tl.to({}, { duration: 0.68 });
+  tl.to({}, { duration: flipWait });
 
   tl.call(() => {
     commitStep(steps[1]);
   });
 
-  tl.to({}, { duration: 0.015 });
+  tl.to({}, { duration: 0.02 });
 
   tl.call(() => {
     setStep(steps[2]);
   });
 
-  tl.to({}, { duration: 0.68 });
+  tl.to({}, { duration: flipWait });
 
   tl.call(() => {
     commitStep(steps[2]);
   });
 
-  tl.to({}, { duration: 0.015 });
+  tl.to({}, { duration: 0.02 });
 
   tl.call(() => {
     setStep(steps[3]);
   });
 
-  tl.to({}, { duration: 0.68 });
+  tl.to({}, { duration: flipWait });
 
   tl.call(() => {
     commitStep(steps[3]);
     block.classList.add("is-exiting");
   });
 
-  tl.to({}, { duration: 0.72 });
+  tl.to({}, { duration: exitWait });
 
   tl.to(wrap, {
     autoAlpha: 0,
