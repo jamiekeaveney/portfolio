@@ -99,17 +99,22 @@ function runPageOnceAnimation(next) {
     return tl;
   }
 
-  const a = gsap.utils.random([2, 3, 4]);
-  const b = gsap.utils.random([5, 6]);
-  const c = gsap.utils.random([1, 5]);
-  const d = gsap.utils.random([7, 8, 9]);
+  const randomNumbers1 = gsap.utils.random([2, 3, 4]);
+  const randomNumbers2 = gsap.utils.random([5, 6]);
+  const randomNumbers3 = gsap.utils.random([1, 5]);
+  const randomNumbers4 = gsap.utils.random([7, 8, 9]);
 
-  const steps = [0, parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
+  const step1 = parseInt("" + randomNumbers1 + randomNumbers3, 10);
+  const step2 = parseInt("" + randomNumbers2 + randomNumbers4, 10);
 
-  const makeDigits = (n) =>
+  const makeRow = (n) =>
     (n < 10 ? "0" + n : String(n))
       .split("")
-      .map((char, i) => `<span class="loader-digit" style="--d:${i}">${char}</span>`)
+      .concat("%")
+      .map((char, i) => {
+        const cls = char === "%" ? "loader-percent" : "loader-digit";
+        return `<span class="${cls}" style="--d:${i}">${char}</span>`;
+      })
       .join("");
 
   const setY = (pct) => {
@@ -127,17 +132,24 @@ function runPageOnceAnimation(next) {
     block.style.transform = `translate3d(0, ${-(travel * pct / 100)}px, 0)`;
   };
 
+  const startAt = (value) => {
+    top.innerHTML = "";
+    bot.innerHTML = makeRow(value);
+    bar.style.width = value + "%";
+    setY(value);
+  };
+
   const setStep = (value) => {
-    bot.innerHTML = makeDigits(value);
+    bot.innerHTML = makeRow(value);
     block.classList.add("is-flipping");
     bar.style.width = value + "%";
     setY(value);
   };
 
   const commitStep = (value) => {
-    top.innerHTML = makeDigits(value);
+    top.innerHTML = makeRow(value);
     bot.innerHTML = "";
-    block.classList.remove("is-flipping");
+    block.classList.remove("is-flipping", "is-entering");
   };
 
   tl.call(() => {
@@ -151,71 +163,53 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    top.innerHTML = makeDigits(0);
-    bot.innerHTML = "";
-    bar.style.width = "0%";
-
     block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.style.transition = "none";
     bar.style.transition = "none";
-    setY(0);
+
+    startAt(step1);
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         block.style.transition = "";
         bar.style.transition = "";
+        block.classList.add("is-entering");
       });
     });
   });
 
+  tl.to({}, { duration: 0.72 });
+
   tl.call(() => {
-    block.classList.add("is-entering");
+    commitStep(step1);
   });
 
-  tl.to({}, { duration: 0.64 });
+  tl.to({}, { duration: 0.02 });
 
   tl.call(() => {
-    block.classList.remove("is-entering");
+    setStep(step2);
   });
 
-  tl.to({}, { duration: 0.12 });
+  tl.to({}, { duration: 0.7 });
 
   tl.call(() => {
-    setStep(steps[1]);
+    commitStep(step2);
   });
 
-  tl.to({}, { duration: 0.68 });
+  tl.to({}, { duration: 0.02 });
 
   tl.call(() => {
-    commitStep(steps[1]);
+    setStep(100);
   });
 
-  tl.to({}, { duration: 0.015 });
+  tl.to({}, { duration: 0.7 });
 
   tl.call(() => {
-    setStep(steps[2]);
-  });
-
-  tl.to({}, { duration: 0.68 });
-
-  tl.call(() => {
-    commitStep(steps[2]);
-  });
-
-  tl.to({}, { duration: 0.015 });
-
-  tl.call(() => {
-    setStep(steps[3]);
-  });
-
-  tl.to({}, { duration: 0.68 });
-
-  tl.call(() => {
-    commitStep(steps[3]);
+    commitStep(100);
     block.classList.add("is-exiting");
   });
 
-  tl.to({}, { duration: 0.72 });
+  tl.to({}, { duration: 0.7 });
 
   tl.to(wrap, {
     autoAlpha: 0,
