@@ -95,15 +95,13 @@ function runPageOnceAnimation(next) {
   }
 
   /* ----------------------------------------------------------------
-     Random step values — 3 steps.
-     Step 1: enter with 00
-     Step 2: flip to a value beyond halfway (61–73)
-     Step 3: flip to 100, then exit
+     3-step values:
+     Step 1 — enter with 00
+     Step 2 — flip to a value in the 55–75 range
+     Step 3 — flip to 100, then exit
      ---------------------------------------------------------------- */
-  const tens = gsap.utils.random([6, 7]);
-  const ones = gsap.utils.random([1, 3]);
-  const mid  = parseInt("" + tens + ones, 10);
-  const steps = [0, Math.min(mid, 73), 100];
+  const mid = gsap.utils.random(55, 75, 1);
+  const steps = [0, mid, 100];
 
   /* ----------------------------------------------------------------
      TIMING
@@ -157,7 +155,7 @@ function runPageOnceAnimation(next) {
   };
 
   /* ----------------------------------------------------------------
-     TIMELINE — 3 steps
+     TIMELINE
      ---------------------------------------------------------------- */
 
   /* — SETUP — */
@@ -172,9 +170,7 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    /* Pre-fill top with 00 — hidden by is-primed,
-       slides in when is-entering fires. */
-    top.innerHTML = makeDigits(steps[0]);
+    top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
 
@@ -193,19 +189,17 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* — STEP 1: ENTER — 00 slides in from below. */
+  /* — STEP 1: ENTER with 00 — */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
-    bar.style.width = steps[0] + "%";
-    setY(steps[0]);
   });
   tl.to({}, { duration: enterWait });
   tl.call(() => {
     block.classList.remove("is-entering");
   });
 
-  /* — STEP 2: FLIP to random value (61–73) — */
+  /* — STEP 2: FLIP to mid value (55–75) — */
   tl.to({}, { duration: 0.08 });
   tl.call(() => { setStep(steps[1]); });
   tl.to({}, { duration: flipWaitFor(steps[1]) });
