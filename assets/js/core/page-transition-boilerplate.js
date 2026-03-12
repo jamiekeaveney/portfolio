@@ -49,17 +49,20 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs before the enter animation
-  // Keep this mostly for features that truly need to exist
-  // before the incoming page is visible.
+  // Runs before the enter animation.
+  // Use this for anything that needs to be ready before
+  // the incoming page is visible (e.g. cloning slide elements,
+  // setting initial layout values).
+  if (has(".slider")) initSlider(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs after enter animation completes
-  if (has(".slider")) initSlider(nextPage);
+  // Runs after enter animation completes.
+  // Use this for scroll-driven features, resize observers,
+  // or anything that depends on the page being settled in the DOM.
   if (has(".scroll-1_component")) initScroll1(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 
@@ -70,6 +73,13 @@ function initAfterEnterFunctions(next) {
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
+}
+
+function destroyPageFunctions(container) {
+  // Tear down anything that was initialised on the leaving page.
+  // Called in beforeLeave so cleanup happens while the
+  // container still exists in the DOM.
+  destroySlider(container);
 }
 
 
@@ -101,7 +111,6 @@ function runPageLeaveAnimation(current, next) {
   CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
 
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
 
@@ -110,7 +119,6 @@ function runPageLeaveAnimation(current, next) {
       zIndex: 2
     });
 
-    // Hide current page immediately on mobile menu navigation
     tl.set(current, {
       autoAlpha: 0
     }, 0);
@@ -149,7 +157,6 @@ function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
 
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
@@ -222,6 +229,12 @@ barba.hooks.before(data => {
   }
 });
 
+barba.hooks.beforeLeave(data => {
+  // Clean up features on the leaving page while its
+  // container still exists in the DOM.
+  destroyPageFunctions(data.current.container);
+});
+
 barba.hooks.beforeEnter(data => {
   // Position new container on top
   gsap.set(data.next.container, {
@@ -235,8 +248,9 @@ barba.hooks.beforeEnter(data => {
     lenis.stop();
   }
 
+  // Sync the Webflow page ID so IX2 targets the correct page
+  // when it reinitialises later in afterLeave.
   syncWebflowPageIdFromNextHtml(data.next.html);
-  destroyAndInitIX2();
 
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
@@ -246,6 +260,11 @@ barba.hooks.afterLeave(() => {
   if (hasScrollTrigger) {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
+
+  // The old page is now gone, so it is safe to tear down
+  // and reinitialise IX2 without disturbing animations that
+  // were still visible on the leaving container.
+  destroyAndInitIX2();
 });
 
 barba.hooks.enter(data => {
