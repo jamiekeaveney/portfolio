@@ -241,10 +241,6 @@ barba.hooks.beforeEnter(data => {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
 
-  // Reset scroll BEFORE IX2 init so scroll-triggered Webflow animations
-  // are evaluated from the top of the incoming page rather than the old page position
-  resetScrollPosition();
-
   syncWebflowPageIdFromNextHtml(data.next.html);
   destroyAndInitIX2();
 
@@ -372,14 +368,6 @@ function resetPage(container) {
   }
 }
 
-function resetScrollPosition() {
-  if (hasLenis && lenis && typeof lenis.scrollTo === "function") {
-    lenis.scrollTo(0, { immediate: true, force: true });
-  } else {
-    window.scrollTo(0, 0);
-  }
-}
-
 function debounceOnWidthChange(fn, ms) {
   let last = innerWidth,
     timer;
@@ -484,10 +472,6 @@ function destroyAndInitIX2() {
 
   try {
     window.Webflow.require("ix2")?.init?.();
-  } catch (_) {}
-
-  try {
-    document.dispatchEvent(new Event("readystatechange"));
   } catch (_) {}
 }
 
