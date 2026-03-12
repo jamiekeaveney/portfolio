@@ -100,12 +100,17 @@ function runPageOnceAnimation(next) {
     return tl;
   }
 
-  const seq = () => {
-    const j = (b, r) => b + Math.floor(Math.random() * r * 2) - r;
-    return [0, j(24, 8), j(72, 8), 100];
-  };
+  const randomNumbers1 = gsap.utils.random([2, 3, 4]);
+  const randomNumbers2 = gsap.utils.random([5, 6]);
+  const randomNumbers3 = gsap.utils.random([1, 5]);
+  const randomNumbers4 = gsap.utils.random([7, 8, 9]);
 
-  const steps = seq();
+  const steps = [
+    0,
+    parseInt("" + randomNumbers1 + randomNumbers3, 10),
+    parseInt("" + randomNumbers2 + randomNumbers4, 10),
+    100
+  ];
 
   const mkDigs = (n) => {
     const s = n < 10 ? "0" + n : String(n);
@@ -164,7 +169,7 @@ function runPageOnceAnimation(next) {
     bot.innerHTML = "";
     bar.style.width = "0%";
 
-    block.classList.remove("is-flipping", "is-exiting");
+    block.classList.remove("is-entering", "is-flipping", "is-exiting");
 
     block.style.transition = "none";
     bar.style.transition = "none";
@@ -178,41 +183,57 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  tl.to({}, { duration: 0.3 });
+  tl.call(() => {
+    block.classList.add("is-entering");
+  });
+
+  tl.to({}, { duration: 0.76 });
+
+  tl.call(() => {
+    block.classList.remove("is-entering");
+  });
+
+  tl.to({}, { duration: 0.16 });
 
   tl.call(() => {
     setStep(steps[1]);
   });
 
-  tl.to({}, { duration: 0.84 });
+  tl.to({}, { duration: 0.72 });
 
   tl.call(() => {
     commitStep(steps[1]);
   });
 
-  tl.to({}, { duration: 0.02 });
+  tl.to({}, { duration: 0.015 });
 
   tl.call(() => {
     setStep(steps[2]);
   });
 
-  tl.to({}, { duration: 0.84 });
+  tl.to({}, { duration: 0.72 });
 
   tl.call(() => {
     commitStep(steps[2]);
   });
 
-  tl.to({}, { duration: 0.02 });
+  tl.to({}, { duration: 0.015 });
 
   tl.call(() => {
     setStep(steps[3]);
   });
 
-  tl.to({}, { duration: 0.84 });
+  tl.to({}, { duration: 0.72 });
 
   tl.call(() => {
     commitStep(steps[3]);
   });
+
+  tl.call(() => {
+    block.classList.add("is-exiting");
+  });
+
+  tl.to({}, { duration: 0.82 });
 
   tl.to(wrap, {
     autoAlpha: 0,
@@ -231,7 +252,7 @@ function runPageOnceAnimation(next) {
       pointerEvents: "none"
     });
 
-    block.classList.remove("is-flipping", "is-exiting");
+    block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.style.transform = "";
     bar.style.width = "0%";
     top.innerHTML = "";
