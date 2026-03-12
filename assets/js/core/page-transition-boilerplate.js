@@ -93,6 +93,10 @@ function runPageOnceAnimation(next) {
   if (!panel || !bar || !block || !top || !bot) {
     return tl;
   }
+
+  /* ----------------------------------------------------------------
+     Random step values
+     ---------------------------------------------------------------- */
   const a = gsap.utils.random([2, 3, 4]);
   const b = gsap.utils.random([5, 6]);
   const c = gsap.utils.random([1, 5]);
@@ -100,24 +104,26 @@ function runPageOnceAnimation(next) {
   const steps = [0, parseInt("" + a + c, 10), parseInt("" + b + d, 10), 100];
 
   /* ----------------------------------------------------------------
-     TIMING — computed from CSS custom-property durations + stagger.
-     The percent symbol always has --d:2, and "100" has 3 digits
-     (max --d:2), so the worst-case stagger delay is 2 × 0.07 = 0.14s.
-     A 0.02s pad absorbs any rounding / rAF drift.
+     TIMING — derived from CSS durations + max stagger per state.
+     Percent always has --d:2, "100" has 3 digits (max --d:2).
+     Pad absorbs rAF drift.
      ---------------------------------------------------------------- */
-  const stagger   = 0.07;
-  const pad       = 0.02;
-  const enterDur  = 0.58;
-  const flipDur   = 0.68;
-  const exitDur   = 0.58;
+  const stagger  = 0.07;
+  const pad      = 0.02;
+  const enterDur = 0.58;
+  const flipDur  = 0.68;
+  const exitDur  = 0.58;
 
-  // Max stagger indices: enter/exit → percent at --d:2 = 0.14s
-  //                      flip → digits only; 2-digit max --d:1, 3-digit max --d:2
-  const enterWait = enterDur + 2 * stagger + pad;          // 0.72s
-  const flipWait2 = flipDur  + 1 * stagger + pad;          // 0.77s  (2-digit steps)
-  const flipWait3 = flipDur  + 2 * stagger + pad;          // 0.84s  (3-digit / 100)
-  const exitWait  = exitDur  + 2 * stagger + pad;          // 0.72s
+  const enterWait = enterDur + 2 * stagger + pad;
+  const flipWait2 = flipDur  + 1 * stagger + pad;
+  const flipWait3 = flipDur  + 2 * stagger + pad;
+  const exitWait  = exitDur  + 2 * stagger + pad;
 
+  const flipWaitFor = (value) => (value >= 100 ? flipWait3 : flipWait2);
+
+  /* ----------------------------------------------------------------
+     Helpers
+     ---------------------------------------------------------------- */
   const makeDigits = (n) =>
     (n < 10 ? "0" + n : String(n))
       .split("")
@@ -150,31 +156,39 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-flipping");
   };
 
-  /* Helper: choose flip wait based on digit count of the target value */
-  const flipWaitFor = (value) => (value >= 100 ? flipWait3 : flipWait2);
-
   /* ----------------------------------------------------------------
      TIMELINE
      ---------------------------------------------------------------- */
 
-  /* — SETUP — */
+  /* — SETUP —
+     Loader is already visible via CSS. Ensure a clean primed state
+     so the enter animation can fire from a known position. */
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+
+    /* Redundant with CSS defaults but guarantees state after
+       any prior animation teardown (e.g. back-button replay). */
     gsap.set(wrap, {
       display: "block",
       autoAlpha: 1,
       pointerEvents: "auto"
     });
+
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
+
     block.classList.remove("is-entering", "is-flipping", "is-exiting");
     block.classList.add("is-primed");
+
+    /* Kill transitions during setup so nothing visually twitches. */
     block.style.transition = "none";
     bar.style.transition = "none";
     setY(0);
+
+    /* Re-enable transitions after two rAFs (layout + paint). */
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         block.style.transition = "";
@@ -183,7 +197,7 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* — ENTER (00 slides in) — */
+  /* — ENTER (00 slides in from below) — */
   tl.call(() => {
     block.classList.remove("is-primed");
     block.classList.add("is-entering");
@@ -209,8 +223,7 @@ function runPageOnceAnimation(next) {
   tl.to({}, { duration: 0.02 });
   tl.call(() => { setStep(steps[3]); });
   tl.to({}, { duration: flipWaitFor(steps[3]) });
-  /* Commit 100 FIRST, then start exit on the next call.
-     This guarantees the flip has fully resolved before exit begins. */
+  /* Commit BEFORE exit — guarantees flip has fully resolved. */
   tl.call(() => { commitStep(steps[3]); });
   tl.call(() => { block.classList.add("is-exiting"); });
   tl.to({}, { duration: exitWait });
@@ -225,6 +238,7 @@ function runPageOnceAnimation(next) {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
+
     gsap.set(wrap, {
       display: "none",
       autoAlpha: 0,
