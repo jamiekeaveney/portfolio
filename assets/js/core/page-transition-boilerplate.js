@@ -86,26 +86,20 @@ function runPageOnceAnimation(next) {
     return tl;
   }
 
-  const loadingContainer = document.querySelector("[data-loading-container]");
-  if (!loadingContainer) return tl;
+  const wrap = document.querySelector('[data-loader="wrap"]');
+  if (!wrap) {
+    return tl;
+  }
 
-  const loadingScreen = loadingContainer.querySelector(".loading-screen");
-  const progressInner = loadingContainer.querySelector(".loading__progress-inner");
-  const numbers = loadingContainer.querySelector(".loading__numbers");
-  const firstWrap = loadingContainer.querySelector(".loading__number-wrap--first");
-  const secondWrap = loadingContainer.querySelector(".loading__number-wrap--second");
-  const thirdWrap = loadingContainer.querySelector(".loading__number-wrap--third");
-  const percentage = loadingContainer.querySelector(".loading__percentage");
+  const panel = wrap.querySelector(".loader-panel");
+  const bar = wrap.querySelector("[data-loader-bar]");
+  const block = wrap.querySelector("[data-loader-block]");
+  const firstWrap = wrap.querySelector(".loader-number-wrap--first");
+  const secondWrap = wrap.querySelector(".loader-number-wrap--second");
+  const thirdWrap = wrap.querySelector(".loader-number-wrap--third");
+  const percentage = wrap.querySelector(".loader-percentage");
 
-  if (
-    !loadingScreen ||
-    !progressInner ||
-    !numbers ||
-    !firstWrap ||
-    !secondWrap ||
-    !thirdWrap ||
-    !percentage
-  ) {
+  if (!panel || !bar || !block || !firstWrap || !secondWrap || !thirdWrap || !percentage) {
     return tl;
   }
 
@@ -122,28 +116,35 @@ function runPageOnceAnimation(next) {
   const value1 = parseInt("" + randomNumbers1 + randomNumbers3, 10);
   const value2 = parseInt("" + randomNumbers2 + randomNumbers4, 10);
 
-  const isDesktop = window.matchMedia("(min-width: 62rem)").matches;
+  function getBlockY(value) {
+    if (window.innerWidth < 992) {
+      return 0;
+    }
 
-  function getNumbersY(value) {
-    if (!isDesktop) return 0;
+    const pad = parseFloat(getComputedStyle(panel).paddingTop) || 40;
+    const blockHeight = block.getBoundingClientRect().height;
+    const total = Math.max(0, window.innerHeight - pad * 2 - blockHeight);
 
-    const screenHeight = loadingScreen.getBoundingClientRect().height;
-    const numbersHeight = numbers.getBoundingClientRect().height;
-    const bottom = parseFloat(window.getComputedStyle(numbers).bottom) || 0;
-    const travel = Math.max(0, screenHeight - bottom * 2 - numbersHeight);
-
-    return -(travel * value / 100);
+    return -(total * value / 100);
   }
 
-  tl.set(loadingScreen, {
-    display: "block"
+  tl.call(() => {
+    if (typeof stopLenis === "function") stopLenis();
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+  }, null, 0);
+
+  tl.set(wrap, {
+    display: "block",
+    autoAlpha: 1,
+    pointerEvents: "auto"
   });
 
-  tl.set(progressInner, {
-    scaleY: 0
+  tl.set(bar, {
+    width: "0%"
   });
 
-  tl.set(numbers, {
+  tl.set(block, {
     y: 0
   });
 
@@ -163,13 +164,9 @@ function runPageOnceAnimation(next) {
     yPercent: 10
   });
 
-  tl.to(progressInner, {
-    scaleY: value1 / 100
+  tl.to(bar, {
+    width: value1 + "%"
   });
-
-  tl.to(percentage, {
-    yPercent: 0
-  }, "<");
 
   tl.to(secondWrap, {
     yPercent: (randomNumbers1 - 1) * -10
@@ -179,14 +176,16 @@ function runPageOnceAnimation(next) {
     yPercent: (randomNumbers3 - 1) * -10
   }, "<");
 
-  if (isDesktop) {
-    tl.to(numbers, {
-      y: getNumbersY(value1)
-    }, "<");
-  }
+  tl.to(percentage, {
+    yPercent: 0
+  }, "<");
 
-  tl.to(progressInner, {
-    scaleY: value2 / 100
+  tl.to(block, {
+    y: getBlockY(value1)
+  }, "<");
+
+  tl.to(bar, {
+    width: value2 + "%"
   });
 
   tl.to(secondWrap, {
@@ -197,14 +196,12 @@ function runPageOnceAnimation(next) {
     yPercent: (randomNumbers4 - 1) * -10
   }, "<");
 
-  if (isDesktop) {
-    tl.to(numbers, {
-      y: getNumbersY(value2)
-    }, "<");
-  }
+  tl.to(block, {
+    y: getBlockY(value2)
+  }, "<");
 
-  tl.to(progressInner, {
-    scaleY: 1
+  tl.to(bar, {
+    width: "100%"
   });
 
   tl.to(secondWrap, {
@@ -219,20 +216,25 @@ function runPageOnceAnimation(next) {
     yPercent: 0
   }, "<");
 
-  if (isDesktop) {
-    tl.to(numbers, {
-      y: getNumbersY(100)
-    }, "<");
-  }
+  tl.to(block, {
+    y: getBlockY(100)
+  }, "<");
 
-  tl.to(loadingScreen, {
+  tl.to(wrap, {
     autoAlpha: 0,
     duration: 0.25,
     ease: "power2.out"
   });
 
-  tl.set(loadingScreen, {
+  tl.call(() => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    if (typeof startLenis === "function") startLenis();
+  });
+
+  tl.set(wrap, {
     display: "none",
+    pointerEvents: "none",
     clearProps: "opacity,visibility"
   });
 
