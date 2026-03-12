@@ -77,6 +77,7 @@ function initAfterEnterFunctions(next) {
 
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
+  const FADE_DURATION = 0.25;
 
   tl.call(() => {
     resetPage(next);
@@ -87,142 +88,135 @@ function runPageOnceAnimation(next) {
   }
 
   const wrap = document.querySelector('[data-loader="wrap"]');
-  if (!wrap) {
-    return tl;
-  }
+  if (!wrap) return tl;
 
   const panel = wrap.querySelector(".loader-panel");
   const bar = wrap.querySelector("[data-loader-bar]");
   const block = wrap.querySelector("[data-loader-block]");
-  const firstWrap = wrap.querySelector(".loader-number-wrap--first");
-  const secondWrap = wrap.querySelector(".loader-number-wrap--second");
-  const thirdWrap = wrap.querySelector(".loader-number-wrap--third");
-  const percentage = wrap.querySelector(".loader-percentage");
+  const top = wrap.querySelector("[data-loader-top]");
+  const bot = wrap.querySelector("[data-loader-bot]");
 
-  if (!panel || !bar || !block || !firstWrap || !secondWrap || !thirdWrap || !percentage) {
+  if (!panel || !bar || !block || !top || !bot) {
     return tl;
   }
 
-  gsap.defaults({
-    ease: "expo.inOut",
-    duration: 1.2
-  });
+  const seq = () => {
+    const j = (b, r) => b + Math.floor(Math.random() * r * 2) - r;
+    return [0, j(24, 8), j(72, 8), 100];
+  };
 
-  const randomNumbers1 = gsap.utils.random([2, 3, 4]);
-  const randomNumbers2 = gsap.utils.random([5, 6]);
-  const randomNumbers3 = gsap.utils.random([1, 5]);
-  const randomNumbers4 = gsap.utils.random([7, 8, 9]);
+  const steps = seq();
 
-  const value1 = parseInt("" + randomNumbers1 + randomNumbers3, 10);
-  const value2 = parseInt("" + randomNumbers2 + randomNumbers4, 10);
+  const mkDigs = (n) => {
+    const s = n < 10 ? "0" + n : String(n);
 
-  function getBlockY(value) {
+    return s
+      .split("")
+      .concat("%")
+      .map((c, i) => {
+        const cls = c === "%" ? "loader-digit loader-digit--percent" : "loader-digit";
+        return `<span class="${cls}" style="--d:${i}">${c}</span>`;
+      })
+      .join("");
+  };
+
+  const posY = (pct) => {
     if (window.innerWidth < 992) {
-      return 0;
+      block.style.transform = "";
+      return;
     }
 
-    const pad = parseFloat(getComputedStyle(panel).paddingTop) || 40;
+    const panelRect = panel.getBoundingClientRect();
+    const styles = getComputedStyle(panel);
+    const padTop = parseFloat(styles.paddingTop) || 0;
+    const padBottom = parseFloat(styles.paddingBottom) || 0;
     const blockHeight = block.getBoundingClientRect().height;
-    const total = Math.max(0, window.innerHeight - pad * 2 - blockHeight);
+    const total = Math.max(0, panelRect.height - padTop - padBottom - blockHeight);
 
-    return -(total * value / 100);
-  }
+    block.style.transform = `translate3d(0, ${-(total * pct / 100)}px, 0)`;
+  };
+
+  const setStep = (value) => {
+    bot.innerHTML = mkDigs(value);
+    block.classList.add("is-flipping");
+    posY(value);
+    bar.style.width = value + "%";
+  };
+
+  const commitStep = (value) => {
+    top.innerHTML = mkDigs(value);
+    bot.innerHTML = "";
+    block.classList.remove("is-flipping");
+  };
 
   tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-  }, null, 0);
 
-  tl.set(wrap, {
-    display: "block",
-    autoAlpha: 1,
-    pointerEvents: "auto"
+    gsap.set(wrap, {
+      display: "block",
+      autoAlpha: 1,
+      pointerEvents: "auto"
+    });
+
+    top.innerHTML = mkDigs(0);
+    bot.innerHTML = "";
+    bar.style.width = "0%";
+
+    block.classList.remove("is-flipping", "is-exiting");
+
+    block.style.transition = "none";
+    bar.style.transition = "none";
+    posY(0);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        block.style.transition = "";
+        bar.style.transition = "";
+      });
+    });
   });
 
-  tl.set(bar, {
-    width: "0%"
+  tl.to({}, { duration: 0.3 });
+
+  tl.call(() => {
+    setStep(steps[1]);
   });
 
-  tl.set(block, {
-    y: 0
+  tl.to({}, { duration: 0.84 });
+
+  tl.call(() => {
+    commitStep(steps[1]);
   });
 
-  tl.set(firstWrap, {
-    yPercent: 100
+  tl.to({}, { duration: 0.02 });
+
+  tl.call(() => {
+    setStep(steps[2]);
   });
 
-  tl.set(percentage, {
-    yPercent: 100
+  tl.to({}, { duration: 0.84 });
+
+  tl.call(() => {
+    commitStep(steps[2]);
   });
 
-  tl.set(secondWrap, {
-    yPercent: 10
+  tl.to({}, { duration: 0.02 });
+
+  tl.call(() => {
+    setStep(steps[3]);
   });
 
-  tl.set(thirdWrap, {
-    yPercent: 10
+  tl.to({}, { duration: 0.84 });
+
+  tl.call(() => {
+    commitStep(steps[3]);
   });
-
-  tl.to(bar, {
-    width: value1 + "%"
-  });
-
-  tl.to(secondWrap, {
-    yPercent: (randomNumbers1 - 1) * -10
-  }, "<");
-
-  tl.to(thirdWrap, {
-    yPercent: (randomNumbers3 - 1) * -10
-  }, "<");
-
-  tl.to(percentage, {
-    yPercent: 0
-  }, "<");
-
-  tl.to(block, {
-    y: getBlockY(value1)
-  }, "<");
-
-  tl.to(bar, {
-    width: value2 + "%"
-  });
-
-  tl.to(secondWrap, {
-    yPercent: (randomNumbers2 - 1) * -10
-  }, "<");
-
-  tl.to(thirdWrap, {
-    yPercent: (randomNumbers4 - 1) * -10
-  }, "<");
-
-  tl.to(block, {
-    y: getBlockY(value2)
-  }, "<");
-
-  tl.to(bar, {
-    width: "100%"
-  });
-
-  tl.to(secondWrap, {
-    yPercent: -90
-  }, "<");
-
-  tl.to(thirdWrap, {
-    yPercent: -90
-  }, "<");
-
-  tl.to(firstWrap, {
-    yPercent: 0
-  }, "<");
-
-  tl.to(block, {
-    y: getBlockY(100)
-  }, "<");
 
   tl.to(wrap, {
     autoAlpha: 0,
-    duration: 0.25,
+    duration: FADE_DURATION,
     ease: "power2.out"
   });
 
@@ -230,12 +224,18 @@ function runPageOnceAnimation(next) {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
-  });
 
-  tl.set(wrap, {
-    display: "none",
-    pointerEvents: "none",
-    clearProps: "opacity,visibility"
+    gsap.set(wrap, {
+      display: "none",
+      autoAlpha: 0,
+      pointerEvents: "none"
+    });
+
+    block.classList.remove("is-flipping", "is-exiting");
+    block.style.transform = "";
+    bar.style.width = "0%";
+    top.innerHTML = "";
+    bot.innerHTML = "";
   });
 
   return tl;
