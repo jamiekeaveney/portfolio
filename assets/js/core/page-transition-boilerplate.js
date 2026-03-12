@@ -26,7 +26,7 @@ const has = (s) => !!nextPage.querySelector(s);
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
-// Stores the scroll offset captured in beforeEnter so the
+// Scroll offset captured just before each transition so the
 // leave animation can start from the correct visual position.
 let _leaveScrollY = 0;
 
@@ -53,10 +53,9 @@ function initOnceFunctions() {
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs before the enter animation.
-  // Use this for anything that needs to be ready before
-  // the incoming page is visible (e.g. cloning slide elements,
-  // setting initial layout values).
+  // Runs before the enter animation
+  // Use this for features that should already be alive
+  // while the incoming page is animating in.
   if (has(".slider")) initSlider(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 }
@@ -64,9 +63,8 @@ function initBeforeEnterFunctions(next) {
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
-  // Runs after enter animation completes.
-  // Use this for scroll-driven features, resize observers,
-  // or anything that depends on the page being settled in the DOM.
+  // Runs after enter animation completes
+  // Use this for most page-level scripts.
   if (has(".scroll-1_component")) initScroll1(nextPage);
   // if (has('[data-something]')) initSomething(nextPage);
 
@@ -77,13 +75,6 @@ function initAfterEnterFunctions(next) {
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
-}
-
-function destroyPageFunctions(container) {
-  // Tear down anything initialised on the leaving page.
-  // Called in afterLeave so features stay visually intact
-  // through the entire leave animation.
-  destroySlider(container);
 }
 
 
@@ -115,18 +106,27 @@ function runPageLeaveAnimation(current, next) {
   CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
 
   if (reducedMotion) {
+    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
 
   if (shouldUseInstantMobileTransition()) {
-    tl.set(current, { zIndex: 2 });
-    tl.set(current, { autoAlpha: 0 }, 0);
+    tl.set(current, {
+      zIndex: 2
+    });
+
+    // Hide current page immediately on mobile menu navigation
+    tl.set(current, {
+      autoAlpha: 0
+    }, 0);
+
     return tl;
   }
 
-  // The current container was locked in place at y: -_leaveScrollY
-  // inside beforeEnter.  Start from that position and animate
-  // upward by 25 vh so the parallax motion is seamless.
+  // The current container was locked at y: -_leaveScrollY in
+  // beforeEnter.  Animate from that position upward by 25 vh
+  // so the parallax-up effect starts exactly where the user
+  // was looking.
   const startY = -_leaveScrollY;
   const endY = startY - window.innerHeight * 0.25;
 
@@ -161,6 +161,7 @@ function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
 
   if (reducedMotion) {
+    // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
@@ -234,12 +235,11 @@ barba.hooks.before(data => {
 });
 
 barba.hooks.beforeEnter(data => {
-  // ---- 1. Capture scroll position --------------------------
+  // 1. Capture scroll offset before anything changes
   _leaveScrollY = window.scrollY || window.pageYOffset || 0;
 
-  // ---- 2. Lock the leaving page in place -------------------
-  // Fix it at its current visual position so the scroll-to-zero
-  // below doesn't cause a visible jump.
+  // 2. Lock the leaving page at its current visual position
+  //    so the scroll-to-zero below won't cause a visible jump.
   gsap.set(data.current.container, {
     position: "fixed",
     top: 0,
@@ -248,7 +248,7 @@ barba.hooks.beforeEnter(data => {
     y: -_leaveScrollY,
   });
 
-  // ---- 3. Position the incoming page off-screen ------------
+  // 3. Position new container on top
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
@@ -256,35 +256,35 @@ barba.hooks.beforeEnter(data => {
     right: 0,
   });
 
-  // ---- 4. Reset scroll to zero BEFORE IX2 reinit -----------
-  // With scroll at 0, IX2 scroll-triggered animations will
-  // initialise in their starting state (elements hidden /
-  // default size) rather than replaying their entrance.
-  window.scrollTo(0, 0);
-
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
+  }
+
+  // 4. Reset scroll to zero BEFORE IX2 reinit.
+  //    With scroll at 0, IX2 scroll-triggered animations
+  //    initialise in their starting state (e.g. words hidden,
+  //    video at default size) rather than snapping to end.
+  window.scrollTo(0, 0);
+  if (lenis) {
     try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (_) {}
   }
 
-  // ---- 5. Reinitialise IX2 for the new page ----------------
+  // 5. Kill old page ScrollTriggers before incoming page init
+  if (hasScrollTrigger) {
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  }
+
+  // 6. Reinit IX2 for the new page
   syncWebflowPageIdFromNextHtml(data.next.html);
   destroyAndInitIX2();
 
-  // ---- 6. Page-specific setup ------------------------------
+  // 7. Page-specific setup
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
 barba.hooks.afterLeave(data => {
-  // The leave animation has completed and the old container
-  // has been removed from the DOM.  Clean up per-page features
-  // (slider RAF loops, listeners, etc.) and kill ScrollTriggers.
-  destroyPageFunctions(data.current.container);
-
-  if (hasScrollTrigger) {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }
+  destroySlider(data.current.container);
 });
 
 barba.hooks.enter(data => {
@@ -509,6 +509,8 @@ function destroyAndInitIX2() {
     window.Webflow.require("ix2")?.init?.();
   } catch (_) {}
 
+  // Dispatch readystatechange so IX2 finishes its full
+  // initialisation cycle (binds scroll observers, etc.).
   try {
     document.dispatchEvent(new Event("readystatechange"));
   } catch (_) {}
