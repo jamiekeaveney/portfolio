@@ -13,6 +13,7 @@ function createSliderInstance(root, track, container) {
   const s = {
     root,
     track,
+    container,
     ui: 0,
     parallax: 0.2,
     drag: false,
@@ -27,10 +28,11 @@ function createSliderInstance(root, track, container) {
     slides: [],
     imgs: [],
     prog: null,
-    rafId: null,
-    resizeRaf: null,
+    rafId: 0,
+    resizeRaf: 0,
     originals: [],
-    listeners: []
+    listeners: [],
+    built: false
   };
 
   const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
@@ -56,27 +58,27 @@ function createSliderInstance(root, track, container) {
   }
 
   function measurePitch() {
-    const slides = s.track.querySelectorAll(".slide");
+    const els = s.track.querySelectorAll(".slide");
 
-    if (slides.length > 1) {
-      const a = slides[0].getBoundingClientRect();
-      const b = slides[1].getBoundingClientRect();
+    if (els.length > 1) {
+      const a = els[0].getBoundingClientRect();
+      const b = els[1].getBoundingClientRect();
       const p = b.left - a.left;
       if (p > 0) return p;
     }
 
-    const first = slides[0];
-    if (!first) return 0;
+    const e = els[0];
+    if (!e) return 0;
 
-    const styles = getComputedStyle(first);
+    const c = getComputedStyle(e);
     return (
-      first.getBoundingClientRect().width +
-      parseFloat(styles.marginLeft) +
-      parseFloat(styles.marginRight)
+      e.getBoundingClientRect().width +
+      parseFloat(c.marginLeft) +
+      parseFloat(c.marginRight)
     );
   }
 
-  function clearImageStyles(el) {
+  function clear(el) {
     if (!el) return;
     el.style.transform = "";
     el.style.objectPosition = "";
@@ -86,10 +88,11 @@ function createSliderInstance(root, track, container) {
   }
 
   function isInteractive(target) {
-    if (!(target instanceof Element)) return false;
-
-    return !!target.closest(
-      'a[href], button, input, textarea, select, label, [role="button"], [data-slider-no-drag]'
+    return (
+      target instanceof Element &&
+      !!target.closest(
+        'a[href], button, input, textarea, select, label, summary, [role="button"], [data-slider-no-drag]'
+      )
     );
   }
 
@@ -105,11 +108,11 @@ function createSliderInstance(root, track, container) {
     if (s.x > -len) {
       s.x -= len;
       s.tx -= len;
-      s.imgs.forEach(clearImageStyles);
+      s.imgs.forEach(clear);
     } else if (s.x < -len * 4) {
       s.x += len;
       s.tx += len;
-      s.imgs.forEach(clearImageStyles);
+      s.imgs.forEach(clear);
     }
 
     s.track.style.transform = `translate3d(${s.x}px,0,0)`;
@@ -168,13 +171,10 @@ function createSliderInstance(root, track, container) {
 
     s.tx += (e.clientX - s.last) * 2;
     s.last = e.clientX;
-
-    if (Math.abs(e.clientX - s.start) > cfg.DRAG_T) {
-      s.dragged = true;
-    }
+    s.dragged = Math.abs(e.clientX - s.start) > cfg.DRAG_T;
   }
 
-  function onPointerUp() {
+  function endDrag() {
     if (!s.drag) return;
 
     s.drag = false;
@@ -187,10 +187,11 @@ function createSliderInstance(root, track, container) {
     s.dragged = false;
   }
 
-  function onClick(e) {
+  function onClickCapture(e) {
     if (now() < s.clickUntil) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation?.();
     }
   }
 
@@ -203,14 +204,14 @@ function createSliderInstance(root, track, container) {
 
     cancelAnimationFrame(s.resizeRaf);
     s.resizeRaf = requestAnimationFrame(() => {
-      const oldSeq = seq();
-      if (!oldSeq) return;
+      const old = seq();
+      if (!old) return;
 
-      const t = (s.x + oldSeq * 2) / oldSeq;
+      const t = (s.x + old * 2) / old;
       s.pitch = measurePitch();
 
-      const newSeq = seq();
-      s.x = s.tx = -(newSeq * 2) + t * newSeq;
+      const nseq = seq();
+      s.x = s.tx = -(nseq * 2) + t * nseq;
       s.track.style.transform = `translate3d(${s.x}px,0,0)`;
     });
   }
@@ -220,17 +221,17 @@ function createSliderInstance(root, track, container) {
   }
 
   function init() {
-    if (s.root.hasAttribute("data-slider-ran")) return;
-    s.root.setAttribute("data-slider-ran", "");
+    if (s.built) return;
+    if (!s.root || !s.track) return;
+
+    s.originals = [...s.track.querySelectorAll(".slide")];
+    s.total = s.originals.length;
+    if (!s.total) return;
 
     s.track.style.willChange = "transform";
 
     const p = cssVarPercent(s.root, "--work-page--slider-parallax");
     if (!Number.isNaN(p)) s.parallax = p;
-
-    s.originals = [...s.track.querySelectorAll(".slide")];
-    s.total = s.originals.length;
-    if (!s.total) return;
 
     const frag = document.createDocumentFragment();
     for (let i = 0; i < cfg.COPIES - 1; i++) {
@@ -249,19 +250,24 @@ function createSliderInstance(root, track, container) {
     s.x = s.tx = start;
     s.track.style.transform = `translate3d(${start}px,0,0)`;
 
-    s.prog = container.querySelector("[data-slider-progress]");
+    s.prog =
+      s.container?.querySelector("[data-slider-progress]") ||
+      document.querySelector("[data-slider-progress]");
+
     s.ui = 0;
+    s.built = true;
+    s.root.setAttribute("data-slider-ran", "");
 
     addListener(s.root, "wheel", onWheel, { passive: false });
     addListener(s.root, "pointerdown", onPointerDown);
     addListener(s.root, "pointermove", onPointerMove);
-    addListener(s.root, "pointerup", onPointerUp);
-    addListener(s.root, "pointercancel", onPointerUp);
-    addListener(s.root, "pointerleave", onPointerUp);
+    addListener(s.root, "pointerup", endDrag);
+    addListener(s.root, "pointercancel", endDrag);
+    addListener(s.root, "pointerleave", endDrag);
     addListener(s.root, "dragstart", onDragStart);
 
-    // use capture so dragged clicks are cancelled before Barba/native nav sees them
-    addListener(s.root, "click", onClick, true);
+    // Capture phase so dragged clicks are cancelled before Barba sees them.
+    addListener(s.root, "click", onClickCapture, true);
 
     addListener(window, "resize", onResize);
 
@@ -309,13 +315,15 @@ function createSliderInstance(root, track, container) {
     s.track.style.transform = "";
     s.track.style.willChange = "";
 
-    s.imgs.forEach(clearImageStyles);
+    s.imgs.forEach(clear);
 
-    const originalCount = s.originals.length;
-    const currentSlides = [...s.track.querySelectorAll(".slide")];
-    currentSlides.slice(originalCount).forEach((el) => el.remove());
+    if (s.originals.length) {
+      const currentSlides = [...s.track.querySelectorAll(".slide")];
+      currentSlides.slice(s.originals.length).forEach((el) => el.remove());
+    }
 
     s.root.removeAttribute("data-slider-ran");
+    s.built = false;
   }
 
   return { init, destroy };
