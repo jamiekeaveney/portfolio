@@ -331,105 +331,119 @@ function runPageEnterAnimation(next) {
   });
 }
 
+function hideCurrentPage(current) {
+  return gsap.timeline().set(current, { autoAlpha: 0 });
+}
+
+function finishEnterFallback(tl, next, resolve) {
+  tl.set(next, { autoAlpha: 1 });
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  tl.call(resolve, null, "pageReady");
+}
+
+function clearFlipState() {
+  flippedThumbnail = null;
+  flipState = null;
+}
+
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger?.closest("[data-case-link]");
-  if (!clicked) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
-
-  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  if (!thumbnail) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
-
+  const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
   const nextHero = next.querySelector("section");
+
+  if (!thumbnail) {
+    return hideCurrentPage(current);
+  }
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-  
+
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-  
+
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-  
-  tl.to(current, {
-    autoAlpha: 0,
-    duration: 0.6
-  }, 0);
-  
+
+  tl.to(
+    current,
+    {
+      autoAlpha: 0,
+      duration: 0.6
+    },
+    0
+  );
+
   if (nextHero) {
     tl.set(nextHero, { backgroundColor: "transparent" }, 0);
   }
-  
+
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
   const nextHero = next.querySelector("section");
-  const revealTargets = nextHero ? nextHero.querySelectorAll("[data-case-reveal]") : [];
-  
-  const tl = gsap.timeline();
-  
-  if (reducedMotion) {
-    flippedThumbnail = null;
-    flipState = null;
-    tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
-  }
-  
+  const revealTargets = next.querySelectorAll("[data-case-reveal]");
   const placeholder = next.querySelector("[data-case-thumbnail]");
-  if (!placeholder || !flippedThumbnail || !flipState) {
-    tl.set(next, { autoAlpha: 1 });
+
+  return new Promise((resolve) => {
+    const tl = gsap.timeline();
+
+    if (reducedMotion) {
+      clearFlipState();
+      finishEnterFallback(tl, next, resolve);
+      return;
+    }
+
+    if (!placeholder || !flippedThumbnail || !flipState) {
+      finishEnterFallback(tl, next, resolve);
+      return;
+    }
+
+    placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
+    placeholder.remove();
+
+    tl.add(
+      Flip.from(flipState, {
+        duration: 0.8,
+        ease: "osmo"
+      }),
+      0
+    );
+
+    tl.add("startEnter", 0.6);
+
+    if (nextHero) {
+      tl.fromTo(
+        nextHero,
+        { backgroundColor: "transparent" },
+        {
+          backgroundColor: "#FFF",
+          duration: 0.5
+        },
+        "startEnter"
+      );
+    }
+
+    tl.fromTo(
+      revealTargets,
+      {
+        autoAlpha: 0,
+        yPercent: 25
+      },
+      {
+        autoAlpha: 1,
+        yPercent: 0,
+        stagger: 0.1
+      },
+      "startEnter+=0.1"
+    );
+
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
-  }
-  
-  placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
-  placeholder.remove();
-  
-  tl.add("startEnter", 0.6);
-  
-  tl.add(
-    Flip.from(flipState, {
-      duration: 0.8,
-      ease: "osmo"
-    }),
-    0
-  );
-    
-  if (nextHero) {
-    tl.fromTo(nextHero, {
-      backgroundColor: "transparent"
-    }, {
-      backgroundColor: "#FFF",
-      duration: 0.5
-    }, "startEnter");
-  }
-
-  tl.fromTo(revealTargets, {
-    autoAlpha: 0,
-    yPercent: 25
-  }, {
-    autoAlpha: 1,
-    yPercent: 0,
-    stagger: 0.1
-  }, "startEnter+=0.1");
-  
-  tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
-  
-  tl.call(() => {
-    flippedThumbnail = null;
-    flipState = null;
-  });
-  
-  return new Promise(resolve => {
+    tl.call(clearFlipState);
     tl.call(resolve, null, "pageReady");
   });
 }
