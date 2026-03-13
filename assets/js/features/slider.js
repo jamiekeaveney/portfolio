@@ -42,7 +42,7 @@ function createSliderInstance(root, track, container) {
     LERP: 0.05,
     MAX_V: 150,
     COPIES: 6,
-    DRAG_T: 5
+    DRAG_T: 8
   };
 
   const s = {
@@ -177,9 +177,30 @@ function createSliderInstance(root, track, container) {
     s.tx -= clamp(e.deltaY * cfg.SPEED, -cfg.MAX_V, cfg.MAX_V);
   }
 
-  // pointerdown — unchanged from original
+  // -----------------------------------------------------------
+  // FIX 1 of 2 — onPointerDown
+  //
+  // The original called e.preventDefault() on every mouse
+  // pointerdown. That's needed for drag-scrolling (prevents
+  // text selection), but on <a> tags inside [data-case-link]
+  // it can suppress the compatibility mouse-event chain that
+  // Barba relies on to intercept clicks. Without those events
+  // reaching Barba, the browser does a full page navigation
+  // instead of an SPA transition.
+  //
+  // Fix: skip preventDefault when the pointer target is inside
+  // a navigable link. Drag-scrolling still works because the
+  // pointermove handler moves the track regardless. And if the
+  // user actually drags, onClick will block the navigation.
+  // -----------------------------------------------------------
   function onPointerDown(e) {
-    if (e.pointerType === "mouse") e.preventDefault();
+    if (e.pointerType === "mouse") {
+      const isLink = e.target.closest("a, [data-case-link]");
+      if (!isLink) {
+        e.preventDefault();
+      }
+    }
+
     s.drag = true;
     s.start = s.last = e.clientX;
     s.dragged = false;
@@ -201,8 +222,6 @@ function createSliderInstance(root, track, container) {
     s.drag = false;
     s.track.classList.remove("dragging");
 
-    // If the pointer sequence was a drag, arm the flag.
-    // The very next click event will consume it.
     if (s.dragged) {
       s.wasDrag = true;
     }
@@ -211,19 +230,23 @@ function createSliderInstance(root, track, container) {
   }
 
   // -----------------------------------------------------------
-  // FIX: The original used a 400ms timer which could swallow
-  // genuine clicks that happened shortly after a drag ended.
-  // It also only called e.preventDefault(), which sets
-  // e.defaultPrevented = true. Barba checks that flag and
-  // skips clicks where it's true — but the browser ALSO skips
-  // default navigation, so the click did absolutely nothing.
+  // FIX 2 of 2 — onClick
   //
-  // New approach:
-  //   Drag-click  → preventDefault + stopPropagation
-  //                  (kills the event before it reaches Barba
-  //                   on document — no navigation at all)
-  //   Real click  → do nothing, event bubbles to Barba,
-  //                  Barba intercepts it, SPA transition runs
+  // The original used a 400 ms timer (clickUntil) and called
+  // only e.preventDefault(). Two problems with that:
+  //
+  //   a) The 400 ms window swallowed genuine clicks that
+  //      happened shortly after a drag ended.
+  //
+  //   b) preventDefault alone sets e.defaultPrevented = true.
+  //      Barba checks that flag — when it's true Barba skips
+  //      the click, but the browser ALSO skips navigation,
+  //      so the click silently does nothing.
+  //
+  // Fix: use a one-shot flag (wasDrag) instead of a timer,
+  // and add stopPropagation so the event never reaches Barba's
+  // document-level listener. For genuine clicks, do absolutely
+  // nothing — the event bubbles normally to Barba.
   // -----------------------------------------------------------
   function onClick(e) {
     if (s.wasDrag) {
