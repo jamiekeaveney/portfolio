@@ -206,23 +206,15 @@ function createSliderInstance(root, track, container) {
     s.dragged = false;
   }
 
-  function onClick(e) {
-    if (s.dragged || now() < s.clickUntil) {
-      e.preventDefault();
-      return;
-    }
-
-    const link = e.target.closest(".slide")?.querySelector("a[href]");
-    if (!link) return;
-
+function onClick(e) {
+  if (s.dragged || now() < s.clickUntil) {
     e.preventDefault();
-
-    if (window.barba && typeof window.barba.go === "function") {
-      window.barba.go(link.href);
-    } else {
-      window.location.href = link.href;
-    }
+    return;
   }
+
+  // Let normal anchor clicks pass through to Barba naturally.
+  // Do not hijack navigation here.
+}
 
   function onDragStart(e) {
     e.preventDefault();
