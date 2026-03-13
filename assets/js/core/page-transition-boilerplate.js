@@ -75,24 +75,6 @@ function initAfterEnterFunctions(next) {
 
 
 // -----------------------------------------
-// FLIP HELPERS
-// -----------------------------------------
-
-function clearFlipState() {
-  flippedThumbnail = null;
-  flipState = null;
-}
-
-function finishEnterFallback(tl, next, resolve) {
-  tl.set(next, { autoAlpha: 1 });
-  tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
-  tl.call(resolve, null, "pageReady");
-}
-
-
-
-// -----------------------------------------
 // PAGE TRANSITIONS
 // -----------------------------------------
 
@@ -300,47 +282,82 @@ function runPageLeaveAnimation(current, next) {
 function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
 
-  if (reducedMotion || shouldUseInstantMobileTransition()) {
+  if (reducedMotion) {
     tl.set(next, { autoAlpha: 1 });
-    tl.call(resetPage, [next]);
-    return tl;
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
 
-  tl.set(next, { autoAlpha: 1 }, 0);
+  if (shouldUseInstantMobileTransition()) {
+    tl.set(next, {
+      autoAlpha: 1,
+      zIndex: 3
+    });
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+
+    return new Promise((resolve) => {
+      tl.call(resolve, null, "pageReady");
+    });
+  }
+
+  tl.add("startEnter", 0);
+
+  tl.set(next, {
+    zIndex: 3
+  });
 
   tl.fromTo(
     next,
-    { y: "50vh", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" },
+    {
+      y: "100vh"
+    },
     {
       y: "0vh",
-      borderTopLeftRadius: "0rem",
-      borderTopRightRadius: "0rem",
       duration: 1.2,
-      ease: "parallax",
-      onComplete: () => resetPage(next)
+      clearProps: "transform",
+      ease: "parallax"
     },
-    0
+    "startEnter"
   );
 
-  return tl;
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+
+  return new Promise((resolve) => {
+    tl.call(resolve, null, "pageReady");
+  });
+}
+
+function hideCurrentPage(current) {
+  return gsap.timeline().set(current, { autoAlpha: 0 });
+}
+
+function finishEnterFallback(tl, next, resolve) {
+  tl.set(next, { autoAlpha: 1 });
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  tl.call(resolve, null, "pageReady");
+}
+
+function clearFlipState() {
+  flippedThumbnail = null;
+  flipState = null;
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger.closest("[data-case-link]");
+  const clicked = trigger?.closest("[data-case-link]");
   const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
   const nextHero = next.querySelector("section");
 
-  // ---- FIX: Freeze the slider BEFORE capturing Flip state ----
-  // This stops the RAF loop so the track holds its position and
-  // Flip.getState reads a stable bounding rect for the thumbnail.
-  if (typeof freezeSlider === "function") {
-    freezeSlider(current);
+  if (!thumbnail) {
+    return hideCurrentPage(current);
   }
 
-  if (thumbnail) {
-    flipState = Flip.getState(thumbnail);
-    flippedThumbnail = thumbnail;
-  }
+  flipState = Flip.getState(thumbnail);
+  flippedThumbnail = thumbnail;
 
   const tl = gsap.timeline({
     onComplete: () => current.remove()
@@ -350,10 +367,14 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  tl.to(current, {
-    autoAlpha: 0,
-    duration: 0.6
-  }, 0);
+  tl.to(
+    current,
+    {
+      autoAlpha: 0,
+      duration: 0.6
+    },
+    0
+  );
 
   if (nextHero) {
     tl.set(nextHero, { backgroundColor: "transparent" }, 0);
@@ -370,25 +391,20 @@ function runCaseEnterAnimation(next) {
   return new Promise((resolve) => {
     const tl = gsap.timeline();
 
-    // Reduced motion — skip flip, just show the page
     if (reducedMotion) {
       clearFlipState();
       finishEnterFallback(tl, next, resolve);
       return;
     }
 
-    // If any piece of the flip chain is missing, fall back gracefully
     if (!placeholder || !flippedThumbnail || !flipState) {
-      clearFlipState();
       finishEnterFallback(tl, next, resolve);
       return;
     }
 
-    // Move the real thumbnail element from the old page into the new page
     placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
     placeholder.remove();
 
-    // Flip from captured position → new position
     tl.add(
       Flip.from(flipState, {
         duration: 0.8,
@@ -411,21 +427,19 @@ function runCaseEnterAnimation(next) {
       );
     }
 
-    if (revealTargets.length) {
-      tl.fromTo(
-        revealTargets,
-        {
-          autoAlpha: 0,
-          yPercent: 25
-        },
-        {
-          autoAlpha: 1,
-          yPercent: 0,
-          stagger: 0.1
-        },
-        "startEnter+=0.1"
-      );
-    }
+    tl.fromTo(
+      revealTargets,
+      {
+        autoAlpha: 0,
+        yPercent: 25
+      },
+      {
+        autoAlpha: 1,
+        yPercent: 0,
+        stagger: 0.1
+      },
+      "startEnter+=0.1"
+    );
 
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
