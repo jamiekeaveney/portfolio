@@ -175,3 +175,24 @@ html.is-transitioning button {
       height: 100dvh;
     }
   }
+
+
+
+
+  
+body[data-page-theme="dark"]{
+  background-color:#0d0d0d;
+}  
+
+
+
+
+
+
+
+
+@media screen and (min-width: 992px) {
+  .slide-track { cursor: grab; }
+  .slide-track.dragging { cursor: grabbing; }
+  .slide-track * { cursor: inherit !important; }
+}
