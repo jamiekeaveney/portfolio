@@ -332,9 +332,17 @@ function runPageEnterAnimation(next) {
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger.closest("[data-case-link]");
+  const clicked = trigger?.closest("[data-case-link]");
+  if (!clicked) {
+    return gsap.timeline().set(current, { autoAlpha: 0 });
+  }
+
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector("section")
+  if (!thumbnail) {
+    return gsap.timeline().set(current, { autoAlpha: 0 });
+  }
+
+  const nextHero = next.querySelector("section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
@@ -347,19 +355,21 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return tl.set(current, { autoAlpha: 0 });
   }
   
-  tl.to(current,{
+  tl.to(current, {
     autoAlpha: 0,
     duration: 0.6
-  }, 0)
+  }, 0);
   
-  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  if (nextHero) {
+    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+  }
   
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector("section")
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  const nextHero = next.querySelector("section");
+  const revealTargets = nextHero ? nextHero.querySelectorAll("[data-case-reveal]") : [];
   
   const tl = gsap.timeline();
   
@@ -373,6 +383,12 @@ function runCaseEnterAnimation(next) {
   }
   
   const placeholder = next.querySelector("[data-case-thumbnail]");
+  if (!placeholder || !flippedThumbnail || !flipState) {
+    tl.set(next, { autoAlpha: 1 });
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+  }
   
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
@@ -382,23 +398,28 @@ function runCaseEnterAnimation(next) {
   tl.add(
     Flip.from(flipState, {
       duration: 0.8,
-    }), 0);
+      ease: "osmo"
+    }),
+    0
+  );
     
-  tl.fromTo(nextHero,{
-    backgroundColor: "transparent"
-  },{
-    backgroundColor: "#FFF",
-    duration: 0.5
-  }, "startEnter")
+  if (nextHero) {
+    tl.fromTo(nextHero, {
+      backgroundColor: "transparent"
+    }, {
+      backgroundColor: "#FFF",
+      duration: 0.5
+    }, "startEnter");
+  }
 
-  tl.fromTo(revealTargets,{
-    autoAlpha:0,
+  tl.fromTo(revealTargets, {
+    autoAlpha: 0,
     yPercent: 25
-  },{
-    autoAlpha:1,
+  }, {
+    autoAlpha: 1,
     yPercent: 0,
     stagger: 0.1
-  }, "startEnter+=0.1")
+  }, "startEnter+=0.1");
   
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
