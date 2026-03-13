@@ -346,29 +346,27 @@ function runWorkLeaveAnimation(current, next, trigger) {
   flippedThumbnail = thumbnail;
 
   const tl = gsap.timeline({
-    onComplete: () => current.remove()
+    onComplete: () => {
+      current.remove();
+    }
   });
 
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  tl.to(
-    current,
-    {
-      autoAlpha: 0,
-      duration: 0.6,
-      ease: "power2.out"
-    },
-    0
-  );
+  // Keep the current page fully visible during the FLIP.
+  // This dummy tween simply keeps the leave transition alive
+  // long enough for the enter animation to cover it.
+  tl.to({}, { duration: 1.2 });
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const placeholder = next.querySelector("[data-case-thumbnail]");
   const revealTargets = next.querySelectorAll("[data-case-reveal]");
+  const placeholder = next.querySelector("[data-case-thumbnail]");
+  const bgTargets = Array.from(next.querySelectorAll(".section"));
   const tl = gsap.timeline();
 
   if (reducedMotion) {
@@ -387,12 +385,28 @@ function runCaseEnterAnimation(next) {
     return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
 
+  // Store each section's real computed background colour
+  const bgColors = bgTargets.map((el) => getComputedStyle(el).backgroundColor);
+
+  // Put the flipped thumbnail into the incoming page
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
 
-  // Hide the incoming page content at first
+  // Make sure the incoming page is present
   gsap.set(next, { autoAlpha: 1 });
-  gsap.set(revealTargets, { autoAlpha: 0, yPercent: 12 });
+
+  // Hide only the case page backgrounds, not the whole container
+  bgTargets.forEach((el) => {
+    gsap.set(el, { backgroundColor: "transparent" });
+  });
+
+  // Keep your intended reveal sequence
+  gsap.set(revealTargets, {
+    autoAlpha: 0,
+    yPercent: 25
+  });
+
+  tl.add("startEnter", 0.6);
 
   tl.add(
     Flip.from(flipState, {
@@ -402,37 +416,40 @@ function runCaseEnterAnimation(next) {
     0
   );
 
-  // Fade in the whole case page a touch after the flip begins
-  tl.fromTo(
-    next,
-    {
-      autoAlpha: 0
-    },
-    {
-      autoAlpha: 1,
-      duration: 0.45,
-      ease: "power2.out"
-    },
-    0.15
-  );
+  // Fade the incoming case page backgrounds back to their real colours
+  bgTargets.forEach((el, i) => {
+    tl.to(
+      el,
+      {
+        backgroundColor: bgColors[i],
+        duration: 0.5,
+        ease: "power2.out"
+      },
+      "startEnter"
+    );
+  });
 
-  // Reveal case content
-  tl.to(
+  tl.fromTo(
     revealTargets,
+    {
+      autoAlpha: 0,
+      yPercent: 25
+    },
     {
       autoAlpha: 1,
       yPercent: 0,
-      duration: 0.6,
-      stagger: 0.08,
-      ease: "power2.out"
+      stagger: 0.1
     },
-    0.3
+    "startEnter+=0.1"
   );
 
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
 
   tl.call(() => {
+    // Remove inline background colours so CSS takes back over
+    bgTargets.forEach((el) => gsap.set(el, { clearProps: "backgroundColor" }));
+
     flippedThumbnail = null;
     flipState = null;
   });
