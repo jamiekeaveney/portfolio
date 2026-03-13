@@ -157,10 +157,10 @@ function runPageOnceAnimation(next) {
   tl.call(function() { commitStep(100); });
 
   /* ---- 250ms pause on 00 ---- */
-  tl.to({}, { duration: 0.25 });  
+  tl.to({}, { duration: 2 });  
 
   /* ---- 250ms fade out ---- */
-  tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
+  tl.to(wrap, { autoAlpha: 0, duration: 0.5, ease: "power2.out" });
 
   /* ---- TEARDOWN ---- */
   tl.call(function() {
