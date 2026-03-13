@@ -14,8 +14,6 @@ let mobileMenuNavigation = false;
 let flipState = null;
 let flippedThumbnail = null;
 
-let caseBgColor = "";
-
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 
@@ -334,136 +332,83 @@ function runPageEnterAnimation(next) {
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger?.closest("[data-case-link]");
-  if (!clicked) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
-
+  const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  if (!thumbnail) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
+  const nextHero = next.querySelector("section")
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-
-  caseBgColor = getComputedStyle(document.documentElement)
-    .getPropertyValue("--_theme---swatches--black")
-    .trim();
-
+  
   const tl = gsap.timeline({
-    onComplete: () => {
-      current.remove();
-    }
+    onComplete: () => current.remove()
   });
-
+  
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-
-  // Keep leave alive so it overlaps with enter
-  tl.to({}, { duration: 1.0 });
-
+  
+  tl.to(current,{
+    autoAlpha: 0,
+    duration: 0.6
+  }, 0)
+  
+  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const placeholder = next.querySelector("[data-case-thumbnail]");
-  const revealTargets = next.querySelectorAll("[data-case-reveal]");
-  const bgTargets = next.querySelectorAll(
-    ".project-hero-section, .project-images-section"
-  );
-
+  const nextHero = next.querySelector("section")
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  
   const tl = gsap.timeline();
-
+  
   if (reducedMotion) {
     flippedThumbnail = null;
     flipState = null;
-    caseBgColor = "";
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-
-  if (!placeholder || !flippedThumbnail || !flipState) {
-    tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
-  }
-
+  
+  const placeholder = next.querySelector("[data-case-thumbnail]");
+  
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-
-  // Make sure next sits above current, but starts visually hidden
-  gsap.set(next, {
-    zIndex: 3,
-    autoAlpha: 1
-  });
-
-  // Start the incoming page layer transparent so current can still be seen beneath
-  gsap.set(next, {
-    opacity: 1
-  });
-
-  // Hide only the background layers and reveal items
-  gsap.set(bgTargets, {
-    backgroundColor: "transparent"
-  });
-
-  gsap.set(revealTargets, {
-    autoAlpha: 0,
-    yPercent: 25
-  });
-
-  // Start FLIP immediately
+  
+  tl.add("startEnter", 0.6);
+  
   tl.add(
     Flip.from(flipState, {
       duration: 0.8,
-      ease: "osmo"
-    }),
-    0
-  );
+    }), 0);
+    
+  tl.fromTo(nextHero,{
+    backgroundColor: "transparent"
+  },{
+    backgroundColor: "#FFF",
+    duration: 0.5
+  }, "startEnter")
 
-  // Start the background fade almost immediately as well
-  tl.to(
-    bgTargets,
-    {
-      backgroundColor: caseBgColor,
-      duration: 0.5,
-      ease: "power2.out"
-    },
-    0.05
-  );
-
-  // Keep your reveal sequence slightly delayed
-  tl.to(
-    revealTargets,
-    {
-      autoAlpha: 1,
-      yPercent: 0,
-      stagger: 0.1,
-      duration: 0.6,
-      ease: "power2.out"
-    },
-    0.18
-  );
-
+  tl.fromTo(revealTargets,{
+    autoAlpha:0,
+    yPercent: 25
+  },{
+    autoAlpha:1,
+    yPercent: 0,
+    stagger: 0.1
+  }, "startEnter+=0.1")
+  
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
-
+  
   tl.call(() => {
-    bgTargets.forEach((el) => {
-      gsap.set(el, { clearProps: "backgroundColor" });
-    });
-
     flippedThumbnail = null;
     flipState = null;
-    caseBgColor = "";
   });
-
-  return new Promise((resolve) => {
+  
+  return new Promise(resolve => {
     tl.call(resolve, null, "pageReady");
   });
 }
