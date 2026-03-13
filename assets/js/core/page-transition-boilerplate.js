@@ -75,6 +75,24 @@ function initAfterEnterFunctions(next) {
 
 
 // -----------------------------------------
+// FLIP HELPERS
+// -----------------------------------------
+
+function clearFlipState() {
+  flippedThumbnail = null;
+  flipState = null;
+}
+
+function finishEnterFallback(tl, next, resolve) {
+  tl.set(next, { autoAlpha: 1 });
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  tl.call(resolve, null, "pageReady");
+}
+
+
+
+// -----------------------------------------
 // PAGE TRANSITIONS
 // -----------------------------------------
 
@@ -282,73 +300,47 @@ function runPageLeaveAnimation(current, next) {
 function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
 
-  if (reducedMotion) {
+  if (reducedMotion || shouldUseInstantMobileTransition()) {
     tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+    tl.call(resetPage, [next]);
+    return tl;
   }
 
-  if (shouldUseInstantMobileTransition()) {
-    tl.set(next, {
-      autoAlpha: 1,
-      zIndex: 3
-    });
-
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-
-    return new Promise((resolve) => {
-      tl.call(resolve, null, "pageReady");
-    });
-  }
-
-  tl.add("startEnter", 0);
-
-  tl.set(next, {
-    zIndex: 3
-  });
+  tl.set(next, { autoAlpha: 1 }, 0);
 
   tl.fromTo(
     next,
-    {
-      y: "100vh"
-    },
+    { y: "50vh", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" },
     {
       y: "0vh",
+      borderTopLeftRadius: "0rem",
+      borderTopRightRadius: "0rem",
       duration: 1.2,
-      clearProps: "transform",
-      ease: "parallax"
+      ease: "parallax",
+      onComplete: () => resetPage(next)
     },
-    "startEnter"
+    0
   );
 
-  tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
-
-  return new Promise((resolve) => {
-    tl.call(resolve, null, "pageReady");
-  });
-}
-
-function finishEnterFallback(tl, next, resolve) {
-  tl.set(next, { autoAlpha: 1 });
-  tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
-  tl.call(resolve, null, "pageReady");
-}
-
-function clearFlipState() {
-  flippedThumbnail = null;
-  flipState = null;
+  return tl;
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
-  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
+  const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
+  const nextHero = next.querySelector("section");
 
-  flipState = Flip.getState(thumbnail);
-  flippedThumbnail = thumbnail;
+  // ---- FIX: Freeze the slider BEFORE capturing Flip state ----
+  // This stops the RAF loop so the track holds its position and
+  // Flip.getState reads a stable bounding rect for the thumbnail.
+  if (typeof freezeSlider === "function") {
+    freezeSlider(current);
+  }
+
+  if (thumbnail) {
+    flipState = Flip.getState(thumbnail);
+    flippedThumbnail = thumbnail;
+  }
 
   const tl = gsap.timeline({
     onComplete: () => current.remove()
@@ -358,40 +350,45 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  // Work page stays fully visible underneath the incoming case page.
-  // Just push it behind and hold long enough for the enter to finish.
-  tl.set(current, { zIndex: 1 }, 0);
-  tl.to({}, { duration: 1.8 });
+  tl.to(current, {
+    autoAlpha: 0,
+    duration: 0.6
+  }, 0);
+
+  if (nextHero) {
+    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+  }
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const sections = next.querySelectorAll("section");
+  const nextHero = next.querySelector("section");
   const revealTargets = next.querySelectorAll("[data-case-reveal]");
   const placeholder = next.querySelector("[data-case-thumbnail]");
 
   return new Promise((resolve) => {
     const tl = gsap.timeline();
 
+    // Reduced motion — skip flip, just show the page
     if (reducedMotion) {
       clearFlipState();
       finishEnterFallback(tl, next, resolve);
       return;
     }
 
+    // If any piece of the flip chain is missing, fall back gracefully
     if (!placeholder || !flippedThumbnail || !flipState) {
+      clearFlipState();
       finishEnterFallback(tl, next, resolve);
       return;
     }
 
-    // Case page on top, sections transparent so work page shows through
-    tl.set(next, { zIndex: 3 }, 0);
-    tl.set(sections, { backgroundColor: "transparent" }, 0);
-
+    // Move the real thumbnail element from the old page into the new page
     placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
     placeholder.remove();
 
+    // Flip from captured position → new position
     tl.add(
       Flip.from(flipState, {
         duration: 0.8,
@@ -402,29 +399,33 @@ function runCaseEnterAnimation(next) {
 
     tl.add("startEnter", 0.6);
 
-    // Sections fade from transparent → dark, covering the work page
-    tl.to(
-      sections,
-      {
-        backgroundColor: "#0d0d0d",
-        duration: 0.5
-      },
-      "startEnter"
-    );
+    if (nextHero) {
+      tl.fromTo(
+        nextHero,
+        { backgroundColor: "transparent" },
+        {
+          backgroundColor: "#FFF",
+          duration: 0.5
+        },
+        "startEnter"
+      );
+    }
 
-    tl.fromTo(
-      revealTargets,
-      {
-        autoAlpha: 0,
-        yPercent: 25
-      },
-      {
-        autoAlpha: 1,
-        yPercent: 0,
-        stagger: 0.1
-      },
-      "startEnter+=0.1"
-    );
+    if (revealTargets.length) {
+      tl.fromTo(
+        revealTargets,
+        {
+          autoAlpha: 0,
+          yPercent: 25
+        },
+        {
+          autoAlpha: 1,
+          yPercent: 0,
+          stagger: 0.1
+        },
+        "startEnter+=0.1"
+      );
+    }
 
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
@@ -445,7 +446,7 @@ barba.hooks.before((data) => {
   mobileMenuNavigation = false;
 
   const trigger = data?.trigger;
-  if (!trigger || typeof trigger === "string") return;
+  if (!trigger) return;
 
   if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
     mobileMenuNavigation = true;
@@ -454,19 +455,6 @@ barba.hooks.before((data) => {
 });
 
 barba.hooks.beforeEnter((data) => {
-  // Capture scroll BEFORE stopping lenis, then lock the current
-  // container at that offset so it doesn't visually jump to top.
-  if (data.current?.container) {
-    const scrollY = lenis ? Math.round(lenis.scroll) : window.scrollY;
-
-    gsap.set(data.current.container, {
-      position: "fixed",
-      top: -scrollY,
-      left: 0,
-      right: 0
-    });
-  }
-
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
@@ -524,8 +512,7 @@ barba.init({
       sync: true,
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
-      custom: ({ trigger }) =>
-        trigger instanceof Element && !!trigger.closest("[data-case-link]"),
+      custom: ({ trigger }) => !!trigger?.closest("[data-case-link]"),
       async leave(data) {
         return runWorkLeaveAnimation(
           data.current.container,

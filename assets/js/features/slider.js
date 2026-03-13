@@ -34,6 +34,17 @@ function destroySlider(container = document) {
   });
 }
 
+// ---- NEW: Freeze every slider in a container ----
+// Stops the RAF loop so the track holds its position during transitions.
+function freezeSlider(container = document) {
+  if (!container) return;
+
+  [...sliderInstances.entries()].forEach(([root, instance]) => {
+    if (!container.contains(root)) return;
+    instance.freeze();
+  });
+}
+
 function createSliderInstance(root, track, container) {
   const BP = 991;
   const mq = window.matchMedia(`(max-width:${BP}px)`);
@@ -66,7 +77,8 @@ function createSliderInstance(root, track, container) {
     rafId: null,
     resizeRaf: null,
     originals: [],
-    listeners: []
+    listeners: [],
+    frozen: false
   };
 
   const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
@@ -122,6 +134,8 @@ function createSliderInstance(root, track, container) {
   }
 
   function loop() {
+    if (s.frozen) return;               // ← stop ticking when frozen
+
     s.x += (s.tx - s.x) * cfg.LERP;
 
     const len = seq();
@@ -174,13 +188,24 @@ function createSliderInstance(root, track, container) {
   }
 
   function onWheel(e) {
+    if (s.frozen) return;               // ← ignore input when frozen
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     e.preventDefault();
     s.tx -= clamp(e.deltaY * cfg.SPEED, -cfg.MAX_V, cfg.MAX_V);
   }
 
   function onPointerDown(e) {
-    if (e.pointerType === "mouse") e.preventDefault();
+    if (s.frozen) return;               // ← ignore input when frozen
+
+    // ---- FIX: Don't preventDefault if the target is inside a navigation link.
+    // Calling preventDefault on pointerdown for links can break the click
+    // event chain that Barba relies on to intercept page navigations.
+    const isNavLink = e.target.closest("a, [data-case-link]");
+
+    if (e.pointerType === "mouse" && !isNavLink) {
+      e.preventDefault();
+    }
+
     s.drag = true;
     s.start = s.last = e.clientX;
     s.dragged = false;
@@ -206,22 +231,23 @@ function createSliderInstance(root, track, container) {
     s.dragged = false;
   }
 
-function onClick(e) {
-  if (s.dragged || now() < s.clickUntil) {
-    e.preventDefault();
-    return;
-  }
+  function onClick(e) {
+    if (s.dragged || now() < s.clickUntil) {
+      e.preventDefault();
+      e.stopPropagation();              // ← also stop propagation for drag-clicks
+      return;
+    }
 
-  // Let normal anchor clicks pass through to Barba naturally.
-  // Do not hijack navigation here.
-}
+    // Let normal anchor clicks pass through to Barba naturally.
+    // Do not hijack navigation here.
+  }
 
   function onDragStart(e) {
     e.preventDefault();
   }
 
   function onResize() {
-    if (mq.matches) return;
+    if (mq.matches || s.frozen) return;
 
     cancelAnimationFrame(s.resizeRaf);
     s.resizeRaf = requestAnimationFrame(() => {
@@ -239,6 +265,31 @@ function onClick(e) {
 
   function onBreakpointChange() {
     window.location.reload();
+  }
+
+  // ---- NEW: freeze / unfreeze ----
+  function freeze() {
+    if (s.frozen) return;
+    s.frozen = true;
+
+    // Cancel running RAF so the track stops exactly where it is
+    cancelAnimationFrame(s.rafId);
+    cancelAnimationFrame(s.resizeRaf);
+
+    // Snap interpolation so there's no residual drift
+    s.x = s.tx;
+    s.track.style.transform = `translate3d(${s.x}px,0,0)`;
+
+    // Clear any in-progress drag state
+    s.drag = false;
+    s.dragged = false;
+    s.track.classList.remove("dragging");
+  }
+
+  function unfreeze() {
+    if (!s.frozen) return;
+    s.frozen = false;
+    loop();
   }
 
   function init() {
@@ -324,7 +375,8 @@ function onClick(e) {
     currentSlides.slice(originalCount).forEach((el) => el.remove());
 
     s.root.removeAttribute("data-slider-ran");
+    s.frozen = false;
   }
 
-  return { init, destroy };
+  return { init, destroy, freeze, unfreeze };
 }
