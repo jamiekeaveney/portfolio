@@ -182,6 +182,7 @@ function runPageOnceAnimation(next) {
 }
 
 
+
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
   const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
