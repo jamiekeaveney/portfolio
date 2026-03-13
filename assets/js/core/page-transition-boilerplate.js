@@ -13,6 +13,7 @@ let mobileMenuNavigation = false;
 
 let flipState = null;
 let flippedThumbnail = null;
+let caseBgColor = "";
 
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
@@ -332,83 +333,128 @@ function runPageEnterAnimation(next) {
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger.closest("[data-case-link]");
+  const clicked = trigger?.closest("[data-case-link]");
+  if (!clicked) {
+    return gsap.timeline().set(current, { autoAlpha: 0 });
+  }
+
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector("section")
+  if (!thumbnail) {
+    return gsap.timeline().set(current, { autoAlpha: 0 });
+  }
+
+  const bgTargets = next.querySelectorAll(".section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-  
+
+  caseBgColor = getComputedStyle(document.documentElement)
+    .getPropertyValue("--_theme---swatches--black")
+    .trim();
+
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-  
+
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-  
-  tl.to(current,{
-    autoAlpha: 0,
-    duration: 0.6
-  }, 0)
-  
-  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
-  
+
+  // Make incoming case sections transparent before enter starts
+  gsap.set(bgTargets, {
+    backgroundColor: "rgba(0,0,0,0)"
+  });
+
+  // Keep the current page visible while FLIP happens
+  tl.to(
+    {},
+    {
+      duration: 1.2
+    },
+    0
+  );
+
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector("section")
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
-  
+  const nextHero = next.querySelector(".project-hero-section");
+  const revealTargets = next.querySelectorAll("[data-case-reveal]");
+  const bgTargets = next.querySelectorAll(".section");
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
     flippedThumbnail = null;
     flipState = null;
+    caseBgColor = "";
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
-  
+
   const placeholder = next.querySelector("[data-case-thumbnail]");
-  
+  if (!placeholder || !flippedThumbnail || !flipState) {
+    tl.set(next, { autoAlpha: 1 });
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+  }
+
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-  
+
+  gsap.set(next, { autoAlpha: 1 });
+
   tl.add("startEnter", 0.6);
-  
+
   tl.add(
     Flip.from(flipState, {
       duration: 0.8,
-    }), 0);
-    
-  tl.fromTo(nextHero,{
-    backgroundColor: "transparent"
-  },{
-    backgroundColor: "#FFF",
-    duration: 0.5
-  }, "startEnter")
+      ease: "osmo"
+    }),
+    0
+  );
 
-  tl.fromTo(revealTargets,{
-    autoAlpha:0,
-    yPercent: 25
-  },{
-    autoAlpha:1,
-    yPercent: 0,
-    stagger: 0.1
-  }, "startEnter+=0.1")
-  
+  tl.to(
+    bgTargets,
+    {
+      backgroundColor: caseBgColor,
+      duration: 0.5,
+      ease: "power2.out"
+    },
+    "startEnter"
+  );
+
+  tl.fromTo(
+    revealTargets,
+    {
+      autoAlpha: 0,
+      yPercent: 25
+    },
+    {
+      autoAlpha: 1,
+      yPercent: 0,
+      stagger: 0.1,
+      ease: "power2.out"
+    },
+    "startEnter+=0.1"
+  );
+
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
-  
+
   tl.call(() => {
+    bgTargets.forEach((el) => {
+      gsap.set(el, { clearProps: "backgroundColor" });
+    });
+
     flippedThumbnail = null;
     flipState = null;
+    caseBgColor = "";
   });
-  
-  return new Promise(resolve => {
+
+  return new Promise((resolve) => {
     tl.call(resolve, null, "pageReady");
   });
 }
