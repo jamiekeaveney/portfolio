@@ -334,109 +334,81 @@ function runPageEnterAnimation(next) {
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector(".project-hero-section");
+  const nextHero = next.querySelector("section")
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-
+  
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-
+  
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-
-  tl.to(
-    current,
-    {
-      autoAlpha: 0,
-      duration: 0.6
-    },
-    0
-  );
-
-  if (nextHero) {
-    gsap.set(nextHero, { backgroundColor: "transparent" });
-  }
-
+  
+  tl.to(current,{
+    autoAlpha: 0,
+    duration: 0.6
+  }, 0)
+  
+  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector(".project-hero-section");
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
+  const nextHero = next.querySelector("section")
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  
   const tl = gsap.timeline();
-
+  
   if (reducedMotion) {
     flippedThumbnail = null;
     flipState = null;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-
+  
   const placeholder = next.querySelector("[data-case-thumbnail]");
-
-  const heroBg = nextHero
-    ? getComputedStyle(nextHero).backgroundColor
-    : "rgb(0, 0, 0)";
-
+  
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-
+  
   tl.add("startEnter", 0.6);
-
+  
   tl.add(
     Flip.from(flipState, {
       duration: 0.8,
-      ease: "osmo"
-    }),
-    0
-  );
+    }), 0);
+    
+  tl.fromTo(nextHero,{
+    backgroundColor: "transparent"
+  },{
+    backgroundColor: "#FFF",
+    duration: 0.5
+  }, "startEnter")
 
-  if (nextHero) {
-    tl.fromTo(
-      nextHero,
-      {
-        backgroundColor: "transparent"
-      },
-      {
-        backgroundColor: heroBg,
-        duration: 0.5
-      },
-      "startEnter"
-    );
-  }
-
-  tl.fromTo(
-    revealTargets,
-    {
-      autoAlpha: 0,
-      yPercent: 25
-    },
-    {
-      autoAlpha: 1,
-      yPercent: 0,
-      stagger: 0.1
-    },
-    "startEnter+=0.1"
-  );
-
+  tl.fromTo(revealTargets,{
+    autoAlpha:0,
+    yPercent: 25
+  },{
+    autoAlpha:1,
+    yPercent: 0,
+    stagger: 0.1
+  }, "startEnter+=0.1")
+  
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
-
+  
   tl.call(() => {
-    if (nextHero) {
-      gsap.set(nextHero, { clearProps: "backgroundColor" });
-    }
-
     flippedThumbnail = null;
     flipState = null;
   });
-
-  return new Promise((resolve) => {
+  
+  return new Promise(resolve => {
     tl.call(resolve, null, "pageReady");
   });
 }
