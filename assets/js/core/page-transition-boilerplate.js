@@ -348,13 +348,9 @@ function clearFlipState() {
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger?.closest("[data-case-link]");
-  const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
+  const clicked = trigger.closest("[data-case-link]");
+  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
   const nextHero = next.querySelector("section");
-
-  if (!thumbnail) {
-    return hideCurrentPage(current);
-  }
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
@@ -376,9 +372,7 @@ function runWorkLeaveAnimation(current, next, trigger) {
     0
   );
 
-  if (nextHero) {
-    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
-  }
+  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
 
   return tl;
 }
@@ -460,7 +454,7 @@ barba.hooks.before((data) => {
   mobileMenuNavigation = false;
 
   const trigger = data?.trigger;
-  if (!trigger) return;
+  if (!trigger || typeof trigger === "string") return;
 
   if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
     mobileMenuNavigation = true;
@@ -526,7 +520,8 @@ barba.init({
       sync: true,
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
-      custom: ({ trigger }) => !!trigger?.closest("[data-case-link]"),
+      custom: ({ trigger }) =>
+        trigger instanceof Element && !!trigger.closest("[data-case-link]"),
       async leave(data) {
         return runWorkLeaveAnimation(
           data.current.container,
