@@ -331,10 +331,6 @@ function runPageEnterAnimation(next) {
   });
 }
 
-function hideCurrentPage(current) {
-  return gsap.timeline().set(current, { autoAlpha: 0 });
-}
-
 function finishEnterFallback(tl, next, resolve) {
   tl.set(next, { autoAlpha: 1 });
   tl.add("pageReady");
@@ -350,7 +346,6 @@ function clearFlipState() {
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector("section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
@@ -363,22 +358,16 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  tl.to(
-    current,
-    {
-      autoAlpha: 0,
-      duration: 0.6
-    },
-    0
-  );
-
-  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+  // Work page stays fully visible underneath the incoming case page.
+  // Just push it behind and hold long enough for the enter to finish.
+  tl.set(current, { zIndex: 1 }, 0);
+  tl.to({}, { duration: 1.8 });
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector("section");
+  const sections = next.querySelectorAll("section");
   const revealTargets = next.querySelectorAll("[data-case-reveal]");
   const placeholder = next.querySelector("[data-case-thumbnail]");
 
@@ -396,6 +385,10 @@ function runCaseEnterAnimation(next) {
       return;
     }
 
+    // Case page on top, sections transparent so work page shows through
+    tl.set(next, { zIndex: 3 }, 0);
+    tl.set(sections, { backgroundColor: "transparent" }, 0);
+
     placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
     placeholder.remove();
 
@@ -409,17 +402,15 @@ function runCaseEnterAnimation(next) {
 
     tl.add("startEnter", 0.6);
 
-    if (nextHero) {
-      tl.fromTo(
-        nextHero,
-        { backgroundColor: "transparent" },
-        {
-          backgroundColor: "#FFF",
-          duration: 0.5
-        },
-        "startEnter"
-      );
-    }
+    // Sections fade from transparent → dark, covering the work page
+    tl.to(
+      sections,
+      {
+        backgroundColor: "#0d0d0d",
+        duration: 0.5
+      },
+      "startEnter"
+    );
 
     tl.fromTo(
       revealTargets,
@@ -463,6 +454,19 @@ barba.hooks.before((data) => {
 });
 
 barba.hooks.beforeEnter((data) => {
+  // Capture scroll BEFORE stopping lenis, then lock the current
+  // container at that offset so it doesn't visually jump to top.
+  if (data.current?.container) {
+    const scrollY = lenis ? Math.round(lenis.scroll) : window.scrollY;
+
+    gsap.set(data.current.container, {
+      position: "fixed",
+      top: -scrollY,
+      left: 0,
+      right: 0
+    });
+  }
+
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
