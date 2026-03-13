@@ -491,7 +491,7 @@ barba.init({
       sync: true,
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
-      custom: ({ trigger }) => trigger.hasAttribute("data-case-link"),
+      custom: ({ trigger }) => !!trigger?.closest("[data-case-link]"),
       async leave(data) {
         return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
       },
