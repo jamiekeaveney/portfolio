@@ -89,11 +89,11 @@ function runPageOnceAnimation(next) {
   var bot   = wrap.querySelector("[data-loader-bot]");
   if (!panel || !bar || !block || !top || !bot) return tl;
 
-  /* Steps: 00 → ~30 → ~70 → 100 */
+  /* 4 steps: 00 → ~30 → ~70 → 100 */
   var step1 = gsap.utils.random(25, 35, 1);
   var step2 = gsap.utils.random(65, 75, 1);
 
-  /* Flip wait = duration + max stagger + pad */
+  /* Flip wait = animation duration + max stagger delay + safety pad */
   var flipWait2 = 0.68 + 0.07 + 0.02;
   var flipWait3 = 0.68 + 0.14 + 0.02;
 
@@ -123,7 +123,7 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-flipping");
   };
 
-  /* Setup — 00 visible immediately */
+  /* ---- SETUP ---- */
   tl.call(function() {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
@@ -133,39 +133,33 @@ function runPageOnceAnimation(next) {
     bot.innerHTML = "";
     bar.style.width = "0%";
     block.classList.remove("is-flipping");
-    block.style.transition = "none";
-    bar.style.transition = "none";
     setY(0);
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        block.style.transition = "";
-        bar.style.transition = "";
-      });
-    });
   });
 
-  /* Step 1 → ~30 */
-  tl.to({}, { duration: 0.08 });
+  /* ---- 250ms pause on 00 ---- */
+  tl.to({}, { duration: 0.25 });
+
+  /* ---- Flip 00 → ~30 ---- */
   tl.call(function() { setStep(step1); });
   tl.to({}, { duration: flipWait2 });
   tl.call(function() { commitStep(step1); });
 
-  /* Step 2 → ~70 */
+  /* ---- Flip ~30 → ~70 ---- */
   tl.to({}, { duration: 0.02 });
   tl.call(function() { setStep(step2); });
   tl.to({}, { duration: flipWait2 });
   tl.call(function() { commitStep(step2); });
 
-  /* Step 3 → 100 */
+  /* ---- Flip ~70 → 100 ---- */
   tl.to({}, { duration: 0.02 });
   tl.call(function() { setStep(100); });
   tl.to({}, { duration: flipWait3 });
   tl.call(function() { commitStep(100); });
 
-  /* Fade out 250ms after 100 lands */
+  /* ---- 250ms fade out ---- */
   tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
 
-  /* Teardown */
+  /* ---- TEARDOWN ---- */
   tl.call(function() {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
@@ -180,7 +174,6 @@ function runPageOnceAnimation(next) {
 
   return tl;
 }
-
 
 
 function runPageLeaveAnimation(current, next) {
