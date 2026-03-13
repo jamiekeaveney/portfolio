@@ -75,10 +75,6 @@ function initAfterEnterFunctions(next) {
 // PAGE TRANSITIONS
 // -----------------------------------------
 
-// -----------------------------------------
-// PAGE TRANSITIONS
-// -----------------------------------------
-
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
@@ -94,49 +90,33 @@ function runPageOnceAnimation(next) {
   const panel = wrap.querySelector(".loader-panel");
   const bar = wrap.querySelector("[data-loader-bar]");
   const block = wrap.querySelector("[data-loader-block]");
+  const top = wrap.querySelector("[data-loader-top]");
+  const bot = wrap.querySelector("[data-loader-bot]");
 
-  const colH = wrap.querySelector('[data-loader-col="h"]');
-  const colT = wrap.querySelector('[data-loader-col="t"]');
-  const colO = wrap.querySelector('[data-loader-col="o"]');
+  if (!panel || !bar || !block || !top || !bot) return tl;
 
-  const trackH = wrap.querySelector('[data-loader-track="h"]');
-  const trackT = wrap.querySelector('[data-loader-track="t"]');
-  const trackO = wrap.querySelector('[data-loader-track="o"]');
-
-  if (!panel || !bar || !block || !colH || !colT || !colO || !trackH || !trackT || !trackO) {
-    return tl;
-  }
-
-  const EASE = "power2.out";
-  const MOVE_EASE = "power2.out";
   const FLIP_DUR = 0.68;
-  const REVEAL_DUR = 0.18;
-  const BAR_DUR = 0.9;
-  const BLOCK_DUR = 0.9;
+  const FLIP_STAGGER = 0.07;
+  const FLIP_PAD = 0.02;
   const HOLD_DUR = 0.25;
   const STEP_GAP = 0.02;
-  const STAGGER = 0.07;
   const FADE_DUR = 0.5;
-  const COL_W = "0.62em";
 
   const step1 = gsap.utils.random(25, 35, 1);
   const step2 = gsap.utils.random(65, 75, 1);
 
-  function getParts(value) {
-    if (value === 100) {
-      return { h: 1, t: 0, o: 0, digits: 3 };
-    }
+  function makeDigits(value) {
+    return String(value)
+      .split("")
+      .map((char, i) => {
+        return `<span class="loader-digit" style="--d:${i}">${char}</span>`;
+      })
+      .join("");
+  }
 
-    if (value >= 10) {
-      return {
-        h: 0,
-        t: Math.floor(value / 10),
-        o: value % 10,
-        digits: 2
-      };
-    }
-
-    return { h: 0, t: 0, o: value, digits: 1 };
+  function getFlipWait(value) {
+    const digitCount = String(value).length;
+    return FLIP_DUR + (digitCount - 1) * FLIP_STAGGER + FLIP_PAD;
   }
 
   function getTravel() {
@@ -151,116 +131,37 @@ function runPageOnceAnimation(next) {
     );
   }
 
-  function getTrackYPercent(trackType, digit) {
-    if (trackType === "h") {
-      return digit === 1 ? -50 : 0;
-    }
-    return digit * -10;
+  function setBlockY(travel, pct) {
+    block.style.transform = `translate3d(0, ${-(travel * pct) / 100}px, 0)`;
   }
 
-  function setColumnState(col, visible) {
-    gsap.set(col, {
-      width: visible ? COL_W : 0,
-      autoAlpha: visible ? 1 : 0
-    });
-
-    col.classList.toggle("is-visible", visible);
-    col.classList.toggle("is-hidden", !visible);
+  function setStep(value, travel) {
+    bot.innerHTML = makeDigits(value);
+    block.classList.add("is-flipping");
+    bar.style.width = value + "%";
+    setBlockY(travel, value);
   }
 
-  function setImmediate(value, travel) {
-    const parts = getParts(value);
-
-    setColumnState(colH, parts.digits === 3);
-    setColumnState(colT, parts.digits >= 2);
-    setColumnState(colO, true);
-
-    gsap.set(trackH, { yPercent: getTrackYPercent("h", parts.h) });
-    gsap.set(trackT, { yPercent: getTrackYPercent("t", parts.t) });
-    gsap.set(trackO, { yPercent: getTrackYPercent("o", parts.o) });
-
-    gsap.set(bar, { width: value + "%" });
-    gsap.set(block, { y: -(travel * value) / 100 });
+  function commitStep(value) {
+    top.innerHTML = makeDigits(value);
+    bot.innerHTML = "";
+    block.classList.remove("is-flipping");
   }
 
-  function animateValue(value, travel, addGap) {
-    const parts = getParts(value);
-
+  function addFlipStep(value, travel, addGap) {
     if (addGap) {
       tl.to({}, { duration: STEP_GAP });
     }
 
-    tl.to(
-      bar,
-      {
-        width: value + "%",
-        duration: BAR_DUR,
-        ease: MOVE_EASE
-      },
-      "<"
-    );
+    tl.call(() => {
+      setStep(value, travel);
+    });
 
-    tl.to(
-      block,
-      {
-        y: -(travel * value) / 100,
-        duration: BLOCK_DUR,
-        ease: MOVE_EASE
-      },
-      "<"
-    );
+    tl.to({}, { duration: getFlipWait(value) });
 
-    tl.to(
-      colH,
-      {
-        width: parts.digits === 3 ? COL_W : 0,
-        autoAlpha: parts.digits === 3 ? 1 : 0,
-        duration: REVEAL_DUR,
-        ease: EASE
-      },
-      "<"
-    );
-
-    tl.to(
-      colT,
-      {
-        width: parts.digits >= 2 ? COL_W : 0,
-        autoAlpha: parts.digits >= 2 ? 1 : 0,
-        duration: REVEAL_DUR,
-        ease: EASE
-      },
-      "<"
-    );
-
-    tl.to(
-      trackH,
-      {
-        yPercent: getTrackYPercent("h", parts.h),
-        duration: FLIP_DUR,
-        ease: "expo.inOut"
-      },
-      "<"
-    );
-
-    tl.to(
-      trackT,
-      {
-        yPercent: getTrackYPercent("t", parts.t),
-        duration: FLIP_DUR,
-        ease: "expo.inOut"
-      },
-      "<+" + STAGGER
-    );
-
-    tl.to(
-      trackO,
-      {
-        yPercent: getTrackYPercent("o", parts.o),
-        duration: FLIP_DUR,
-        ease: "expo.inOut"
-      },
-      "<+" + STAGGER
-    );
+    tl.call(() => {
+      commitStep(value);
+    });
   }
 
   tl.call(() => {
@@ -275,17 +176,20 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    const travel = getTravel();
-    setImmediate(0, travel);
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
+    bar.style.width = "0%";
+    block.classList.remove("is-flipping");
+    setBlockY(getTravel(), 0);
   });
 
   tl.to({}, { duration: HOLD_DUR });
 
   const travel = getTravel();
 
-  animateValue(step1, travel, false);
-  animateValue(step2, travel, true);
-  animateValue(100, travel, true);
+  addFlipStep(step1, travel, false);
+  addFlipStep(step2, travel, true);
+  addFlipStep(100, travel, true);
 
   tl.to({}, { duration: HOLD_DUR });
 
@@ -307,9 +211,11 @@ function runPageOnceAnimation(next) {
       pointerEvents: "none"
     });
 
-    setImmediate(0, getTravel());
-    gsap.set(block, { clearProps: "transform" });
-    gsap.set(bar, { width: "0%" });
+    block.classList.remove("is-flipping");
+    block.style.transform = "";
+    bar.style.width = "0%";
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
   });
 
   return tl;
