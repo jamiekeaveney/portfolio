@@ -110,23 +110,17 @@ function runPageOnceAnimation(next) {
     block.style.transform = "translate3d(0," + -(travel * pct / 100) + "px,0)";
   };
 
-  /* setStep: clean up previous flip, set new bot, start new flip.
-     The reflow force between remove/add ensures the animation restarts. */
   var setStep = function(v) {
-    block.classList.remove("is-flipping");
-    void block.offsetHeight;
     bot.innerHTML = makeDigits(v);
     block.classList.add("is-flipping");
     bar.style.width = v + "%";
     setY(v);
   };
 
-  /* commitStep: copy landed value into top so it persists.
-     Do NOT clear bot or remove is-flipping — the bot digits stay
-     visible via fill-mode:both until the next setStep cleans up.
-     This eliminates the repaint gap that caused the flicker. */
   var commitStep = function(v) {
     top.innerHTML = makeDigits(v);
+    bot.innerHTML = "";
+    block.classList.remove("is-flipping");
   };
 
   /* Setup — 00 visible immediately */
