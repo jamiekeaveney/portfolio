@@ -510,39 +510,45 @@ barba.init({
   preventRunning: true,
   transitions: [
     {
-      name: "work-to-case",
-      sync: true,
-      from: { namespace: ["work"] },
-      to: { namespace: ["case"] },
-      custom: ({ trigger }) => !!trigger?.closest("[data-case-link]"),
-      async leave(data) {
-        return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
-      },
-      async enter(data) {
-        return runCaseEnterAnimation(data.next.container);
-      }
-    },    
-    {
-      name: "default",
-      sync: true,
-      
-      // First load
-      async once(data) {
-        initOnceFunctions();
-
-        return runPageOnceAnimation(data.next.container);
-      },
-
-      // Current page leaves
-      async leave(data) {
-        return runPageLeaveAnimation(data.current.container, data.next.container);
-      },
-
-      // New page enters
-      async enter(data) {
-        return runPageEnterAnimation(data.next.container);
-      }
-    }
+  name: "work-to-case",
+  sync: true,
+  from: { namespace: ["work"] },
+  to: { namespace: ["case"] },
+  custom: ({ trigger }) => {
+    const match = !!trigger?.closest("[data-case-link]");
+    console.log("work-to-case custom check:", {
+      trigger,
+      match,
+      closest: trigger?.closest("[data-case-link]")
+    });
+    return match;
+  },
+  async leave(data) {
+    console.log("RUNNING work-to-case leave", data);
+    return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
+  },
+  async enter(data) {
+    console.log("RUNNING work-to-case enter", data);
+    return runCaseEnterAnimation(data.next.container);
+  }
+},
+{
+  name: "default",
+  sync: true,
+  async once(data) {
+    console.log("RUNNING default once");
+    initOnceFunctions();
+    return runPageOnceAnimation(data.next.container);
+  },
+  async leave(data) {
+    console.log("RUNNING default leave", data);
+    return runPageLeaveAnimation(data.current.container, data.next.container);
+  },
+  async enter(data) {
+    console.log("RUNNING default enter", data);
+    return runPageEnterAnimation(data.next.container);
+  }
+}
   ],
 });
 
