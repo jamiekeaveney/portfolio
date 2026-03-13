@@ -136,9 +136,6 @@ function runPageOnceAnimation(next) {
     setY(0);
   });
 
-  /* ---- 250ms pause on 00 ---- */
-  tl.to({}, { duration: 0.25 });
-
   /* ---- Flip 00 → ~30 ---- */
   tl.call(function() { setStep(step1); });
   tl.to({}, { duration: flipWait2 });
@@ -157,7 +154,7 @@ function runPageOnceAnimation(next) {
   tl.call(function() { commitStep(100); });
 
   /* ---- 250ms fade out ---- */
-  tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
+  tl.to(wrap, { autoAlpha: 0, duration: 0.5, ease: "power2.out" });
 
   /* ---- TEARDOWN ---- */
   tl.call(function() {
