@@ -6,7 +6,8 @@ function createSliderInstance(root, track, container) {
     LERP: 0.05,
     MAX_V: 150,
     COPIES: 6,
-    DRAG_T: 3
+    DRAG_T: 3,
+    CLICK_MS: 400
   };
 
   const s = {
@@ -16,9 +17,7 @@ function createSliderInstance(root, track, container) {
     parallax: 0.2,
     drag: false,
     dragged: false,
-    suppressClick: false,
-    suppressClickTimer: null,
-    pointerId: null,
+    clickUntil: 0,
     start: 0,
     last: 0,
     x: 0,
@@ -35,6 +34,7 @@ function createSliderInstance(root, track, container) {
   };
 
   const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
+  const now = () => performance.now();
   const seq = () => s.pitch * s.total;
 
   function addListener(el, event, handler, options) {
@@ -89,33 +89,27 @@ function createSliderInstance(root, track, container) {
     if (!(target instanceof Element)) return false;
 
     return !!target.closest(
-      'a, button, input, textarea, select, option, label, summary, details, iframe, video, [role="button"], [contenteditable="true"], [data-slider-no-drag]'
+      'a[href], button, input, textarea, select, label, [role="button"], [data-slider-no-drag]'
     );
-  }
-
-  function suppressNextClick() {
-    s.suppressClick = true;
-    clearTimeout(s.suppressClickTimer);
-    s.suppressClickTimer = setTimeout(() => {
-      s.suppressClick = false;
-    }, 0);
   }
 
   function loop() {
     s.x += (s.tx - s.x) * cfg.LERP;
 
     const len = seq();
+    if (!len) {
+      s.rafId = requestAnimationFrame(loop);
+      return;
+    }
 
-    if (len > 0) {
-      if (s.x > -len) {
-        s.x -= len;
-        s.tx -= len;
-        s.imgs.forEach(clearImageStyles);
-      } else if (s.x < -len * 4) {
-        s.x += len;
-        s.tx += len;
-        s.imgs.forEach(clearImageStyles);
-      }
+    if (s.x > -len) {
+      s.x -= len;
+      s.tx -= len;
+      s.imgs.forEach(clearImageStyles);
+    } else if (s.x < -len * 4) {
+      s.x += len;
+      s.tx += len;
+      s.imgs.forEach(clearImageStyles);
     }
 
     s.track.style.transform = `translate3d(${s.x}px,0,0)`;
@@ -164,25 +158,15 @@ function createSliderInstance(root, track, container) {
     if (isInteractive(e.target)) return;
 
     s.drag = true;
-    s.dragged = false;
-    s.pointerId = e.pointerId;
     s.start = s.last = e.clientX;
-
+    s.dragged = false;
     s.track.classList.add("dragging");
-
-    if (s.root.setPointerCapture) {
-      try {
-        s.root.setPointerCapture(e.pointerId);
-      } catch (_) {}
-    }
   }
 
   function onPointerMove(e) {
     if (!s.drag) return;
-    if (s.pointerId !== null && e.pointerId !== s.pointerId) return;
 
-    const delta = e.clientX - s.last;
-    s.tx += delta * 2;
+    s.tx += (e.clientX - s.last) * 2;
     s.last = e.clientX;
 
     if (Math.abs(e.clientX - s.start) > cfg.DRAG_T) {
@@ -190,35 +174,24 @@ function createSliderInstance(root, track, container) {
     }
   }
 
-  function endDrag(e) {
+  function onPointerUp() {
     if (!s.drag) return;
-    if (e && s.pointerId !== null && e.pointerId !== s.pointerId) return;
-
-    if (s.root.releasePointerCapture && s.pointerId !== null) {
-      try {
-        s.root.releasePointerCapture(s.pointerId);
-      } catch (_) {}
-    }
 
     s.drag = false;
-    s.pointerId = null;
     s.track.classList.remove("dragging");
 
     if (s.dragged) {
-      suppressNextClick();
+      s.clickUntil = now() + cfg.CLICK_MS;
     }
 
     s.dragged = false;
   }
 
-  function onClickCapture(e) {
-    if (!s.suppressClick) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation?.();
-
-    s.suppressClick = false;
+  function onClick(e) {
+    if (now() < s.clickUntil) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   }
 
   function onDragStart(e) {
@@ -257,7 +230,6 @@ function createSliderInstance(root, track, container) {
 
     s.originals = [...s.track.querySelectorAll(".slide")];
     s.total = s.originals.length;
-
     if (!s.total) return;
 
     const frag = document.createDocumentFragment();
@@ -282,13 +254,14 @@ function createSliderInstance(root, track, container) {
 
     addListener(s.root, "wheel", onWheel, { passive: false });
     addListener(s.root, "pointerdown", onPointerDown);
-    addListener(window, "pointermove", onPointerMove);
-    addListener(window, "pointerup", endDrag);
-    addListener(window, "pointercancel", endDrag);
+    addListener(s.root, "pointermove", onPointerMove);
+    addListener(s.root, "pointerup", onPointerUp);
+    addListener(s.root, "pointercancel", onPointerUp);
+    addListener(s.root, "pointerleave", onPointerUp);
     addListener(s.root, "dragstart", onDragStart);
 
-    // Capture phase: only suppress the click that immediately follows a drag.
-    addListener(s.root, "click", onClickCapture, true);
+    // use capture so dragged clicks are cancelled before Barba/native nav sees them
+    addListener(s.root, "click", onClick, true);
 
     addListener(window, "resize", onResize);
 
@@ -316,7 +289,6 @@ function createSliderInstance(root, track, container) {
   function destroy() {
     cancelAnimationFrame(s.rafId);
     cancelAnimationFrame(s.resizeRaf);
-    clearTimeout(s.suppressClickTimer);
 
     s.listeners.forEach(({ el, event, handler, options, isMQ, legacyMQ }) => {
       if (isMQ) {
