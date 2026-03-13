@@ -75,76 +75,195 @@ function initAfterEnterFunctions(next) {
 // PAGE TRANSITIONS
 // -----------------------------------------
 
-function runPageOnceAnimation(next) {
-  var tl = gsap.timeline();
+// -----------------------------------------
+// PAGE TRANSITIONS
+// -----------------------------------------
 
-  tl.call(function () {
+function runPageOnceAnimation(next) {
+  const tl = gsap.timeline();
+
+  tl.call(() => {
     resetPage(next);
   }, null, 0);
 
   if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
 
-  var wrap = document.querySelector('[data-loader="wrap"]');
+  const wrap = document.querySelector('[data-loader="wrap"]');
   if (!wrap) return tl;
 
-  var panel = wrap.querySelector(".loader-panel");
-  var bar = wrap.querySelector("[data-loader-bar]");
-  var block = wrap.querySelector("[data-loader-block]");
-  var top = wrap.querySelector("[data-loader-top]");
-  var bot = wrap.querySelector("[data-loader-bot]");
+  const panel = wrap.querySelector(".loader-panel");
+  const bar = wrap.querySelector("[data-loader-bar]");
+  const block = wrap.querySelector("[data-loader-block]");
 
-  if (!panel || !bar || !block || !top || !bot) return tl;
+  const colH = wrap.querySelector('[data-loader-col="h"]');
+  const colT = wrap.querySelector('[data-loader-col="t"]');
+  const colO = wrap.querySelector('[data-loader-col="o"]');
 
-  /* 4 steps: 0 → ~30 → ~70 → 100 */
-  var step1 = gsap.utils.random(25, 35, 1);
-  var step2 = gsap.utils.random(65, 75, 1);
+  const trackH = wrap.querySelector('[data-loader-track="h"]');
+  const trackT = wrap.querySelector('[data-loader-track="t"]');
+  const trackO = wrap.querySelector('[data-loader-track="o"]');
 
-  var makeDigits = function (n) {
-    return String(n)
-      .split("")
-      .map(function (c, i) {
-        return (
-          '<span class="loader-digit" style="--d:' + i + '">' + c + "</span>"
-        );
-      })
-      .join("");
-  };
+  if (!panel || !bar || !block || !colH || !colT || !colO || !trackH || !trackT || !trackO) {
+    return tl;
+  }
 
-  var getFlipWait = function (v) {
-    var digitCount = String(v).length;
-    var maxDelay = (digitCount - 1) * 0.07;
-    return 0.68 + maxDelay + 0.02;
-  };
+  const EASE = "power2.out";
+  const MOVE_EASE = "power2.out";
+  const FLIP_DUR = 0.68;
+  const REVEAL_DUR = 0.18;
+  const BAR_DUR = 0.9;
+  const BLOCK_DUR = 0.9;
+  const HOLD_DUR = 0.25;
+  const STEP_GAP = 0.02;
+  const STAGGER = 0.07;
+  const FADE_DUR = 0.5;
+  const COL_W = "0.62em";
 
-  var setY = function (pct) {
-    var s = getComputedStyle(panel);
-    var travel = Math.max(
+  const step1 = gsap.utils.random(25, 35, 1);
+  const step2 = gsap.utils.random(65, 75, 1);
+
+  function getParts(value) {
+    if (value === 100) {
+      return { h: 1, t: 0, o: 0, digits: 3 };
+    }
+
+    if (value >= 10) {
+      return {
+        h: 0,
+        t: Math.floor(value / 10),
+        o: value % 10,
+        digits: 2
+      };
+    }
+
+    return { h: 0, t: 0, o: value, digits: 1 };
+  }
+
+  function getTravel() {
+    const styles = getComputedStyle(panel);
+    const paddingTop = parseFloat(styles.paddingTop) || 0;
+    const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+    const blockHeight = block.getBoundingClientRect().height;
+
+    return Math.max(
       0,
-      panel.clientHeight -
-        (parseFloat(s.paddingTop) || 0) -
-        (parseFloat(s.paddingBottom) || 0) -
-        block.getBoundingClientRect().height
+      panel.clientHeight - paddingTop - paddingBottom - blockHeight
+    );
+  }
+
+  function getTrackYPercent(trackType, digit) {
+    if (trackType === "h") {
+      return digit === 1 ? -50 : 0;
+    }
+    return digit * -10;
+  }
+
+  function setColumnState(col, visible) {
+    gsap.set(col, {
+      width: visible ? COL_W : 0,
+      autoAlpha: visible ? 1 : 0
+    });
+
+    col.classList.toggle("is-visible", visible);
+    col.classList.toggle("is-hidden", !visible);
+  }
+
+  function setImmediate(value, travel) {
+    const parts = getParts(value);
+
+    setColumnState(colH, parts.digits === 3);
+    setColumnState(colT, parts.digits >= 2);
+    setColumnState(colO, true);
+
+    gsap.set(trackH, { yPercent: getTrackYPercent("h", parts.h) });
+    gsap.set(trackT, { yPercent: getTrackYPercent("t", parts.t) });
+    gsap.set(trackO, { yPercent: getTrackYPercent("o", parts.o) });
+
+    gsap.set(bar, { width: value + "%" });
+    gsap.set(block, { y: -(travel * value) / 100 });
+  }
+
+  function animateValue(value, travel, addGap) {
+    const parts = getParts(value);
+
+    if (addGap) {
+      tl.to({}, { duration: STEP_GAP });
+    }
+
+    tl.to(
+      bar,
+      {
+        width: value + "%",
+        duration: BAR_DUR,
+        ease: MOVE_EASE
+      },
+      "<"
     );
 
-    block.style.transform =
-      "translate3d(0," + -(travel * pct / 100) + "px,0)";
-  };
+    tl.to(
+      block,
+      {
+        y: -(travel * value) / 100,
+        duration: BLOCK_DUR,
+        ease: MOVE_EASE
+      },
+      "<"
+    );
 
-  var setStep = function (v) {
-    bot.innerHTML = makeDigits(v);
-    block.classList.add("is-flipping");
-    bar.style.width = v + "%";
-    setY(v);
-  };
+    tl.to(
+      colH,
+      {
+        width: parts.digits === 3 ? COL_W : 0,
+        autoAlpha: parts.digits === 3 ? 1 : 0,
+        duration: REVEAL_DUR,
+        ease: EASE
+      },
+      "<"
+    );
 
-  var commitStep = function (v) {
-    top.innerHTML = makeDigits(v);
-    bot.innerHTML = "";
-    block.classList.remove("is-flipping");
-  };
+    tl.to(
+      colT,
+      {
+        width: parts.digits >= 2 ? COL_W : 0,
+        autoAlpha: parts.digits >= 2 ? 1 : 0,
+        duration: REVEAL_DUR,
+        ease: EASE
+      },
+      "<"
+    );
 
-  /* ---- SETUP ---- */
-  tl.call(function () {
+    tl.to(
+      trackH,
+      {
+        yPercent: getTrackYPercent("h", parts.h),
+        duration: FLIP_DUR,
+        ease: "expo.inOut"
+      },
+      "<"
+    );
+
+    tl.to(
+      trackT,
+      {
+        yPercent: getTrackYPercent("t", parts.t),
+        duration: FLIP_DUR,
+        ease: "expo.inOut"
+      },
+      "<+" + STAGGER
+    );
+
+    tl.to(
+      trackO,
+      {
+        yPercent: getTrackYPercent("o", parts.o),
+        duration: FLIP_DUR,
+        ease: "expo.inOut"
+      },
+      "<+" + STAGGER
+    );
+  }
+
+  tl.call(() => {
     if (typeof stopLenis === "function") stopLenis();
 
     document.documentElement.style.overflow = "hidden";
@@ -156,57 +275,27 @@ function runPageOnceAnimation(next) {
       pointerEvents: "auto"
     });
 
-    top.innerHTML = makeDigits(0);
-    bot.innerHTML = "";
-    bar.style.width = "0%";
-    block.classList.remove("is-flipping");
-    setY(0);
+    const travel = getTravel();
+    setImmediate(0, travel);
   });
 
-  /* ---- 250ms pause on 0 ---- */
-  tl.to({}, { duration: 0.25 });
+  tl.to({}, { duration: HOLD_DUR });
 
-  /* ---- Flip 0 → ~30 ---- */
-  tl.call(function () {
-    setStep(step1);
-  });
-  tl.to({}, { duration: getFlipWait(step1) });
-  tl.call(function () {
-    commitStep(step1);
-  });
+  const travel = getTravel();
 
-  /* ---- Flip ~30 → ~70 ---- */
-  tl.to({}, { duration: 0.02 });
-  tl.call(function () {
-    setStep(step2);
-  });
-  tl.to({}, { duration: getFlipWait(step2) });
-  tl.call(function () {
-    commitStep(step2);
-  });
+  animateValue(step1, travel, false);
+  animateValue(step2, travel, true);
+  animateValue(100, travel, true);
 
-  /* ---- Flip ~70 → 100 ---- */
-  tl.to({}, { duration: 0.02 });
-  tl.call(function () {
-    setStep(100);
-  });
-  tl.to({}, { duration: getFlipWait(100) });
-  tl.call(function () {
-    commitStep(100);
-  });
+  tl.to({}, { duration: HOLD_DUR });
 
-  /* ---- 250ms pause on 100 ---- */
-  tl.to({}, { duration: 0.25 });
-
-  /* ---- fade out ---- */
   tl.to(wrap, {
     autoAlpha: 0,
-    duration: 0.5,
+    duration: FADE_DUR,
     ease: "power2.out"
   });
 
-  /* ---- TEARDOWN ---- */
-  tl.call(function () {
+  tl.call(() => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
 
@@ -218,11 +307,9 @@ function runPageOnceAnimation(next) {
       pointerEvents: "none"
     });
 
-    block.classList.remove("is-flipping");
-    block.style.transform = "";
-    bar.style.width = "0%";
-    top.innerHTML = makeDigits(0);
-    bot.innerHTML = "";
+    setImmediate(0, getTravel());
+    gsap.set(block, { clearProps: "transform" });
+    gsap.set(bar, { width: "0%" });
   });
 
   return tl;
