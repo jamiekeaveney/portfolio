@@ -110,20 +110,26 @@ function runPageOnceAnimation(next) {
     block.style.transform = "translate3d(0," + -(travel * pct / 100) + "px,0)";
   };
 
+  /* setStep: clean up previous flip, set new bot, start new flip.
+     The reflow force between remove/add ensures the animation restarts. */
   var setStep = function(v) {
+    block.classList.remove("is-flipping");
+    void block.offsetHeight;
     bot.innerHTML = makeDigits(v);
     block.classList.add("is-flipping");
     bar.style.width = v + "%";
     setY(v);
   };
 
+  /* commitStep: copy landed value into top so it persists.
+     Do NOT clear bot or remove is-flipping — the bot digits stay
+     visible via fill-mode:both until the next setStep cleans up.
+     This eliminates the repaint gap that caused the flicker. */
   var commitStep = function(v) {
     top.innerHTML = makeDigits(v);
-    bot.innerHTML = "";
-    block.classList.remove("is-flipping");
   };
 
-  /* Setup — 00 visible immediately, no enter stagger */
+  /* Setup — 00 visible immediately */
   tl.call(function() {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
@@ -156,10 +162,14 @@ function runPageOnceAnimation(next) {
   tl.to({}, { duration: flipWait2 });
   tl.call(function() { commitStep(step2); });
 
-  /* Step 3 → 100 + simultaneous fade — both complete together */
+  /* Step 3 → 100 */
   tl.to({}, { duration: 0.02 });
   tl.call(function() { setStep(100); });
-  tl.to(wrap, { autoAlpha: 0, duration: flipWait3, ease: "power2.in" });
+  tl.to({}, { duration: flipWait3 });
+  tl.call(function() { commitStep(100); });
+
+  /* Fade out 250ms after 100 lands */
+  tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
 
   /* Teardown */
   tl.call(function() {
