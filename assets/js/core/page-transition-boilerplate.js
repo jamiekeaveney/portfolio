@@ -77,58 +77,85 @@ function initAfterEnterFunctions(next) {
 
 function runPageOnceAnimation(next) {
   var tl = gsap.timeline();
-  tl.call(function() { resetPage(next); }, null, 0);
+
+  tl.call(function () {
+    resetPage(next);
+  }, null, 0);
+
   if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
 
-  var wrap  = document.querySelector('[data-loader="wrap"]');
+  var wrap = document.querySelector('[data-loader="wrap"]');
   if (!wrap) return tl;
+
   var panel = wrap.querySelector(".loader-panel");
-  var bar   = wrap.querySelector("[data-loader-bar]");
+  var bar = wrap.querySelector("[data-loader-bar]");
   var block = wrap.querySelector("[data-loader-block]");
-  var top   = wrap.querySelector("[data-loader-top]");
-  var bot   = wrap.querySelector("[data-loader-bot]");
+  var top = wrap.querySelector("[data-loader-top]");
+  var bot = wrap.querySelector("[data-loader-bot]");
+
   if (!panel || !bar || !block || !top || !bot) return tl;
 
-  /* 4 steps: 00 → ~30 → ~70 → 100 */
+  /* 4 steps: 0 → ~30 → ~70 → 100 */
   var step1 = gsap.utils.random(25, 35, 1);
   var step2 = gsap.utils.random(65, 75, 1);
 
-  /* Flip wait = animation duration + max stagger delay + safety pad */
-  var flipWait2 = 0.68 + 0.07 + 0.02;
-  var flipWait3 = 0.68 + 0.14 + 0.02;
-
-  var makeDigits = function(n) {
-    return (n < 10 ? "0" + n : "" + n)
+  var makeDigits = function (n) {
+    return String(n)
       .split("")
-      .map(function(c, i) { return '<span class="loader-digit" style="--d:' + i + '">' + c + "</span>"; })
+      .map(function (c, i) {
+        return (
+          '<span class="loader-digit" style="--d:' + i + '">' + c + "</span>"
+        );
+      })
       .join("");
   };
 
-  var setY = function(pct) {
-    var s = getComputedStyle(panel);
-    var travel = Math.max(0, panel.clientHeight - (parseFloat(s.paddingTop) || 0) - (parseFloat(s.paddingBottom) || 0) - block.getBoundingClientRect().height);
-    block.style.transform = "translate3d(0," + -(travel * pct / 100) + "px,0)";
+  var getFlipWait = function (v) {
+    var digitCount = String(v).length;
+    var maxDelay = (digitCount - 1) * 0.07;
+    return 0.68 + maxDelay + 0.02;
   };
 
-  var setStep = function(v) {
+  var setY = function (pct) {
+    var s = getComputedStyle(panel);
+    var travel = Math.max(
+      0,
+      panel.clientHeight -
+        (parseFloat(s.paddingTop) || 0) -
+        (parseFloat(s.paddingBottom) || 0) -
+        block.getBoundingClientRect().height
+    );
+
+    block.style.transform =
+      "translate3d(0," + -(travel * pct / 100) + "px,0)";
+  };
+
+  var setStep = function (v) {
     bot.innerHTML = makeDigits(v);
     block.classList.add("is-flipping");
     bar.style.width = v + "%";
     setY(v);
   };
 
-  var commitStep = function(v) {
+  var commitStep = function (v) {
     top.innerHTML = makeDigits(v);
     bot.innerHTML = "";
     block.classList.remove("is-flipping");
   };
 
   /* ---- SETUP ---- */
-  tl.call(function() {
+  tl.call(function () {
     if (typeof stopLenis === "function") stopLenis();
+
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-    gsap.set(wrap, { display: "block", autoAlpha: 1, pointerEvents: "auto" });
+
+    gsap.set(wrap, {
+      display: "block",
+      autoAlpha: 1,
+      pointerEvents: "auto"
+    });
+
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
@@ -136,38 +163,61 @@ function runPageOnceAnimation(next) {
     setY(0);
   });
 
-  /* ---- 250ms pause on 00 ---- */
+  /* ---- 250ms pause on 0 ---- */
   tl.to({}, { duration: 0.25 });
 
-  /* ---- Flip 00 → ~30 ---- */
-  tl.call(function() { setStep(step1); });
-  tl.to({}, { duration: flipWait2 });
-  tl.call(function() { commitStep(step1); });
+  /* ---- Flip 0 → ~30 ---- */
+  tl.call(function () {
+    setStep(step1);
+  });
+  tl.to({}, { duration: getFlipWait(step1) });
+  tl.call(function () {
+    commitStep(step1);
+  });
 
   /* ---- Flip ~30 → ~70 ---- */
   tl.to({}, { duration: 0.02 });
-  tl.call(function() { setStep(step2); });
-  tl.to({}, { duration: flipWait2 });
-  tl.call(function() { commitStep(step2); });
+  tl.call(function () {
+    setStep(step2);
+  });
+  tl.to({}, { duration: getFlipWait(step2) });
+  tl.call(function () {
+    commitStep(step2);
+  });
 
   /* ---- Flip ~70 → 100 ---- */
   tl.to({}, { duration: 0.02 });
-  tl.call(function() { setStep(100); });
-  tl.to({}, { duration: flipWait3 });
-  tl.call(function() { commitStep(100); });
+  tl.call(function () {
+    setStep(100);
+  });
+  tl.to({}, { duration: getFlipWait(100) });
+  tl.call(function () {
+    commitStep(100);
+  });
 
-  /* ---- 250ms pause on 00 ---- */
-  tl.to({}, { duration: 2 });  
+  /* ---- 250ms pause on 100 ---- */
+  tl.to({}, { duration: 0.25 });
 
-  /* ---- 250ms fade out ---- */
-  tl.to(wrap, { autoAlpha: 0, duration: 0.5, ease: "power2.out" });
+  /* ---- fade out ---- */
+  tl.to(wrap, {
+    autoAlpha: 0,
+    duration: 0.5,
+    ease: "power2.out"
+  });
 
   /* ---- TEARDOWN ---- */
-  tl.call(function() {
+  tl.call(function () {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
+
     if (typeof startLenis === "function") startLenis();
-    gsap.set(wrap, { display: "none", autoAlpha: 0, pointerEvents: "none" });
+
+    gsap.set(wrap, {
+      display: "none",
+      autoAlpha: 0,
+      pointerEvents: "none"
+    });
+
     block.classList.remove("is-flipping");
     block.style.transform = "";
     bar.style.width = "0%";
@@ -177,7 +227,6 @@ function runPageOnceAnimation(next) {
 
   return tl;
 }
-
 
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
@@ -261,9 +310,7 @@ function runPageEnterAnimation(next) {
   tl.add("startEnter", 0);
 
   tl.set(next, {
-    zIndex: 3,
-    borderTopLeftRadius: "0.75rem",
-    borderTopRightRadius: "0.75rem"
+    zIndex: 3
   });
 
   tl.fromTo(
@@ -278,18 +325,6 @@ function runPageEnterAnimation(next) {
       ease: "parallax"
     },
     "startEnter"
-  );
-
-  tl.to(
-    next,
-    {
-      borderTopLeftRadius: "0rem",
-      borderTopRightRadius: "0rem",
-      duration: 0.25,
-      ease: "none",
-      clearProps: "borderTopLeftRadius,borderTopRightRadius"
-    },
-    0.95
   );
 
   tl.add("pageReady");
