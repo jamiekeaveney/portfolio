@@ -332,41 +332,40 @@ function runPageEnterAnimation(next) {
 }
 
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger?.closest("[data-case-link]");
-  if (!clicked) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
-
+  const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  if (!thumbnail) {
-    return gsap.timeline().set(current, { autoAlpha: 0 });
-  }
+  const nextHero = next.querySelector(".project-hero-section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
 
   const tl = gsap.timeline({
-    onComplete: () => {
-      current.remove();
-    }
+    onComplete: () => current.remove()
   });
 
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  // Keep the current page fully visible during the FLIP.
-  // This dummy tween simply keeps the leave transition alive
-  // long enough for the enter animation to cover it.
-  tl.to({}, { duration: 1.2 });
+  tl.to(
+    current,
+    {
+      autoAlpha: 0,
+      duration: 0.6
+    },
+    0
+  );
+
+  if (nextHero) {
+    gsap.set(nextHero, { backgroundColor: "transparent" });
+  }
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const revealTargets = next.querySelectorAll("[data-case-reveal]");
-  const placeholder = next.querySelector("[data-case-thumbnail]");
-  const bgTargets = Array.from(next.querySelectorAll(".section"));
+  const nextHero = next.querySelector(".project-hero-section");
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
   const tl = gsap.timeline();
 
   if (reducedMotion) {
@@ -378,33 +377,14 @@ function runCaseEnterAnimation(next) {
     return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
 
-  if (!placeholder || !flippedThumbnail || !flipState) {
-    tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
-  }
+  const placeholder = next.querySelector("[data-case-thumbnail]");
 
-  // Store each section's real computed background colour
-  const bgColors = bgTargets.map((el) => getComputedStyle(el).backgroundColor);
+  const heroBg = nextHero
+    ? getComputedStyle(nextHero).backgroundColor
+    : "rgb(0, 0, 0)";
 
-  // Put the flipped thumbnail into the incoming page
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-
-  // Make sure the incoming page is present
-  gsap.set(next, { autoAlpha: 1 });
-
-  // Hide only the case page backgrounds, not the whole container
-  bgTargets.forEach((el) => {
-    gsap.set(el, { backgroundColor: "transparent" });
-  });
-
-  // Keep your intended reveal sequence
-  gsap.set(revealTargets, {
-    autoAlpha: 0,
-    yPercent: 25
-  });
 
   tl.add("startEnter", 0.6);
 
@@ -416,18 +396,19 @@ function runCaseEnterAnimation(next) {
     0
   );
 
-  // Fade the incoming case page backgrounds back to their real colours
-  bgTargets.forEach((el, i) => {
-    tl.to(
-      el,
+  if (nextHero) {
+    tl.fromTo(
+      nextHero,
       {
-        backgroundColor: bgColors[i],
-        duration: 0.5,
-        ease: "power2.out"
+        backgroundColor: "transparent"
+      },
+      {
+        backgroundColor: heroBg,
+        duration: 0.5
       },
       "startEnter"
     );
-  });
+  }
 
   tl.fromTo(
     revealTargets,
@@ -447,8 +428,9 @@ function runCaseEnterAnimation(next) {
   tl.call(resetPage, [next], "pageReady");
 
   tl.call(() => {
-    // Remove inline background colours so CSS takes back over
-    bgTargets.forEach((el) => gsap.set(el, { clearProps: "backgroundColor" }));
+    if (nextHero) {
+      gsap.set(nextHero, { clearProps: "backgroundColor" });
+    }
 
     flippedThumbnail = null;
     flipState = null;
