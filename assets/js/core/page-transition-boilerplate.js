@@ -11,6 +11,9 @@ let nextPage = document;
 let onceFunctionsInitialized = false;
 let mobileMenuNavigation = false;
 
+let flipState = null;
+let flippedThumbnail = null;
+
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 
@@ -328,6 +331,88 @@ function runPageEnterAnimation(next) {
   });
 }
 
+function runWorkLeaveAnimation(current, next, trigger) {
+  const clicked = trigger.closest("[data-case-link]");
+  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
+  const nextHero = next.querySelector("section")
+
+  flipState = Flip.getState(thumbnail);
+  flippedThumbnail = thumbnail;
+  
+  const tl = gsap.timeline({
+    onComplete: () => current.remove()
+  });
+  
+  if (reducedMotion) {
+    return tl.set(current, { autoAlpha: 0 });
+  }
+  
+  tl.to(current,{
+    autoAlpha: 0,
+    duration: 0.6
+  }, 0)
+  
+  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  
+  return tl;
+}
+
+function runCaseEnterAnimation(next) {
+  const nextHero = next.querySelector("section")
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  
+  const tl = gsap.timeline();
+  
+  if (reducedMotion) {
+    flippedThumbnail = null;
+    flipState = null;
+    tl.set(next, { autoAlpha: 1 });
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+  }
+  
+  const placeholder = next.querySelector("[data-case-thumbnail]");
+  
+  placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
+  placeholder.remove();
+  
+  tl.add("startEnter", 0.6);
+  
+  tl.add(
+    Flip.from(flipState, {
+      duration: 0.8,
+    }), 0);
+    
+  tl.fromTo(nextHero,{
+    backgroundColor: "transparent"
+  },{
+    backgroundColor: "#FFF",
+    duration: 0.5
+  }, "startEnter")
+
+  tl.fromTo(revealTargets,{
+    autoAlpha:0,
+    yPercent: 25
+  },{
+    autoAlpha:1,
+    yPercent: 0,
+    stagger: 0.1
+  }, "startEnter+=0.1")
+  
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  
+  tl.call(() => {
+    flippedThumbnail = null;
+    flipState = null;
+  });
+  
+  return new Promise(resolve => {
+    tl.call(resolve, null, "pageReady");
+  });
+}
+
 
 // -----------------------------------------
 // BARBA HOOKS + INIT
@@ -397,28 +482,45 @@ barba.hooks.after(() => {
 });
 
 barba.init({
-  debug: true, // Set to false in production
+  debug: false, // Set to 'false' in production
   timeout: 7000,
   preventRunning: true,
   transitions: [
     {
+      name: "work-to-case",
+      sync: true,
+      from: { namespace: ["work"] },
+      to: { namespace: ["project"] },
+      custom: ({ trigger }) => trigger.hasAttribute("data-case-link"),
+      async leave(data) {
+        return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
+      },
+      async enter(data) {
+        return runCaseEnterAnimation(data.next.container);
+      }
+    },    
+    {
       name: "default",
       sync: true,
-
+      
+      // First load
       async once(data) {
         initOnceFunctions();
+
         return runPageOnceAnimation(data.next.container);
       },
 
+      // Current page leaves
       async leave(data) {
         return runPageLeaveAnimation(data.current.container, data.next.container);
       },
 
+      // New page enters
       async enter(data) {
         return runPageEnterAnimation(data.next.container);
       }
     }
-  ]
+  ],
 });
 
 
