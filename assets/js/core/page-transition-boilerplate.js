@@ -352,15 +352,17 @@ function runWorkLeaveAnimation(current, next, trigger) {
     .trim();
 
   const tl = gsap.timeline({
-    onComplete: () => current.remove()
+    onComplete: () => {
+      current.remove();
+    }
   });
 
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  // Keep current page alive while enter animation plays
-  tl.to({}, { duration: 1.2 });
+  // Keep leave alive so it overlaps with enter
+  tl.to({}, { duration: 1.0 });
 
   return tl;
 }
@@ -368,7 +370,10 @@ function runWorkLeaveAnimation(current, next, trigger) {
 function runCaseEnterAnimation(next) {
   const placeholder = next.querySelector("[data-case-thumbnail]");
   const revealTargets = next.querySelectorAll("[data-case-reveal]");
-  const bgTargets = next.querySelectorAll(".project-hero-section, .project-images-section");
+  const bgTargets = next.querySelectorAll(
+    ".project-hero-section, .project-images-section"
+  );
+
   const tl = gsap.timeline();
 
   if (reducedMotion) {
@@ -391,22 +396,28 @@ function runCaseEnterAnimation(next) {
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
 
-  // Make the incoming page itself transparent at first
-  gsap.set(next, { autoAlpha: 1 });
+  // Make sure next sits above current, but starts visually hidden
+  gsap.set(next, {
+    zIndex: 3,
+    autoAlpha: 1
+  });
 
-  // Hide incoming background layers only
+  // Start the incoming page layer transparent so current can still be seen beneath
+  gsap.set(next, {
+    opacity: 1
+  });
+
+  // Hide only the background layers and reveal items
   gsap.set(bgTargets, {
     backgroundColor: "transparent"
   });
 
-  // Hide reveal content until sequence starts
   gsap.set(revealTargets, {
     autoAlpha: 0,
     yPercent: 25
   });
 
-  tl.add("startEnter", 0.6);
-
+  // Start FLIP immediately
   tl.add(
     Flip.from(flipState, {
       duration: 0.8,
@@ -415,6 +426,7 @@ function runCaseEnterAnimation(next) {
     0
   );
 
+  // Start the background fade almost immediately as well
   tl.to(
     bgTargets,
     {
@@ -422,9 +434,10 @@ function runCaseEnterAnimation(next) {
       duration: 0.5,
       ease: "power2.out"
     },
-    "startEnter"
+    0.05
   );
 
+  // Keep your reveal sequence slightly delayed
   tl.to(
     revealTargets,
     {
@@ -434,7 +447,7 @@ function runCaseEnterAnimation(next) {
       duration: 0.6,
       ease: "power2.out"
     },
-    "startEnter+=0.1"
+    0.18
   );
 
   tl.add("pageReady");
