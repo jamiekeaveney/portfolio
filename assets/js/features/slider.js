@@ -1,5 +1,5 @@
 // -----------------------------------------
-// SLIDER (fixed for Barba FLIP transitions)
+// SLIDER
 // -----------------------------------------
 
 const sliderInstances = new Map();
@@ -42,8 +42,7 @@ function createSliderInstance(root, track, container) {
     LERP: 0.05,
     MAX_V: 150,
     COPIES: 6,
-    DRAG_T: 6,        // raised from 3 → 6 so micro-tremors during a normal click aren't treated as drags
-    CLICK_GUARD: "sl-drag-click"  // CSS class used as a one-shot flag
+    DRAG_T: 5
   };
 
   const s = {
@@ -53,7 +52,7 @@ function createSliderInstance(root, track, container) {
     parallax: 0.2,
     drag: false,
     dragged: false,
-    wasDrag: false,       // one-shot flag consumed by the next click event
+    wasDrag: false,
     start: 0,
     last: 0,
     x: 0,
@@ -70,7 +69,6 @@ function createSliderInstance(root, track, container) {
   };
 
   const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
-  const now = () => performance.now();
   const seq = () => s.pitch * s.total;
 
   function addListener(el, event, handler, options) {
@@ -179,18 +177,9 @@ function createSliderInstance(root, track, container) {
     s.tx -= clamp(e.deltaY * cfg.SPEED, -cfg.MAX_V, cfg.MAX_V);
   }
 
-  // -------------------------------------------------------
-  // Pointer / click handling — reworked for Barba compat
-  // -------------------------------------------------------
-
+  // pointerdown — unchanged from original
   function onPointerDown(e) {
-    // Only prevent default for mouse AND only when the target is NOT inside
-    // a navigable link. This keeps drag-to-scroll working while letting
-    // Barba pick up genuine link clicks without interference.
-    if (e.pointerType === "mouse" && !e.target.closest("a, [data-case-link]")) {
-      e.preventDefault();
-    }
-
+    if (e.pointerType === "mouse") e.preventDefault();
     s.drag = true;
     s.start = s.last = e.clientX;
     s.dragged = false;
@@ -212,8 +201,8 @@ function createSliderInstance(root, track, container) {
     s.drag = false;
     s.track.classList.remove("dragging");
 
-    // If this pointer sequence was a drag, arm the one-shot flag
-    // so the upcoming click event gets killed.
+    // If the pointer sequence was a drag, arm the flag.
+    // The very next click event will consume it.
     if (s.dragged) {
       s.wasDrag = true;
     }
@@ -221,21 +210,28 @@ function createSliderInstance(root, track, container) {
     s.dragged = false;
   }
 
+  // -----------------------------------------------------------
+  // FIX: The original used a 400ms timer which could swallow
+  // genuine clicks that happened shortly after a drag ended.
+  // It also only called e.preventDefault(), which sets
+  // e.defaultPrevented = true. Barba checks that flag and
+  // skips clicks where it's true — but the browser ALSO skips
+  // default navigation, so the click did absolutely nothing.
+  //
+  // New approach:
+  //   Drag-click  → preventDefault + stopPropagation
+  //                  (kills the event before it reaches Barba
+  //                   on document — no navigation at all)
+  //   Real click  → do nothing, event bubbles to Barba,
+  //                  Barba intercepts it, SPA transition runs
+  // -----------------------------------------------------------
   function onClick(e) {
-    // If the previous pointer sequence was a drag, block this click
-    // completely — preventDefault AND stopImmediatePropagation so
-    // Barba never sees it (Barba skips clicks where defaultPrevented
-    // is already true, but stopImmediate is the belt-and-suspenders
-    // guarantee that no other listener on this element fires).
     if (s.wasDrag) {
-      s.wasDrag = false;           // consume the flag
+      s.wasDrag = false;
       e.preventDefault();
-      e.stopImmediatePropagation();
+      e.stopPropagation();
       return;
     }
-
-    // Not a drag → genuine click. Do nothing — let the event bubble
-    // up naturally so Barba can intercept it for page transitions.
   }
 
   function onDragStart(e) {
@@ -302,12 +298,7 @@ function createSliderInstance(root, track, container) {
     addListener(s.root, "pointercancel", onPointerUp);
     addListener(s.root, "pointerleave", onPointerUp);
     addListener(s.root, "dragstart", onDragStart);
-
-    // The click listener MUST use capture: true so it fires BEFORE Barba's
-    // delegated click handler. When it's a drag-click we kill it here;
-    // when it's a genuine click we let it through untouched.
-    addListener(s.track, "click", onClick, true);
-
+    addListener(s.track, "click", onClick);
     addListener(window, "resize", onResize);
 
     if (mq.addEventListener) {
