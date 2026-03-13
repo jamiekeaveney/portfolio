@@ -77,10 +77,10 @@ function initAfterEnterFunctions(next) {
 
 function runPageOnceAnimation(next) {
   var tl = gsap.timeline();
-  tl.call(() => { resetPage(next); }, null, 0);
+  tl.call(function() { resetPage(next); }, null, 0);
   if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
 
-  var wrap = document.querySelector('[data-loader="wrap"]');
+  var wrap  = document.querySelector('[data-loader="wrap"]');
   if (!wrap) return tl;
   var panel = wrap.querySelector(".loader-panel");
   var bar   = wrap.querySelector("[data-loader-bar]");
@@ -89,14 +89,13 @@ function runPageOnceAnimation(next) {
   var bot   = wrap.querySelector("[data-loader-bot]");
   if (!panel || !bar || !block || !top || !bot) return tl;
 
-  /* Steps: 00 → mid (55–75) → 100 */
-  var mid = gsap.utils.random(55, 75, 1);
+  /* Steps: 00 → ~30 → ~70 → 100 */
+  var step1 = gsap.utils.random(25, 35, 1);
+  var step2 = gsap.utils.random(65, 75, 1);
 
-  /* Timing — duration + max stagger + pad */
-  var enterWait = 0.58 + 0.14 + 0.02;
+  /* Flip wait = duration + max stagger + pad */
   var flipWait2 = 0.68 + 0.07 + 0.02;
   var flipWait3 = 0.68 + 0.14 + 0.02;
-  var exitWait  = 0.58 + 0.14 + 0.02;
 
   var makeDigits = function(n) {
     return (n < 10 ? "0" + n : "" + n)
@@ -106,7 +105,6 @@ function runPageOnceAnimation(next) {
   };
 
   var setY = function(pct) {
-    if (window.innerWidth < 992) { block.style.transform = ""; return; }
     var s = getComputedStyle(panel);
     var travel = Math.max(0, panel.clientHeight - (parseFloat(s.paddingTop) || 0) - (parseFloat(s.paddingBottom) || 0) - block.getBoundingClientRect().height);
     block.style.transform = "translate3d(0," + -(travel * pct / 100) + "px,0)";
@@ -125,7 +123,7 @@ function runPageOnceAnimation(next) {
     block.classList.remove("is-flipping");
   };
 
-  /* Setup */
+  /* Setup — 00 visible immediately, no enter stagger */
   tl.call(function() {
     if (typeof stopLenis === "function") stopLenis();
     document.documentElement.style.overflow = "hidden";
@@ -134,8 +132,7 @@ function runPageOnceAnimation(next) {
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
     bar.style.width = "0%";
-    block.classList.remove("is-entering", "is-flipping", "is-exiting");
-    block.classList.add("is-primed");
+    block.classList.remove("is-flipping");
     block.style.transition = "none";
     bar.style.transition = "none";
     setY(0);
@@ -147,36 +144,30 @@ function runPageOnceAnimation(next) {
     });
   });
 
-  /* Step 1 — enter 00 */
-  tl.call(function() {
-    block.classList.remove("is-primed");
-    block.classList.add("is-entering");
-  });
-  tl.to({}, { duration: enterWait });
-  tl.call(function() { block.classList.remove("is-entering"); });
-
-  /* Step 2 — flip to mid */
+  /* Step 1 → ~30 */
   tl.to({}, { duration: 0.08 });
-  tl.call(function() { setStep(mid); });
+  tl.call(function() { setStep(step1); });
   tl.to({}, { duration: flipWait2 });
-  tl.call(function() { commitStep(mid); });
+  tl.call(function() { commitStep(step1); });
 
-  /* Step 3 — flip to 100, exit */
+  /* Step 2 → ~70 */
+  tl.to({}, { duration: 0.02 });
+  tl.call(function() { setStep(step2); });
+  tl.to({}, { duration: flipWait2 });
+  tl.call(function() { commitStep(step2); });
+
+  /* Step 3 → 100 + simultaneous fade — both complete together */
   tl.to({}, { duration: 0.02 });
   tl.call(function() { setStep(100); });
-  tl.to({}, { duration: flipWait3 });
-  tl.call(function() { commitStep(100); });
-  tl.call(function() { block.classList.add("is-exiting"); });
-  tl.to({}, { duration: exitWait });
+  tl.to(wrap, { autoAlpha: 0, duration: flipWait3, ease: "power2.in" });
 
-  /* Fade out & teardown */
-  tl.to(wrap, { autoAlpha: 0, duration: 0.25, ease: "power2.out" });
+  /* Teardown */
   tl.call(function() {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     if (typeof startLenis === "function") startLenis();
     gsap.set(wrap, { display: "none", autoAlpha: 0, pointerEvents: "none" });
-    block.classList.remove("is-primed", "is-entering", "is-flipping", "is-exiting");
+    block.classList.remove("is-flipping");
     block.style.transform = "";
     bar.style.width = "0%";
     top.innerHTML = makeDigits(0);
