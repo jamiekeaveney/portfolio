@@ -13,6 +13,7 @@ let mobileMenuNavigation = false;
 
 let flipState = null;
 let flippedThumbnail = null;
+
 let caseBgColor = "";
 
 const hasLenis = typeof window.Lenis !== "undefined";
@@ -343,8 +344,6 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return gsap.timeline().set(current, { autoAlpha: 0 });
   }
 
-  const bgTargets = next.querySelectorAll(".section");
-
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
 
@@ -360,27 +359,16 @@ function runWorkLeaveAnimation(current, next, trigger) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  // Make incoming case sections transparent before enter starts
-  gsap.set(bgTargets, {
-    backgroundColor: "rgba(0,0,0,0)"
-  });
-
-  // Keep the current page visible while FLIP happens
-  tl.to(
-    {},
-    {
-      duration: 1.2
-    },
-    0
-  );
+  // Keep current page alive while enter animation plays
+  tl.to({}, { duration: 1.2 });
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector(".project-hero-section");
+  const placeholder = next.querySelector("[data-case-thumbnail]");
   const revealTargets = next.querySelectorAll("[data-case-reveal]");
-  const bgTargets = next.querySelectorAll(".section");
+  const bgTargets = next.querySelectorAll(".project-hero-section, .project-images-section");
   const tl = gsap.timeline();
 
   if (reducedMotion) {
@@ -393,7 +381,6 @@ function runCaseEnterAnimation(next) {
     return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
 
-  const placeholder = next.querySelector("[data-case-thumbnail]");
   if (!placeholder || !flippedThumbnail || !flipState) {
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
@@ -404,7 +391,19 @@ function runCaseEnterAnimation(next) {
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
 
+  // Make the incoming page itself transparent at first
   gsap.set(next, { autoAlpha: 1 });
+
+  // Hide incoming background layers only
+  gsap.set(bgTargets, {
+    backgroundColor: "transparent"
+  });
+
+  // Hide reveal content until sequence starts
+  gsap.set(revealTargets, {
+    autoAlpha: 0,
+    yPercent: 25
+  });
 
   tl.add("startEnter", 0.6);
 
@@ -426,16 +425,13 @@ function runCaseEnterAnimation(next) {
     "startEnter"
   );
 
-  tl.fromTo(
+  tl.to(
     revealTargets,
-    {
-      autoAlpha: 0,
-      yPercent: 25
-    },
     {
       autoAlpha: 1,
       yPercent: 0,
       stagger: 0.1,
+      duration: 0.6,
       ease: "power2.out"
     },
     "startEnter+=0.1"
