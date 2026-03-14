@@ -128,7 +128,7 @@ function runPageEnterAnimation(next){
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector("section")
+  const nextHero = next.querySelector("[data-case-hero]");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
@@ -152,7 +152,7 @@ function runWorkLeaveAnimation(current, next, trigger) {
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector("section")
+  const nextHero = next.querySelector("[data-case-hero]");
   const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
   
   const tl = gsap.timeline();
