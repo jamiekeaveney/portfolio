@@ -4,20 +4,15 @@
 
 gsap.registerPlugin(CustomEase);
 
-if (history.scrollRestoration) {
-  history.scrollRestoration = "manual";
-}
+history.scrollRestoration = "manual";
 
 let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
+let mobileMenuNavigation = false;
 
 let flipState = null;
 let flippedThumbnail = null;
-
-let nextScrollY = 0;
-
-const htmlEl = document.documentElement;
 
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
@@ -27,58 +22,17 @@ let reducedMotion = rmMQ.matches;
 rmMQ.addEventListener?.("change", (e) => (reducedMotion = e.matches));
 rmMQ.addListener?.((e) => (reducedMotion = e.matches));
 
-const has = (s) => !!nextPage.querySelector(s);
+const mobileTransitionMQ = window.matchMedia("(max-width: 991px)");
+
+const has = (selector) => !!nextPage.querySelector(selector);
 
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
 CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
+
 gsap.defaults({ ease: "osmo", duration: durationDefault });
-
-
-
-// -----------------------------------------
-// SAFETY HELPERS
-// -----------------------------------------
-
-function isElementTrigger(trigger) {
-  return trigger instanceof Element;
-}
-
-function isHistoryTrigger(trigger) {
-  return trigger === "back" || trigger === "forward";
-}
-
-function shouldUseInstantMobileTransition() {
-  return false;
-}
-
-function stopLenisSafely() {
-  if (lenis && typeof lenis.stop === "function") {
-    lenis.stop();
-  }
-}
-
-function startLenisSafely() {
-  if (lenis && typeof lenis.start === "function") {
-    lenis.start();
-  }
-}
-
-function getCurrentScrollY() {
-  if (lenis && typeof lenis.scroll === "number") {
-    return lenis.scroll;
-  }
-  return window.scrollY || window.pageYOffset || 0;
-}
-
-function getNextScrollFromHistory(data) {
-  if (!isHistoryTrigger(data?.trigger)) return 0;
-
-  const y = barba?.history?.current?.scroll?.y;
-  return typeof y === "number" ? y : 0;
-}
 
 
 
@@ -99,14 +53,15 @@ function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs before the enter animation
-  // if (has('[data-something]')) initSomething();
+  // Use for features that need to exist while the new page animates in
+  if (has(".slider")) initSlider(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs after enter animation completes
-  // if (has('[data-something]')) initSomething();
+  if (has(".scroll-1_component")) initScroll1(nextPage);
 
   if (hasLenis) {
     lenis.resize();
@@ -127,7 +82,7 @@ function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
   tl.call(() => {
-    resetPage(next, { scrollY: 0 });
+    resetPage(next);
   }, null, 0);
 
   if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
@@ -156,7 +111,9 @@ function runPageOnceAnimation(next) {
   function makeDigits(value) {
     return String(value)
       .split("")
-      .map((char, i) => `<span class="loader-digit" style="--d:${i}">${char}</span>`)
+      .map((char, i) => {
+        return `<span class="loader-digit" style="--d:${i}">${char}</span>`;
+      })
       .join("");
   }
 
@@ -211,9 +168,9 @@ function runPageOnceAnimation(next) {
   }
 
   tl.call(() => {
-    stopLenisSafely();
+    if (typeof stopLenis === "function") stopLenis();
 
-    htmlEl.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
 
     gsap.set(wrap, {
@@ -246,10 +203,10 @@ function runPageOnceAnimation(next) {
   });
 
   tl.call(() => {
-    htmlEl.style.overflow = "";
+    document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
 
-    startLenisSafely();
+    if (typeof startLenis === "function") startLenis();
 
     gsap.set(wrap, {
       display: "none",
@@ -270,7 +227,7 @@ function runPageOnceAnimation(next) {
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
   const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
-  const currentScrollY = getCurrentScrollY();
+  const currentScrollY = lenis ? lenis.scroll : window.scrollY || window.pageYOffset || 0;
 
   const tl = gsap.timeline({
     onComplete: () => {
@@ -280,6 +237,12 @@ function runPageLeaveAnimation(current, next) {
 
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
+  }
+
+  if (shouldUseInstantMobileTransition()) {
+    tl.set(current, { zIndex: 2 });
+    tl.set(current, { autoAlpha: 0 }, 0);
+    return tl;
   }
 
   tl.set(current, {
@@ -332,8 +295,22 @@ function runPageEnterAnimation(next) {
   if (reducedMotion) {
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next, { scrollY: nextScrollY }], "pageReady");
+    tl.call(resetPage, [next], "pageReady");
     return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+  }
+
+  if (shouldUseInstantMobileTransition()) {
+    tl.set(next, {
+      autoAlpha: 1,
+      zIndex: 3
+    });
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+
+    return new Promise((resolve) => {
+      tl.call(resolve, null, "pageReady");
+    });
   }
 
   tl.add("startEnter", 0);
@@ -357,7 +334,7 @@ function runPageEnterAnimation(next) {
   );
 
   tl.add("pageReady");
-  tl.call(resetPage, [next, { scrollY: nextScrollY }], "pageReady");
+  tl.call(resetPage, [next], "pageReady");
 
   return new Promise((resolve) => {
     tl.call(resolve, null, "pageReady");
@@ -389,9 +366,7 @@ function runWorkLeaveAnimation(current, next, trigger) {
     0
   );
 
-  if (nextHero) {
-    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
-  }
+  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
 
   return tl;
 }
@@ -407,16 +382,14 @@ function runCaseEnterAnimation(next) {
     flipState = null;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next, { scrollY: 0 }], "pageReady");
+    tl.call(resetPage, [next], "pageReady");
     return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
 
   const placeholder = next.querySelector("[data-case-thumbnail]");
 
-  if (placeholder && flippedThumbnail) {
-    placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
-    placeholder.remove();
-  }
+  placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
+  placeholder.remove();
 
   tl.add("startEnter", 0.6);
 
@@ -454,7 +427,7 @@ function runCaseEnterAnimation(next) {
   );
 
   tl.add("pageReady");
-  tl.call(resetPage, [next, { scrollY: 0 }], "pageReady");
+  tl.call(resetPage, [next], "pageReady");
 
   tl.call(() => {
     flippedThumbnail = null;
@@ -472,34 +445,43 @@ function runCaseEnterAnimation(next) {
 // BARBA HOOKS + INIT
 // -----------------------------------------
 
-barba.hooks.leave((data) => {
-  if (barba?.history?.current?.scroll) {
-    nextScrollY = barba.history.current.scroll.y || 0;
-  } else {
-    nextScrollY = getCurrentScrollY();
+barba.hooks.before((data) => {
+  document.documentElement.classList.add("is-transitioning");
+
+  mobileMenuNavigation = false;
+
+  const trigger = data?.trigger;
+  if (!(trigger instanceof Element)) return;
+
+  if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
+    mobileMenuNavigation = true;
+    closeMobileNav();
   }
 });
 
 barba.hooks.beforeEnter((data) => {
-  nextScrollY = getNextScrollFromHistory(data);
-
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
     left: 0,
-    right: 0,
-    width: "100%"
+    right: 0
   });
 
-  stopLenisSafely();
+  if (lenis && typeof lenis.stop === "function") {
+    lenis.stop();
+  }
 
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
-barba.hooks.afterLeave(() => {
+barba.hooks.afterLeave((data) => {
   if (hasScrollTrigger) {
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+
+  if (typeof destroySlider === "function") {
+    destroySlider(data.current.container);
   }
 });
 
@@ -510,15 +492,16 @@ barba.hooks.enter((data) => {
 barba.hooks.afterEnter((data) => {
   initAfterEnterFunctions(data.next.container);
 
-  startLenisSafely();
-
   if (hasLenis) {
     lenis.resize();
+    lenis.start();
   }
 
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
+
+  document.documentElement.classList.remove("is-transitioning");
 });
 
 barba.init({
@@ -532,7 +515,7 @@ barba.init({
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
       custom: ({ trigger }) =>
-        isElementTrigger(trigger) && trigger.hasAttribute("data-case-link"),
+        trigger instanceof Element && trigger.hasAttribute("data-case-link"),
       async leave(data) {
         return runWorkLeaveAnimation(
           data.current.container,
@@ -546,7 +529,7 @@ barba.init({
     },
     {
       name: "default",
-      sync: false,
+      sync: true,
 
       async once(data) {
         initOnceFunctions();
@@ -618,28 +601,23 @@ function initLenis() {
   gsap.ticker.lagSmoothing(0);
 }
 
-function resetPage(container, options = {}) {
-  const scrollY = typeof options.scrollY === "number" ? options.scrollY : 0;
-
+function resetPage(container) {
+  window.scrollTo(0, 0);
   gsap.set(container, {
-    clearProps: "position,top,left,right,width,zIndex,transform"
+    clearProps:
+      "position,top,left,right,width,zIndex,borderTopLeftRadius,borderTopRightRadius,transform"
   });
 
-  if (hasLenis && lenis && typeof lenis.scrollTo === "function") {
+  if (hasLenis) {
     lenis.resize();
-    lenis.scrollTo(scrollY, {
-      immediate: true,
-      force: true
-    });
     lenis.start();
-  } else {
-    window.scrollTo(0, scrollY);
   }
 }
 
 function debounceOnWidthChange(fn, ms) {
-  let last = innerWidth,
-    timer;
+  let last = innerWidth;
+  let timer;
+
   return function (...args) {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -654,6 +632,7 @@ function debounceOnWidthChange(fn, ms) {
 function initBarbaNavUpdate(data) {
   const tpl = document.createElement("template");
   tpl.innerHTML = data.next.html.trim();
+
   const nextNodes = tpl.content.querySelectorAll("[data-barba-update]");
   const currentNodes = document.querySelectorAll("nav [data-barba-update]");
 
@@ -671,6 +650,25 @@ function initBarbaNavUpdate(data) {
     const newClassList = next.getAttribute("class") || "";
     curr.setAttribute("class", newClassList);
   });
+}
+
+function isMobileTransition() {
+  return mobileTransitionMQ.matches;
+}
+
+function shouldUseInstantMobileTransition() {
+  return isMobileTransition() && mobileMenuNavigation;
+}
+
+function getMobileNavCheckbox() {
+  return document.querySelector(".nav_checkbox, #nav-toggle");
+}
+
+function closeMobileNav() {
+  const navCheckbox = getMobileNavCheckbox();
+  if (navCheckbox?.checked) {
+    navCheckbox.checked = false;
+  }
 }
 
 
