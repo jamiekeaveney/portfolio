@@ -134,11 +134,22 @@ const initSlider = (() => {
 
     // --- Events ---
 
-    // Click → navigate
+    // Click → navigate via Barba (avoids full page reload)
     track.addEventListener("click", e => {
       if (s.dragged || now() < s.clickUntil) { e.preventDefault(); return; }
-      const link = e.target.closest(".slide")?.querySelector("a[href]");
-      if (link) { e.preventDefault(); location.href = link.href; }
+      const slide = e.target.closest(".slide");
+      const link = slide?.querySelector("a[href]");
+      if (!link) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (typeof barba === "undefined") { location.href = link.href; return; }
+
+      // Pass the [data-case-link] element as trigger so the work-to-case
+      // transition's custom check and FLIP logic can find it
+      const caseLink = slide?.closest("[data-case-link]") || slide;
+      barba.go(link.href, caseLink);
     }, sig);
 
     // Wheel → horizontal scroll
