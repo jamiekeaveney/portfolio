@@ -137,30 +137,14 @@ function initAfterEnterFunctions(next) {
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
-  // On reload or browser back/forward that caused a full page load,
-  // skip the loader entirely and restore scroll position
-  if (isReloadOrBackForward) {
-    const savedScroll = getSavedScroll(window.location.href);
-
-    tl.call(() => {
-      // Hide the loader in case it's visible by default
-      const wrap = document.querySelector('[data-loader="wrap"]');
-      if (wrap) {
-        gsap.set(wrap, {
-          display: "none",
-          autoAlpha: 0,
-          pointerEvents: "none"
-        });
-      }
-
-      resetPage(next, savedScroll);
-    }, null, 0);
-
-    return tl;
-  }
+  // On refresh or back/forward that caused a full reload, restore scroll.
+  // On a genuine first visit, start at top. Either way the loader plays.
+  const onceScroll = isReloadOrBackForward
+    ? getSavedScroll(window.location.href)
+    : 0;
 
   tl.call(() => {
-    resetPage(next, 0);
+    resetPage(next, onceScroll);
   }, null, 0);
 
   if (reducedMotion) return tl;
