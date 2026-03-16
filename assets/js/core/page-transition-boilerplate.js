@@ -9,6 +9,7 @@ history.scrollRestoration = "manual";
 let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
+let mobileMenuNavigation = false;
 
 let flipState = null;
 let flippedThumbnail = null;
@@ -18,15 +19,19 @@ const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 
 const rmMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
 let reducedMotion = rmMQ.matches;
-rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
-rmMQ.addListener?.(e => (reducedMotion = e.matches)); 
+rmMQ.addEventListener?.("change", (e) => (reducedMotion = e.matches));
+rmMQ.addListener?.((e) => (reducedMotion = e.matches));
 
-const has = (s) => !!nextPage.querySelector(s);
+const mobileTransitionMQ = window.matchMedia("(max-width: 991px)");
+
+const has = (selector) => !!nextPage.querySelector(selector);
 
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
+CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
+
 gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 
@@ -39,29 +44,29 @@ function initOnceFunctions() {
   initLenis();
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
-  
+
   // Runs once on first load
   // if (has('[data-something]')) initSomething();
 }
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
-  
+
   // Runs before the enter animation
-  // if (has('[data-something]')) initSomething();
+  // Use for features that need to exist while the new page animates in
+  if (has(".slider")) initSlider(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
-  
+
   // Runs after enter animation completes
-  // if (has('[data-something]')) initSomething();
-  
-  
-  if(hasLenis){
+  if (has(".scroll-1_component")) initScroll1(nextPage);
+
+  if (hasLenis) {
     lenis.resize();
   }
-  
+
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
@@ -77,50 +82,251 @@ function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
   tl.call(() => {
-    resetPage(next)
+    resetPage(next);
   }, null, 0);
+
+  if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
+
+  const wrap = document.querySelector('[data-loader="wrap"]');
+  if (!wrap) return tl;
+
+  const panel = wrap.querySelector(".loader-panel");
+  const bar = wrap.querySelector("[data-loader-bar]");
+  const block = wrap.querySelector("[data-loader-block]");
+  const top = wrap.querySelector("[data-loader-top]");
+  const bot = wrap.querySelector("[data-loader-bot]");
+
+  if (!panel || !bar || !block || !top || !bot) return tl;
+
+  const FLIP_DUR = 0.68;
+  const FLIP_STAGGER = 0.07;
+  const FLIP_PAD = 0.02;
+  const HOLD_DUR = 0.25;
+  const STEP_GAP = 0.02;
+  const FADE_DUR = 0.5;
+
+  const step1 = gsap.utils.random(25, 35, 1);
+  const step2 = gsap.utils.random(65, 75, 1);
+
+  function makeDigits(value) {
+    return String(value)
+      .split("")
+      .map((char, i) => {
+        return `<span class="loader-digit" style="--d:${i}">${char}</span>`;
+      })
+      .join("");
+  }
+
+  function getFlipWait(value) {
+    const digitCount = String(value).length;
+    return FLIP_DUR + (digitCount - 1) * FLIP_STAGGER + FLIP_PAD;
+  }
+
+  function getTravel() {
+    const styles = getComputedStyle(panel);
+    const paddingTop = parseFloat(styles.paddingTop) || 0;
+    const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+    const blockHeight = block.getBoundingClientRect().height;
+
+    return Math.max(
+      0,
+      panel.clientHeight - paddingTop - paddingBottom - blockHeight
+    );
+  }
+
+  function setBlockY(travel, pct) {
+    block.style.transform = `translate3d(0, ${-(travel * pct) / 100}px, 0)`;
+  }
+
+  function setStep(value, travel) {
+    bot.innerHTML = makeDigits(value);
+    block.classList.add("is-flipping");
+    bar.style.width = value + "%";
+    setBlockY(travel, value);
+  }
+
+  function commitStep(value) {
+    top.innerHTML = makeDigits(value);
+    bot.innerHTML = "";
+    block.classList.remove("is-flipping");
+  }
+
+  function addFlipStep(value, travel, addGap) {
+    if (addGap) {
+      tl.to({}, { duration: STEP_GAP });
+    }
+
+    tl.call(() => {
+      setStep(value, travel);
+    });
+
+    tl.to({}, { duration: getFlipWait(value) });
+
+    tl.call(() => {
+      commitStep(value);
+    });
+  }
+
+  tl.call(() => {
+    if (typeof stopLenis === "function") stopLenis();
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    gsap.set(wrap, {
+      display: "block",
+      autoAlpha: 1,
+      pointerEvents: "auto"
+    });
+
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
+    bar.style.width = "0%";
+    block.classList.remove("is-flipping");
+    setBlockY(getTravel(), 0);
+  });
+
+  tl.to({}, { duration: HOLD_DUR });
+
+  const travel = getTravel();
+
+  addFlipStep(step1, travel, false);
+  addFlipStep(step2, travel, true);
+  addFlipStep(100, travel, true);
+
+  tl.to({}, { duration: HOLD_DUR });
+
+  tl.to(wrap, {
+    autoAlpha: 0,
+    duration: FADE_DUR,
+    ease: "power2.out"
+  });
+
+  tl.call(() => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+
+    if (typeof startLenis === "function") startLenis();
+
+    gsap.set(wrap, {
+      display: "none",
+      autoAlpha: 0,
+      pointerEvents: "none"
+    });
+
+    block.classList.remove("is-flipping");
+    block.style.transform = "";
+    bar.style.width = "0%";
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
+  });
 
   return tl;
 }
 
 function runPageLeaveAnimation(current, next) {
+  const transitionWrap = document.querySelector("[data-transition-wrap]");
+  const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
+
   const tl = gsap.timeline({
-    onComplete: () => { current.remove() }
+    onComplete: () => {
+      current.remove();
+    }
   });
-  
+
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  tl.to(current, { autoAlpha: 0, duration: 0.4 });
+  if (shouldUseInstantMobileTransition()) {
+    tl.set(current, { zIndex: 2 });
+    tl.set(current, { autoAlpha: 0 }, 0);
+    return tl;
+  }
+
+  if (transitionWrap) {
+    tl.set(transitionWrap, { zIndex: 2 });
+  }
+
+  if (transitionDark) {
+    tl.fromTo(
+      transitionDark,
+      { autoAlpha: 0 },
+      {
+        autoAlpha: 0.8,
+        duration: 1.2,
+        ease: "parallax"
+      },
+      0
+    );
+  }
+
+  tl.fromTo(
+    current,
+    { y: "0vh" },
+    {
+      y: "-25vh",
+      duration: 1.2,
+      ease: "parallax"
+    },
+    0
+  );
+
+  if (transitionDark) {
+    tl.set(transitionDark, { autoAlpha: 0 });
+  }
 
   return tl;
 }
 
-function runPageEnterAnimation(next){
+function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady")
+    tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
-  
-  tl.add("startEnter", 0.6);
-  
-  tl.fromTo(next, {
-    autoAlpha: 0,
-  },{
-    autoAlpha: 1,
-  }, "startEnter");
+
+  if (shouldUseInstantMobileTransition()) {
+    tl.set(next, {
+      autoAlpha: 1,
+      zIndex: 3
+    });
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+
+    return new Promise((resolve) => {
+      tl.call(resolve, null, "pageReady");
+    });
+  }
+
+  tl.add("startEnter", 0);
+
+  tl.set(next, {
+    zIndex: 3
+  });
+
+  tl.fromTo(
+    next,
+    {
+      y: "100vh"
+    },
+    {
+      y: "0vh",
+      duration: 1.2,
+      clearProps: "transform",
+      ease: "parallax"
+    },
+    "startEnter"
+  );
 
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     tl.call(resolve, null, "pageReady");
   });
 }
@@ -208,49 +414,65 @@ function runCaseEnterAnimation(next) {
 }
 
 
+
 // -----------------------------------------
 // BARBA HOOKS + INIT
 // -----------------------------------------
 
-barba.hooks.beforeEnter(data => {
-  // Position new container on top
+barba.hooks.before((data) => {
+  document.documentElement.classList.add("is-transitioning");
+
+  mobileMenuNavigation = false;
+
+  const trigger = data?.trigger;
+  if (!trigger) return;
+
+  if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
+    mobileMenuNavigation = true;
+    closeMobileNav();
+  }
+});
+
+barba.hooks.beforeEnter((data) => {
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
     left: 0,
-    right: 0,
+    right: 0
   });
-  
+
   if (lenis && typeof lenis.stop === "function") {
     lenis.stop();
   }
-  
+
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
-barba.hooks.afterLeave(() => {
-  if(hasScrollTrigger){
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+barba.hooks.afterLeave((data) => {
+  if (hasScrollTrigger) {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+
+  if (typeof destroySlider === "function") {
+    destroySlider(data.current.container);
   }
 });
 
-barba.hooks.enter(data => {
+barba.hooks.enter((data) => {
   initBarbaNavUpdate(data);
-})
+});
 
-barba.hooks.afterEnter(data => {
-  // Run page functions
+barba.hooks.afterEnter((data) => {
   initAfterEnterFunctions(data.next.container);
-  
-  // Settle
-  if(hasLenis){
+
+  if (hasLenis) {
     lenis.resize();
-    lenis.start();    
+    lenis.start();
   }
-  
-  if(hasScrollTrigger){
-    ScrollTrigger.refresh(); 
+
+  if (hasScrollTrigger) {
+    ScrollTrigger.refresh();
   }
 });
 
@@ -316,26 +538,27 @@ const themeConfig = {
 function applyThemeFrom(container) {
   const pageTheme = container?.dataset?.pageTheme || "light";
   const config = themeConfig[pageTheme] || themeConfig.light;
-  
+
   document.body.dataset.pageTheme = pageTheme;
-  const transitionEl = document.querySelector('[data-theme-transition]');
+
+  const transitionEl = document.querySelector("[data-theme-transition]");
   if (transitionEl) {
     transitionEl.dataset.themeTransition = config.transition;
   }
 
-  const nav = document.querySelector('[data-theme-nav]');
+  const nav = document.querySelector("[data-theme-nav]");
   if (nav) {
     nav.dataset.themeNav = config.nav;
   }
 }
 
 function initLenis() {
-  if (lenis) return; // already created
+  if (lenis) return;
   if (!hasLenis) return;
 
   lenis = new Lenis({
     lerp: 0.165,
-    wheelMultiplier: 1.25,
+    wheelMultiplier: 1.25
   });
 
   if (hasScrollTrigger) {
@@ -349,19 +572,23 @@ function initLenis() {
   gsap.ticker.lagSmoothing(0);
 }
 
-function resetPage(container){
+function resetPage(container) {
   window.scrollTo(0, 0);
-  gsap.set(container, { clearProps: "position,top,left,right" });
-  
-  if(hasLenis){
+  gsap.set(container, {
+    clearProps:
+      "position,top,left,right,zIndex,borderTopLeftRadius,borderTopRightRadius"
+  });
+
+  if (hasLenis) {
     lenis.resize();
-    lenis.start();    
+    lenis.start();
   }
 }
 
 function debounceOnWidthChange(fn, ms) {
-  let last = innerWidth,
-    timer;
+  let last = innerWidth;
+  let timer;
+
   return function (...args) {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -374,27 +601,45 @@ function debounceOnWidthChange(fn, ms) {
 }
 
 function initBarbaNavUpdate(data) {
-  var tpl = document.createElement('template');
+  const tpl = document.createElement("template");
   tpl.innerHTML = data.next.html.trim();
-  var nextNodes = tpl.content.querySelectorAll('[data-barba-update]');
-  var currentNodes = document.querySelectorAll('nav [data-barba-update]');
 
-  currentNodes.forEach(function (curr, index) {
-    var next = nextNodes[index];
+  const nextNodes = tpl.content.querySelectorAll("[data-barba-update]");
+  const currentNodes = document.querySelectorAll("nav [data-barba-update]");
+
+  currentNodes.forEach((curr, index) => {
+    const next = nextNodes[index];
     if (!next) return;
 
-    // Aria-current sync
-    var newStatus = next.getAttribute('aria-current');
+    const newStatus = next.getAttribute("aria-current");
     if (newStatus !== null) {
-      curr.setAttribute('aria-current', newStatus);
+      curr.setAttribute("aria-current", newStatus);
     } else {
-      curr.removeAttribute('aria-current');
+      curr.removeAttribute("aria-current");
     }
 
-    // Class list sync
-    var newClassList = next.getAttribute('class') || '';
-    curr.setAttribute('class', newClassList);
+    const newClassList = next.getAttribute("class") || "";
+    curr.setAttribute("class", newClassList);
   });
+}
+
+function isMobileTransition() {
+  return mobileTransitionMQ.matches;
+}
+
+function shouldUseInstantMobileTransition() {
+  return isMobileTransition() && mobileMenuNavigation;
+}
+
+function getMobileNavCheckbox() {
+  return document.querySelector(".nav_checkbox, #nav-toggle");
+}
+
+function closeMobileNav() {
+  const navCheckbox = getMobileNavCheckbox();
+  if (navCheckbox?.checked) {
+    navCheckbox.checked = false;
+  }
 }
 
 
