@@ -87,6 +87,11 @@ function initScrollSaver() {
   } else {
     window.addEventListener("scroll", save, { passive: true });
   }
+
+  // Capture exact scroll position the instant the user refreshes or leaves
+  window.addEventListener("beforeunload", () => {
+    saveScrollPosition(window.location.href, getCurrentScroll());
+  });
 }
 
 
@@ -143,14 +148,18 @@ function runPageOnceAnimation(next) {
     ? getSavedScroll(window.location.href)
     : 0;
 
-  tl.call(() => {
-    resetPage(next, onceScroll);
-  }, null, 0);
-
-  if (reducedMotion) return tl;
+  if (reducedMotion) {
+    tl.call(() => {
+      resetPage(next, onceScroll);
+    }, null, 0);
+    return tl;
+  }
 
   const wrap = document.querySelector('[data-loader="wrap"]');
-  if (!wrap) return tl;
+  if (!wrap) {
+    tl.call(() => { resetPage(next, onceScroll); }, null, 0);
+    return tl;
+  }
 
   const panel = wrap.querySelector(".loader-panel");
   const bar = wrap.querySelector("[data-loader-bar]");
@@ -158,7 +167,10 @@ function runPageOnceAnimation(next) {
   const top = wrap.querySelector("[data-loader-top]");
   const bot = wrap.querySelector("[data-loader-bot]");
 
-  if (!panel || !bar || !block || !top || !bot) return tl;
+  if (!panel || !bar || !block || !top || !bot) {
+    tl.call(() => { resetPage(next, onceScroll); }, null, 0);
+    return tl;
+  }
 
   const FLIP_DUR = 0.68;
   const FLIP_STAGGER = 0.07;
@@ -229,11 +241,23 @@ function runPageOnceAnimation(next) {
     });
   }
 
+  // Step 1: Stop Lenis, lock the page, show the loader.
+  // Set scroll position NOW while the loader covers everything —
+  // the user can't see the page behind it.
   tl.call(() => {
     if (lenis) lenis.stop();
 
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+
+    // Set scroll position behind the loader — Lenis is stopped so no drift
+    gsap.set(next, { clearProps: "position,top,left,right" });
+    window.scrollTo(0, onceScroll);
+    if (lenis) {
+      lenis.scrollTo(onceScroll, { immediate: true });
+      lenis.resize();
+      // Do NOT call lenis.start() — keep it stopped during loader
+    }
 
     gsap.set(wrap, {
       display: "block",
@@ -264,11 +288,10 @@ function runPageOnceAnimation(next) {
     ease: "power2.out"
   });
 
+  // Step 2: Loader is done — unlock everything and start Lenis
   tl.call(() => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
-
-    if (lenis) lenis.start();
 
     gsap.set(wrap, {
       display: "none",
@@ -281,6 +304,15 @@ function runPageOnceAnimation(next) {
     bar.style.width = "0%";
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
+
+    // NOW start Lenis — scroll is already in the right place
+    if (lenis) {
+      lenis.start();
+    }
+
+    if (hasScrollTrigger) {
+      ScrollTrigger.refresh();
+    }
   });
 
   return tl;
