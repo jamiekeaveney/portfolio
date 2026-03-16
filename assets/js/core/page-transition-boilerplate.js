@@ -127,84 +127,84 @@ function runPageEnterAnimation(next){
 
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
-  const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector("[data-case-hero]");
-
-  if (!clicked || !thumbnail || !nextHero) {
-    console.error("Missing transition element", { clicked, thumbnail, nextHero });
-    return gsap.timeline({ onComplete: () => current.remove() }).to(current, {
-      autoAlpha: 0,
-      duration: 0.4
-    });
-  }
+  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
+  const nextHero = next.querySelector(".section")
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-
+  
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-
+  
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-
-  tl.to(current, {
+  
+  tl.to(current,{
     autoAlpha: 0,
     duration: 0.6
-  }, 0);
-
-  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
-
+  }, 0)
+  
+  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector("[data-case-hero]");
-  const placeholder = next.querySelector("[data-case-thumbnail]");
-
-  if (!nextHero || !placeholder || !flippedThumbnail || !flipState) {
-    console.error("Missing case enter element", {
-      nextHero,
-      placeholder,
-      flippedThumbnail,
-      flipState
-    });
-    return gsap.timeline().set(next, { autoAlpha: 1 });
-  }
-
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
+  const nextHero = next.querySelector(".section")
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  
   const tl = gsap.timeline();
-
+  
+  if (reducedMotion) {
+    flippedThumbnail = null;
+    flipState = null;
+    tl.set(next, { autoAlpha: 1 });
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+  }
+  
+  const placeholder = next.querySelector("[data-case-thumbnail]");
+  
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-
+  
   tl.add("startEnter", 0.6);
-
+  
   tl.add(
     Flip.from(flipState, {
-      duration: 0.8
-    }),
-    0
-  );
-
-  tl.fromTo(nextHero, {
+      duration: 0.8,
+    }), 0);
+    
+  tl.fromTo(nextHero,{
     backgroundColor: "transparent"
-  }, {
+  },{
     backgroundColor: "#FFF",
     duration: 0.5
-  }, "startEnter");
+  }, "startEnter")
 
-  tl.fromTo(revealTargets, {
-    autoAlpha: 0,
+  tl.fromTo(revealTargets,{
+    autoAlpha:0,
     yPercent: 25
-  }, {
-    autoAlpha: 1,
+  },{
+    autoAlpha:1,
     yPercent: 0,
     stagger: 0.1
-  }, "startEnter+=0.1");
-
-  return tl;
+  }, "startEnter+=0.1")
+  
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  
+  tl.call(() => {
+    flippedThumbnail = null;
+    flipState = null;
+  });
+  
+  return new Promise(resolve => {
+    tl.call(resolve, null, "pageReady");
+  });
 }
 
 
@@ -255,7 +255,7 @@ barba.hooks.afterEnter(data => {
 });
 
 barba.init({
-  debug: true, // Set to 'false' in production
+  debug: false, // Set to 'false' in production
   timeout: 7000,
   preventRunning: true,
   transitions: [
