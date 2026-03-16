@@ -225,14 +225,19 @@ function runPageLeaveAnimation(current, next) {
 
   const tl = gsap.timeline({
     onComplete: () => {
-      current.remove(); 
+      current.remove();
     }
-  })
-  
+  });
+
+  // Close mobile menu if open
+  const navToggle = document.querySelector("#nav-toggle");
+  if (navToggle && navToggle.checked) {
+    navToggle.checked = false;
+  }
+
   CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
-  
+
   if (reducedMotion) {
-    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
   
