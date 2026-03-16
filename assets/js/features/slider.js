@@ -134,9 +134,14 @@ const initSlider = (() => {
 
     // --- Events ---
 
-    // Click → navigate via Barba (avoids full page reload)
+    // Click → let Barba intercept a native click on the <a> element.
+    // Guard flag prevents the track handler from catching the re-dispatched event.
+    let programmaticClick = false;
+
     track.addEventListener("click", e => {
+      if (programmaticClick) return;
       if (s.dragged || now() < s.clickUntil) { e.preventDefault(); return; }
+
       const slide = e.target.closest(".slide");
       const link = slide?.querySelector("a[href]");
       if (!link) return;
@@ -144,12 +149,11 @@ const initSlider = (() => {
       e.preventDefault();
       e.stopPropagation();
 
-      if (typeof barba === "undefined") { location.href = link.href; return; }
-
-      // Pass the [data-case-link] element as trigger so the work-to-case
-      // transition's custom check and FLIP logic can find it
-      const caseLink = slide?.closest("[data-case-link]") || slide;
-      barba.go(link.href, caseLink);
+      // Dispatch a real click on the <a> — Barba listens for link clicks
+      // on the document and will intercept this naturally
+      programmaticClick = true;
+      link.click();
+      programmaticClick = false;
     }, sig);
 
     // Wheel → horizontal scroll
