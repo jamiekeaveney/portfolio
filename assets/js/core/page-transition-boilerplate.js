@@ -80,6 +80,142 @@ function runPageOnceAnimation(next) {
     resetPage(next);
   }, null, 0);
 
+  if (reducedMotion || shouldUseInstantMobileTransition()) return tl;
+
+  const wrap = document.querySelector('[data-loader="wrap"]');
+  if (!wrap) return tl;
+
+  const panel = wrap.querySelector(".loader-panel");
+  const bar = wrap.querySelector("[data-loader-bar]");
+  const block = wrap.querySelector("[data-loader-block]");
+  const top = wrap.querySelector("[data-loader-top]");
+  const bot = wrap.querySelector("[data-loader-bot]");
+
+  if (!panel || !bar || !block || !top || !bot) return tl;
+
+  const FLIP_DUR = 0.68;
+  const FLIP_STAGGER = 0.07;
+  const FLIP_PAD = 0.02;
+  const HOLD_DUR = 0.25;
+  const STEP_GAP = 0.02;
+  const FADE_DUR = 0.5;
+
+  const step1 = gsap.utils.random(25, 35, 1);
+  const step2 = gsap.utils.random(65, 75, 1);
+
+  function makeDigits(value) {
+    return String(value)
+      .split("")
+      .map((char, i) => {
+        return `<span class="loader-digit" style="--d:${i}">${char}</span>`;
+      })
+      .join("");
+  }
+
+  function getFlipWait(value) {
+    const digitCount = String(value).length;
+    return FLIP_DUR + (digitCount - 1) * FLIP_STAGGER + FLIP_PAD;
+  }
+
+  function getTravel() {
+    const styles = getComputedStyle(panel);
+    const paddingTop = parseFloat(styles.paddingTop) || 0;
+    const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+    const blockHeight = block.getBoundingClientRect().height;
+
+    return Math.max(
+      0,
+      panel.clientHeight - paddingTop - paddingBottom - blockHeight
+    );
+  }
+
+  function setBlockY(travel, pct) {
+    block.style.transform = `translate3d(0, ${-(travel * pct) / 100}px, 0)`;
+  }
+
+  function setStep(value, travel) {
+    bot.innerHTML = makeDigits(value);
+    block.classList.add("is-flipping");
+    bar.style.width = value + "%";
+    setBlockY(travel, value);
+  }
+
+  function commitStep(value) {
+    top.innerHTML = makeDigits(value);
+    bot.innerHTML = "";
+    block.classList.remove("is-flipping");
+  }
+
+  function addFlipStep(value, travel, addGap) {
+    if (addGap) {
+      tl.to({}, { duration: STEP_GAP });
+    }
+
+    tl.call(() => {
+      setStep(value, travel);
+    });
+
+    tl.to({}, { duration: getFlipWait(value) });
+
+    tl.call(() => {
+      commitStep(value);
+    });
+  }
+
+  tl.call(() => {
+    if (typeof stopLenis === "function") stopLenis();
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    gsap.set(wrap, {
+      display: "block",
+      autoAlpha: 1,
+      pointerEvents: "auto"
+    });
+
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
+    bar.style.width = "0%";
+    block.classList.remove("is-flipping");
+    setBlockY(getTravel(), 0);
+  });
+
+  tl.to({}, { duration: HOLD_DUR });
+
+  const travel = getTravel();
+
+  addFlipStep(step1, travel, false);
+  addFlipStep(step2, travel, true);
+  addFlipStep(100, travel, true);
+
+  tl.to({}, { duration: HOLD_DUR });
+
+  tl.to(wrap, {
+    autoAlpha: 0,
+    duration: FADE_DUR,
+    ease: "power2.out"
+  });
+
+  tl.call(() => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+
+    if (typeof startLenis === "function") startLenis();
+
+    gsap.set(wrap, {
+      display: "none",
+      autoAlpha: 0,
+      pointerEvents: "none"
+    });
+
+    block.classList.remove("is-flipping");
+    block.style.transform = "";
+    bar.style.width = "0%";
+    top.innerHTML = makeDigits(0);
+    bot.innerHTML = "";
+  });
+
   return tl;
 }
 
