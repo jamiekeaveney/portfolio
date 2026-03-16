@@ -4,14 +4,11 @@
 
 gsap.registerPlugin(CustomEase);
 
-if (history.scrollRestoration) {
-  history.scrollRestoration = "manual";
-}
+history.scrollRestoration = "manual";
 
 let lenis = null;
 let nextPage = document;
 let onceFunctionsInitialized = false;
-let mobileMenuNavigation = false;
 
 let flipState = null;
 let flippedThumbnail = null;
@@ -21,129 +18,16 @@ const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
 
 const rmMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
 let reducedMotion = rmMQ.matches;
-rmMQ.addEventListener?.("change", (e) => (reducedMotion = e.matches));
-rmMQ.addListener?.((e) => (reducedMotion = e.matches));
+rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
+rmMQ.addListener?.(e => (reducedMotion = e.matches)); 
 
-const mobileTransitionMQ = window.matchMedia("(max-width: 991px)");
-
-const has = (selector) => !!nextPage.querySelector(selector);
-const htmlEl = document.documentElement;
-
-const transitionState = {
-  nextScrollY: 0
-};
+const has = (s) => !!nextPage.querySelector(s);
 
 let staggerDefault = 0.05;
 let durationDefault = 0.6;
 
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
-CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
-
 gsap.defaults({ ease: "osmo", duration: durationDefault });
-
-
-
-// -----------------------------------------
-// TRANSITION SAFETY HELPERS
-// -----------------------------------------
-
-function isElementTrigger(trigger) {
-  return trigger instanceof Element;
-}
-
-function isHistoryTrigger(trigger) {
-  return trigger === "back" || trigger === "forward" || trigger === "popstate";
-}
-
-function getLenisScroll() {
-  if (lenis && typeof lenis.scroll === "number") return lenis.scroll;
-  return window.scrollY || window.pageYOffset || 0;
-}
-
-function getBarbaWrapper() {
-  return document.querySelector('[data-barba="wrapper"]');
-}
-
-function killContainerTweens(container) {
-  if (!container) return;
-  gsap.killTweensOf(container);
-  const children = container.querySelectorAll("*");
-  if (children.length) gsap.killTweensOf(children);
-}
-
-function clearContainerProps(container) {
-  if (!container) return;
-
-  killContainerTweens(container);
-
-  gsap.set(container, {
-    clearProps:
-      "position,top,left,right,bottom,width,height,zIndex,transform,opacity,visibility,pointerEvents,backgroundColor,overflow,borderTopLeftRadius,borderTopRightRadius"
-  });
-}
-
-function pruneBarbaContainers(keepContainers = []) {
-  const wrapper = getBarbaWrapper();
-  if (!wrapper) return;
-
-  const keep = new Set(keepContainers.filter(Boolean));
-
-  wrapper.querySelectorAll('[data-barba="container"]').forEach((container) => {
-    if (!keep.has(container)) {
-      killContainerTweens(container);
-      container.remove();
-    }
-  });
-}
-
-function resolveContainerBackground(container) {
-  if (!container) return "#fff";
-
-  if (container.dataset.pageBg) return container.dataset.pageBg;
-
-  const candidates = [
-    container,
-    container.querySelector(".section"),
-    document.body,
-    document.documentElement
-  ];
-
-  for (const el of candidates) {
-    if (!el) continue;
-    const bg = getComputedStyle(el).backgroundColor;
-    if (bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") {
-      return bg;
-    }
-  }
-
-  return "#fff";
-}
-
-function resolveNextScroll(data) {
-  if (!isHistoryTrigger(data?.trigger)) return 0;
-
-  const historyScroll = barba?.history?.current?.scroll?.y;
-  if (typeof historyScroll === "number") return Math.max(0, historyScroll);
-
-  return 0;
-}
-
-function cleanupTransitionState() {
-  htmlEl.classList.remove("is-transitioning");
-  mobileMenuNavigation = false;
-}
-
-function stopLenisSafely() {
-  if (lenis && typeof lenis.stop === "function") {
-    lenis.stop();
-  }
-}
-
-function startLenisSafely() {
-  if (lenis && typeof lenis.start === "function") {
-    lenis.start();
-  }
-}
 
 
 
@@ -155,29 +39,29 @@ function initOnceFunctions() {
   initLenis();
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
-
+  
   // Runs once on first load
   // if (has('[data-something]')) initSomething();
 }
 
 function initBeforeEnterFunctions(next) {
   nextPage = next || document;
-
+  
   // Runs before the enter animation
-  // Use for features that need to exist while the new page animates in
-  if (has(".slider")) initSlider(nextPage);
+  // if (has('[data-something]')) initSomething();
 }
 
 function initAfterEnterFunctions(next) {
   nextPage = next || document;
-
+  
   // Runs after enter animation completes
-  if (has(".scroll-1_component")) initScroll1(nextPage);
-
-  if (hasLenis) {
+  // if (has('[data-something]')) initSomething();
+  
+  
+  if(hasLenis){
     lenis.resize();
   }
-
+  
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
@@ -335,128 +219,80 @@ function runPageOnceAnimation(next) {
   return tl;
 }
 
-function runPageLeaveAnimation(current) {
+function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
-  const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
-  const currentScrollY = getLenisScroll();
+  const transitionDark = transitionWrap.querySelector("[data-transition-dark]");
 
   const tl = gsap.timeline({
     onComplete: () => {
-      current.remove();
+      current.remove(); 
     }
-  });
-
+  })
+  
+  CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
+  
   if (reducedMotion) {
+    // Immediate swap behavior if user prefers reduced motion
     return tl.set(current, { autoAlpha: 0 });
   }
-
-  if (shouldUseInstantMobileTransition()) {
-    tl.set(current, { zIndex: 2 });
-    tl.set(current, { autoAlpha: 0 }, 0);
-    return tl;
-  }
-
-  killContainerTweens(current);
-
-  tl.set(current, {
-    position: "fixed",
-    top: -currentScrollY,
-    left: 0,
-    right: 0,
-    width: "100%",
+  
+  tl.set(transitionWrap, {
     zIndex: 2
   });
-
-  if (transitionWrap) {
-    tl.set(transitionWrap, { zIndex: 4 });
-  }
-
-  if (transitionDark) {
-    tl.fromTo(
-      transitionDark,
-      { autoAlpha: 0 },
-      {
-        autoAlpha: 0.8,
-        duration: 1.2,
-        ease: "parallax"
-      },
-      0
-    );
-  }
-
-  tl.fromTo(
-    current,
-    { y: 0 },
-    {
-      y: "-25vh",
-      duration: 1.2,
-      ease: "parallax"
-    },
-    0
-  );
-
-  if (transitionDark) {
-    tl.set(transitionDark, { autoAlpha: 0 });
-  }
+  
+  tl.fromTo(transitionDark, {
+    autoAlpha: 0
+  },{
+    autoAlpha: 0.8,
+    duration: 1.2,
+    ease: "parallax"
+  }, 0);
+  
+  tl.fromTo(current,{
+    y: "0vh"
+  },{
+    y: "-25vh",
+    duration: 1.2,
+    ease: "parallax",
+  }, 0);
+  
+  tl.set(transitionDark, {
+    autoAlpha: 0,
+  });
 
   return tl;
 }
 
-function runPageEnterAnimation(next, options = {}) {
-  const { scrollY = 0 } = options;
+function runPageEnterAnimation(next){
   const tl = gsap.timeline();
-
+  
   if (reducedMotion) {
-    tl.set(next, {
-      autoAlpha: 1,
-      visibility: "visible",
-      zIndex: 3
-    });
-    tl.add("pageReady");
-    tl.call(resetPage, [next, { scrollY }], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+    // Immediate swap behavior if user prefers reduced motion
+    tl.set(next, { autoAlpha: 1 });
+    tl.add("pageReady")
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-
-  if (shouldUseInstantMobileTransition()) {
-    tl.set(next, {
-      autoAlpha: 1,
-      visibility: "visible",
-      zIndex: 3
-    });
-
-    tl.add("pageReady");
-    tl.call(resetPage, [next, { scrollY }], "pageReady");
-
-    return new Promise((resolve) => {
-      tl.call(resolve, null, "pageReady");
-    });
-  }
-
+  
   tl.add("startEnter", 0);
-
+  
   tl.set(next, {
-    autoAlpha: 1,
-    visibility: "visible",
     zIndex: 3
   });
-
-  tl.fromTo(
-    next,
-    {
-      y: "100vh"
-    },
-    {
-      y: "0vh",
-      duration: 1.2,
-      ease: "parallax"
-    },
-    "startEnter"
-  );
+  
+  tl.fromTo(next, {
+    y: "100vh"
+  }, {
+    y: "0vh",
+    duration: 1.2,
+    clearProps: "all",
+    ease: "parallax"
+  }, "startEnter");
 
   tl.add("pageReady");
-  tl.call(resetPage, [next, { scrollY }], "pageReady");
+  tl.call(resetPage, [next], "pageReady");
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     tl.call(resolve, null, "pageReady");
   });
 }
@@ -464,209 +300,134 @@ function runPageEnterAnimation(next, options = {}) {
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector(".section");
+  const nextHero = next.querySelector(".section")
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-
+  
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-
+  
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-
-  tl.to(
-    current,
-    {
-      autoAlpha: 0,
-      duration: 0.6
-    },
-    0
-  );
-
-  if (nextHero) {
-    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
-  }
-
+  
+  tl.to(current,{
+    autoAlpha: 0,
+    duration: 0.6
+  }, 0)
+  
+  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
+  
   return tl;
 }
 
-function runCaseEnterAnimation(next, options = {}) {
-  const { scrollY = 0 } = options;
-  const nextHero = next.querySelector(".section");
-  const revealTargets = nextHero?.querySelectorAll("[data-case-reveal]") || [];
-
+function runCaseEnterAnimation(next) {
+  const nextHero = next.querySelector(".section")
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
+  
   const tl = gsap.timeline();
-
+  
   if (reducedMotion) {
     flippedThumbnail = null;
     flipState = null;
-    tl.set(next, {
-      autoAlpha: 1,
-      visibility: "visible"
-    });
+    tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next, { scrollY }], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
+    tl.call(resetPage, [next], "pageReady");
+    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
-
+  
   const placeholder = next.querySelector("[data-case-thumbnail]");
-
-  if (placeholder && flippedThumbnail) {
-    placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
-    placeholder.remove();
-  }
-
-  tl.set(next, {
-    autoAlpha: 1,
-    visibility: "visible",
-    zIndex: 3
-  });
-
+  
+  placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
+  placeholder.remove();
+  
   tl.add("startEnter", 0.6);
+  
+  tl.add(
+    Flip.from(flipState, {
+      duration: 0.8,
+    }), 0);
+    
+  tl.fromTo(nextHero,{
+    backgroundColor: "transparent"
+  },{
+    backgroundColor: "#FFF",
+    duration: 0.5
+  }, "startEnter")
 
-  if (flipState) {
-    tl.add(
-      Flip.from(flipState, {
-        duration: 0.8
-      }),
-      0
-    );
-  }
-
-  if (nextHero) {
-    tl.fromTo(
-      nextHero,
-      {
-        backgroundColor: "transparent"
-      },
-      {
-        backgroundColor: "#FFF",
-        duration: 0.5
-      },
-      "startEnter"
-    );
-  }
-
-  if (revealTargets.length) {
-    tl.fromTo(
-      revealTargets,
-      {
-        autoAlpha: 0,
-        yPercent: 25
-      },
-      {
-        autoAlpha: 1,
-        yPercent: 0,
-        stagger: 0.1
-      },
-      "startEnter+=0.1"
-    );
-  }
-
+  tl.fromTo(revealTargets,{
+    autoAlpha:0,
+    yPercent: 25
+  },{
+    autoAlpha:1,
+    yPercent: 0,
+    stagger: 0.1
+  }, "startEnter+=0.1")
+  
   tl.add("pageReady");
-  tl.call(resetPage, [next, { scrollY }], "pageReady");
-
+  tl.call(resetPage, [next], "pageReady");
+  
   tl.call(() => {
     flippedThumbnail = null;
     flipState = null;
   });
-
-  return new Promise((resolve) => {
+  
+  return new Promise(resolve => {
     tl.call(resolve, null, "pageReady");
   });
 }
-
 
 
 // -----------------------------------------
 // BARBA HOOKS + INIT
 // -----------------------------------------
 
-barba.hooks.before((data) => {
-  htmlEl.classList.add("is-transitioning");
-
-  mobileMenuNavigation = false;
-  stopLenisSafely();
-
-  const trigger = data?.trigger;
-
-  if (isElementTrigger(trigger) && isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
-    mobileMenuNavigation = true;
-    closeMobileNav();
-  }
-});
-
-barba.hooks.beforeLeave((data) => {
-  const scrollY = getLenisScroll();
-
-  if (barba?.history?.store) {
-    barba.history.store({ scrollY });
-  }
-
-  killContainerTweens(data.current.container);
-});
-
-barba.hooks.beforeEnter((data) => {
-  transitionState.nextScrollY = resolveNextScroll(data);
-
-  pruneBarbaContainers([data.current?.container, data.next.container]);
-
+barba.hooks.beforeEnter(data => {
+  // Position new container on top
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
-    width: "100%",
-    zIndex: 1,
-    autoAlpha: 1,
-    visibility: "hidden",
-    backgroundColor: resolveContainerBackground(data.next.container)
   });
-
+  
+  if (lenis && typeof lenis.stop === "function") {
+    lenis.stop();
+  }
+  
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
-barba.hooks.afterLeave((data) => {
-  if (hasScrollTrigger) {
-    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-  }
-
-  if (typeof destroySlider === "function") {
-    destroySlider(data.current.container);
+barba.hooks.afterLeave(() => {
+  if(hasScrollTrigger){
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
 });
 
-barba.hooks.enter((data) => {
+barba.hooks.enter(data => {
   initBarbaNavUpdate(data);
-});
+})
 
-barba.hooks.afterEnter((data) => {
-  pruneBarbaContainers([data.next.container]);
-  clearContainerProps(data.next.container);
-
+barba.hooks.afterEnter(data => {
+  // Run page functions
   initAfterEnterFunctions(data.next.container);
-
-  if (hasLenis) {
+  
+  // Settle
+  if(hasLenis){
     lenis.resize();
+    lenis.start();    
   }
-
-  if (hasScrollTrigger) {
-    ScrollTrigger.refresh();
+  
+  if(hasScrollTrigger){
+    ScrollTrigger.refresh(); 
   }
-});
-
-barba.hooks.after(() => {
-  cleanupTransitionState();
-  startLenisSafely();
 });
 
 barba.init({
-  debug: false,
-  logLevel: "off",
+  debug: false, // Set to 'false' in production
   timeout: 7000,
   preventRunning: true,
   transitions: [
@@ -675,39 +436,36 @@ barba.init({
       sync: true,
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
-      custom: ({ trigger }) =>
-        isElementTrigger(trigger) && trigger.hasAttribute("data-case-link"),
+      custom: ({ trigger }) => trigger.hasAttribute("data-case-link"),
       async leave(data) {
-        return runWorkLeaveAnimation(
-          data.current.container,
-          data.next.container,
-          data.trigger
-        );
+        return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
       },
       async enter(data) {
-        return runCaseEnterAnimation(data.next.container, { scrollY: 0 });
+        return runCaseEnterAnimation(data.next.container);
       }
-    },
+    },    
     {
       name: "default",
-      sync: false,
-
+      sync: true,
+      
+      // First load
       async once(data) {
         initOnceFunctions();
+
         return runPageOnceAnimation(data.next.container);
       },
 
+      // Current page leaves
       async leave(data) {
-        return runPageLeaveAnimation(data.current.container);
+        return runPageLeaveAnimation(data.current.container, data.next.container);
       },
 
+      // New page enters
       async enter(data) {
-        return runPageEnterAnimation(data.next.container, {
-          scrollY: transitionState.nextScrollY
-        });
+        return runPageEnterAnimation(data.next.container);
       }
     }
-  ]
+  ],
 });
 
 
@@ -730,27 +488,26 @@ const themeConfig = {
 function applyThemeFrom(container) {
   const pageTheme = container?.dataset?.pageTheme || "light";
   const config = themeConfig[pageTheme] || themeConfig.light;
-
+  
   document.body.dataset.pageTheme = pageTheme;
-
-  const transitionEl = document.querySelector("[data-theme-transition]");
+  const transitionEl = document.querySelector('[data-theme-transition]');
   if (transitionEl) {
     transitionEl.dataset.themeTransition = config.transition;
   }
 
-  const nav = document.querySelector("[data-theme-nav]");
+  const nav = document.querySelector('[data-theme-nav]');
   if (nav) {
     nav.dataset.themeNav = config.nav;
   }
 }
 
 function initLenis() {
-  if (lenis) return;
+  if (lenis) return; // already created
   if (!hasLenis) return;
 
   lenis = new Lenis({
     lerp: 0.165,
-    wheelMultiplier: 1.25
+    wheelMultiplier: 1.25,
   });
 
   if (hasScrollTrigger) {
@@ -764,32 +521,19 @@ function initLenis() {
   gsap.ticker.lagSmoothing(0);
 }
 
-function resetPage(container, options = {}) {
-  const { scrollY = 0 } = options;
-
-  clearContainerProps(container);
-
-  if (hasLenis) {
+function resetPage(container){
+  window.scrollTo(0, 0);
+  gsap.set(container, { clearProps: "position,top,left,right" });
+  
+  if(hasLenis){
     lenis.resize();
-    if (typeof lenis.scrollTo === "function") {
-      lenis.scrollTo(scrollY, {
-        immediate: true,
-        force: true
-      });
-    } else {
-      window.scrollTo(0, scrollY);
-    }
-    lenis.start();
-    return;
+    lenis.start();    
   }
-
-  window.scrollTo(0, scrollY);
 }
 
 function debounceOnWidthChange(fn, ms) {
-  let last = innerWidth;
-  let timer;
-
+  let last = innerWidth,
+    timer;
   return function (...args) {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -802,45 +546,27 @@ function debounceOnWidthChange(fn, ms) {
 }
 
 function initBarbaNavUpdate(data) {
-  const tpl = document.createElement("template");
+  var tpl = document.createElement('template');
   tpl.innerHTML = data.next.html.trim();
+  var nextNodes = tpl.content.querySelectorAll('[data-barba-update]');
+  var currentNodes = document.querySelectorAll('nav [data-barba-update]');
 
-  const nextNodes = tpl.content.querySelectorAll("[data-barba-update]");
-  const currentNodes = document.querySelectorAll("nav [data-barba-update]");
-
-  currentNodes.forEach((curr, index) => {
-    const next = nextNodes[index];
+  currentNodes.forEach(function (curr, index) {
+    var next = nextNodes[index];
     if (!next) return;
 
-    const newStatus = next.getAttribute("aria-current");
+    // Aria-current sync
+    var newStatus = next.getAttribute('aria-current');
     if (newStatus !== null) {
-      curr.setAttribute("aria-current", newStatus);
+      curr.setAttribute('aria-current', newStatus);
     } else {
-      curr.removeAttribute("aria-current");
+      curr.removeAttribute('aria-current');
     }
 
-    const newClassList = next.getAttribute("class") || "";
-    curr.setAttribute("class", newClassList);
+    // Class list sync
+    var newClassList = next.getAttribute('class') || '';
+    curr.setAttribute('class', newClassList);
   });
-}
-
-function isMobileTransition() {
-  return mobileTransitionMQ.matches;
-}
-
-function shouldUseInstantMobileTransition() {
-  return isMobileTransition() && mobileMenuNavigation;
-}
-
-function getMobileNavCheckbox() {
-  return document.querySelector(".nav_checkbox, #nav-toggle");
-}
-
-function closeMobileNav() {
-  const navCheckbox = getMobileNavCheckbox();
-  if (navCheckbox?.checked) {
-    navCheckbox.checked = false;
-  }
 }
 
 
