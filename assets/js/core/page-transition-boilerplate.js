@@ -227,7 +227,6 @@ function runPageOnceAnimation(next) {
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
   const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
-  const currentScrollY = lenis ? lenis.scroll : window.scrollY || window.pageYOffset || 0;
 
   const tl = gsap.timeline({
     onComplete: () => {
@@ -244,15 +243,6 @@ function runPageLeaveAnimation(current, next) {
     tl.set(current, { autoAlpha: 0 }, 0);
     return tl;
   }
-
-  tl.set(current, {
-    position: "fixed",
-    top: -currentScrollY,
-    left: 0,
-    right: 0,
-    width: "100%",
-    zIndex: 2
-  });
 
   if (transitionWrap) {
     tl.set(transitionWrap, { zIndex: 2 });
@@ -273,7 +263,7 @@ function runPageLeaveAnimation(current, next) {
 
   tl.fromTo(
     current,
-    { y: 0 },
+    { y: "0vh" },
     {
       y: "-25vh",
       duration: 1.2,
@@ -341,10 +331,30 @@ function runPageEnterAnimation(next) {
   });
 }
 
+function hideCurrentPage(current) {
+  return gsap.timeline().set(current, { autoAlpha: 0 });
+}
+
+function finishEnterFallback(tl, next, resolve) {
+  tl.set(next, { autoAlpha: 1 });
+  tl.add("pageReady");
+  tl.call(resetPage, [next], "pageReady");
+  tl.call(resolve, null, "pageReady");
+}
+
+function clearFlipState() {
+  flippedThumbnail = null;
+  flipState = null;
+}
+
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger.closest("[data-case-link]");
-  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector(".section");
+  const clicked = trigger?.closest("[data-case-link]");
+  const thumbnail = clicked?.querySelector("[data-case-thumbnail]");
+  const nextHero = next.querySelector("section");
+
+  if (!thumbnail) {
+    return hideCurrentPage(current);
+  }
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
@@ -366,75 +376,74 @@ function runWorkLeaveAnimation(current, next, trigger) {
     0
   );
 
-  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+  if (nextHero) {
+    tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+  }
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector(".section");
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
-
-  const tl = gsap.timeline();
-
-  if (reducedMotion) {
-    flippedThumbnail = null;
-    flipState = null;
-    tl.set(next, { autoAlpha: 1 });
-    tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
-    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
-  }
-
+  const nextHero = next.querySelector("section");
+  const revealTargets = next.querySelectorAll("[data-case-reveal]");
   const placeholder = next.querySelector("[data-case-thumbnail]");
 
-  placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
-  placeholder.remove();
-
-  tl.add("startEnter", 0.6);
-
-  tl.add(
-    Flip.from(flipState, {
-      duration: 0.8
-    }),
-    0
-  );
-
-  tl.fromTo(
-    nextHero,
-    {
-      backgroundColor: "transparent"
-    },
-    {
-      backgroundColor: "#FFF",
-      duration: 0.5
-    },
-    "startEnter"
-  );
-
-  tl.fromTo(
-    revealTargets,
-    {
-      autoAlpha: 0,
-      yPercent: 25
-    },
-    {
-      autoAlpha: 1,
-      yPercent: 0,
-      stagger: 0.1
-    },
-    "startEnter+=0.1"
-  );
-
-  tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
-
-  tl.call(() => {
-    flippedThumbnail = null;
-    flipState = null;
-  });
-
   return new Promise((resolve) => {
+    const tl = gsap.timeline();
+
+    if (reducedMotion) {
+      clearFlipState();
+      finishEnterFallback(tl, next, resolve);
+      return;
+    }
+
+    if (!placeholder || !flippedThumbnail || !flipState) {
+      finishEnterFallback(tl, next, resolve);
+      return;
+    }
+
+    placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
+    placeholder.remove();
+
+    tl.add(
+      Flip.from(flipState, {
+        duration: 0.8,
+        ease: "osmo"
+      }),
+      0
+    );
+
+    tl.add("startEnter", 0.6);
+
+    if (nextHero) {
+      tl.fromTo(
+        nextHero,
+        { backgroundColor: "transparent" },
+        {
+          backgroundColor: "#FFF",
+          duration: 0.5
+        },
+        "startEnter"
+      );
+    }
+
+    tl.fromTo(
+      revealTargets,
+      {
+        autoAlpha: 0,
+        yPercent: 25
+      },
+      {
+        autoAlpha: 1,
+        yPercent: 0,
+        stagger: 0.1
+      },
+      "startEnter+=0.1"
+    );
+
+    tl.add("pageReady");
+    tl.call(resetPage, [next], "pageReady");
+    tl.call(clearFlipState);
     tl.call(resolve, null, "pageReady");
   });
 }
@@ -451,7 +460,7 @@ barba.hooks.before((data) => {
   mobileMenuNavigation = false;
 
   const trigger = data?.trigger;
-  if (!(trigger instanceof Element)) return;
+  if (!trigger) return;
 
   if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
     mobileMenuNavigation = true;
@@ -500,8 +509,11 @@ barba.hooks.afterEnter((data) => {
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
+});
 
+barba.hooks.after(() => {
   document.documentElement.classList.remove("is-transitioning");
+  mobileMenuNavigation = false;
 });
 
 barba.init({
@@ -514,8 +526,7 @@ barba.init({
       sync: true,
       from: { namespace: ["work"] },
       to: { namespace: ["case"] },
-      custom: ({ trigger }) =>
-        trigger instanceof Element && trigger.hasAttribute("data-case-link"),
+      custom: ({ trigger }) => !!trigger?.closest("[data-case-link]"),
       async leave(data) {
         return runWorkLeaveAnimation(
           data.current.container,
@@ -530,16 +541,13 @@ barba.init({
     {
       name: "default",
       sync: true,
-
       async once(data) {
         initOnceFunctions();
         return runPageOnceAnimation(data.next.container);
       },
-
       async leave(data) {
         return runPageLeaveAnimation(data.current.container, data.next.container);
       },
-
       async enter(data) {
         return runPageEnterAnimation(data.next.container);
       }
@@ -605,7 +613,7 @@ function resetPage(container) {
   window.scrollTo(0, 0);
   gsap.set(container, {
     clearProps:
-      "position,top,left,right,width,zIndex,borderTopLeftRadius,borderTopRightRadius,transform"
+      "position,top,left,right,zIndex,borderTopLeftRadius,borderTopRightRadius"
   });
 
   if (hasLenis) {
