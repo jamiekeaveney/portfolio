@@ -1,19 +1,35 @@
 // -----------------------------------------
-// SLIDER
+// HORIZONTAL SCROLL CAROUSEL
 // -----------------------------------------
+// Vertical scroll → horizontal movement (1:1 feel)
+// Infinite loop, drag, parallax, works with Barba + Lenis
+//
+// Call: initSlider(container) from your function registry
+// Requires: .slider, .slide-track, .slide elements
 
 const initSlider = (() => {
   const BP = 991;
   const mq = matchMedia(`(max-width:${BP}px)`);
-  const CFG = { SPEED: 1.75, LERP: 0.05, MAX_V: 150, COPIES: 6, DRAG_T: 3, CLICK_MS: 400 };
 
-  const clamp = (n, a, b) => (n < a ? a : n > b ? b : n);
-  const now = () => performance.now();
+  const CFG = {
+    LERP:       0.1,     // Higher = snappier, more 1:1 feel
+    DRAG_MULT:  2,       // Pointer drag sensitivity
+    DRAG_T:     3,       // Pixels before drag registers
+    CLICK_MS:   300,     // Click suppression after drag
+    COPIES:     3,       // Clone sets for infinite loop
+    PARALLAX:   0.2,     // Default parallax amount (overridden by --work-page--slider-parallax)
+  };
 
-  let instance = null; // only one slider at a time
+  const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const now   = () => performance.now();
 
-  function cssVarPercent(root, name) {
-    const raw = getComputedStyle(root).getPropertyValue(name).trim();
+  let instance = null;
+
+  // ── Helpers ──
+
+  function cssVarPercent(el, name) {
+    const raw = getComputedStyle(el).getPropertyValue(name).trim();
     if (!raw) return NaN;
     const v = parseFloat(raw);
     if (Number.isNaN(v)) return NaN;
@@ -23,10 +39,9 @@ const initSlider = (() => {
   function getPitch(track) {
     const slides = track.querySelectorAll(".slide");
     if (slides.length > 1) {
-      const a = slides[0].getBoundingClientRect();
-      const b = slides[1].getBoundingClientRect();
-      const p = b.left - a.left;
-      if (p > 0) return p;
+      const a = slides[0].getBoundingClientRect().left;
+      const b = slides[1].getBoundingClientRect().left;
+      if (b - a > 0) return b - a;
     }
     const el = slides[0];
     if (!el) return 0;
@@ -34,7 +49,7 @@ const initSlider = (() => {
     return el.getBoundingClientRect().width + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight);
   }
 
-  function clearImg(el) {
+  function clearStyles(el) {
     if (!el) return;
     el.style.transform = "";
     el.style.objectPosition = "";
@@ -43,22 +58,19 @@ const initSlider = (() => {
     el.style.filter = "";
   }
 
+
+  // ── Destroy ──
+
   function destroy() {
     if (!instance) return;
-
-    // Stop animation loop
     if (instance.raf) cancelAnimationFrame(instance.raf);
-
-    // Remove event listeners via AbortController
     instance.abort.abort();
 
-    // Remove cloned slides
     if (instance.track) {
-      const originals = [...instance.track.querySelectorAll(".slide")].slice(0, instance.total);
       [...instance.track.querySelectorAll(".slide")].forEach((el, i) => {
         if (i >= instance.total) el.remove();
       });
-      instance.imgs.forEach(clearImg);
+      instance.imgs.forEach(clearStyles);
       instance.track.style.transform = "";
       instance.track.style.willChange = "";
     }
@@ -66,43 +78,48 @@ const initSlider = (() => {
     instance = null;
   }
 
-  function create(container) {
-    if (mq.matches) return; // desktop only
 
-    const root = container || document;
+  // ── Create ──
+
+  function create(container) {
+    if (mq.matches) return;
+
+    const root   = container || document;
     const slider = root.querySelector(".slider");
-    const track = root.querySelector(".slide-track");
+    const track  = root.querySelector(".slide-track");
     if (!slider || !track) return;
 
-    // Clean up any previous instance
     destroy();
 
     const abort = new AbortController();
-    const sig = { signal: abort.signal };
+    const sig   = { signal: abort.signal };
 
     const s = {
-      slider,
-      track,
-      abort,
+      slider, track, abort,
       raf: null,
       total: 0,
       pitch: 0,
-      parallax: 0.2,
+      parallax: CFG.PARALLAX,
       slides: [],
       imgs: [],
       prog: null,
-      x: 0,
-      tx: 0,
-      ui: 0,
-      drag: false,
-      dragged: false,
-      start: 0,
-      last: 0,
+
+      // Position state
+      current: 0,
+      target:  0,
+
+      // Drag state
+      dragging: false,
+      dragged:  false,
+      dragStartX: 0,
+      dragLastX:  0,
       clickUntil: 0,
+
+      // Progress display
+      ui: 0,
     };
 
     instance = s;
-
     track.style.willChange = "transform";
 
     // Read parallax from CSS variable
@@ -115,73 +132,72 @@ const initSlider = (() => {
     if (!s.total) return;
 
     const frag = document.createDocumentFragment();
-    for (let i = 0; i < CFG.COPIES - 1; i++) {
+    for (let i = 0; i < CFG.COPIES; i++) {
       originals.forEach(el => frag.appendChild(el.cloneNode(true)));
     }
     track.appendChild(frag);
 
     s.slides = [...track.querySelectorAll(".slide")];
-    s.imgs = s.slides.map(el => el.querySelector(".slider-image") || el.querySelector(".slide-image img"));
+    s.imgs   = s.slides.map(el =>
+      el.querySelector(".slider-image") || el.querySelector(".slide-image img")
+    );
 
+    // Measure
     s.pitch = getPitch(track);
     const seq = s.pitch * s.total;
-    const start = -(seq * 2);
-    s.x = s.tx = start;
-    track.style.transform = `translate3d(${start}px,0,0)`;
+
+    // Start centred in the middle copy set
+    const startX = -(seq * Math.floor((CFG.COPIES + 1) / 2));
+    s.current = s.target = startX;
+    track.style.transform = `translate3d(${startX}px,0,0)`;
 
     s.prog = root.querySelector("[data-slider-progress]");
-    s.ui = 0;
 
-    // --- Events ---
 
-    // Click → let Barba intercept a native click on the <a> element.
-    // Guard flag prevents the track handler from catching the re-dispatched event.
+    // ── Events ──
+
+    // Wheel: 1:1 mapping — deltaY pixels of scroll = deltaY pixels horizontal
+    slider.addEventListener("wheel", e => {
+      e.preventDefault();
+      // Use whichever axis has more movement (supports trackpad horizontal swipe too)
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      s.target -= delta;
+    }, { passive: false, ...sig });
+
+    // Click → navigate via Barba
     let programmaticClick = false;
-
     track.addEventListener("click", e => {
       if (programmaticClick) return;
       if (s.dragged || now() < s.clickUntil) { e.preventDefault(); return; }
-
-      const slide = e.target.closest(".slide");
-      const link = slide?.querySelector("a[href]");
+      const link = e.target.closest(".slide")?.querySelector("a[href]");
       if (!link) return;
-
       e.preventDefault();
       e.stopPropagation();
-
-      // Dispatch a real click on the <a> — Barba listens for link clicks
-      // on the document and will intercept this naturally
       programmaticClick = true;
       link.click();
       programmaticClick = false;
     }, sig);
 
-    // Wheel → horizontal scroll
-    slider.addEventListener("wheel", e => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      e.preventDefault();
-      s.tx -= clamp(e.deltaY * CFG.SPEED, -CFG.MAX_V, CFG.MAX_V);
-    }, { passive: false, ...sig });
-
-    // Drag
+    // Pointer drag
     slider.addEventListener("pointerdown", e => {
       if (e.pointerType === "mouse") e.preventDefault();
-      s.drag = true;
-      s.start = s.last = e.clientX;
+      s.dragging = true;
       s.dragged = false;
+      s.dragStartX = s.dragLastX = e.clientX;
       track.classList.add("dragging");
     }, sig);
 
     slider.addEventListener("pointermove", e => {
-      if (!s.drag) return;
-      s.tx += (e.clientX - s.last) * 2;
-      s.last = e.clientX;
-      s.dragged = Math.abs(e.clientX - s.start) > CFG.DRAG_T;
+      if (!s.dragging) return;
+      const dx = e.clientX - s.dragLastX;
+      s.target += dx * CFG.DRAG_MULT;
+      s.dragLastX = e.clientX;
+      if (Math.abs(e.clientX - s.dragStartX) > CFG.DRAG_T) s.dragged = true;
     }, sig);
 
     const pointerUp = () => {
-      if (!s.drag) return;
-      s.drag = false;
+      if (!s.dragging) return;
+      s.dragging = false;
       track.classList.remove("dragging");
       if (s.dragged) s.clickUntil = now() + CFG.CLICK_MS;
       s.dragged = false;
@@ -199,61 +215,68 @@ const initSlider = (() => {
       cancelAnimationFrame(resizeRaf);
       resizeRaf = requestAnimationFrame(() => {
         const oldSeq = s.pitch * s.total;
-        const t = (s.x + oldSeq * 2) / oldSeq;
+        const ratio  = oldSeq ? (s.current / oldSeq) : 0;
         s.pitch = getPitch(track);
         const newSeq = s.pitch * s.total;
-        s.x = s.tx = -(newSeq * 2) + t * newSeq;
-        track.style.transform = `translate3d(${s.x}px,0,0)`;
+        s.current = s.target = ratio * newSeq;
+        track.style.transform = `translate3d(${s.current}px,0,0)`;
       });
     }, sig);
 
-    // --- Animation loop ---
 
-    function loop() {
-      s.x += (s.tx - s.x) * CFG.LERP;
+    // ── Render loop ──
 
+    function tick() {
+      // Lerp toward target
+      s.current = lerp(s.current, s.target, CFG.LERP);
+
+      // Snap if close enough
+      if (Math.abs(s.target - s.current) < 0.5) s.current = s.target;
+
+      // Infinite wrap — keep both values in sync to avoid jump
       const len = s.pitch * s.total;
+      if (len > 0) {
+        while (s.current > -len)          { s.current -= len; s.target -= len; s.imgs.forEach(clearStyles); }
+        while (s.current < -len * CFG.COPIES) { s.current += len; s.target += len; s.imgs.forEach(clearStyles); }
+      }
 
-      if (s.x > -len) { s.x -= len; s.tx -= len; s.imgs.forEach(clearImg); }
-      else if (s.x < -len * 4) { s.x += len; s.tx += len; s.imgs.forEach(clearImg); }
+      // Apply
+      track.style.transform = `translate3d(${s.current}px,0,0)`;
 
-      track.style.transform = `translate3d(${s.x}px,0,0)`;
-
-      // Parallax on images
+      // Parallax
       if (s.parallax) {
-        const vp = innerWidth / 2;
+        const vp   = innerWidth / 2;
         const half = s.parallax * 100 / 2;
         for (let i = 0; i < s.slides.length; i++) {
           const img = s.imgs[i];
           if (!img) continue;
           const r = s.slides[i].getBoundingClientRect();
-          if (r.right < -500 || r.left > innerWidth + 500) continue;
+          if (r.right < -200 || r.left > innerWidth + 200) continue;
           const n = clamp(((r.left + r.width / 2) - vp) / Math.max(1, vp), -1, 1);
-          img.style.objectPosition = (50 - n * half) + "% 50%";
+          img.style.objectPosition = `${50 - n * half}% 50%`;
         }
       }
 
       // Progress counter
       if (s.prog && !mq.matches && s.total && s.pitch) {
-        const len2 = s.pitch * s.total;
-        let t = (-s.x) % len2;
-        if (t < 0) t += len2;
-        const pct = (t / len2) * 100;
-        s.ui += (pct - s.ui) * 0.2;
+        const seqLen = s.pitch * s.total;
+        let t = (-s.current) % seqLen;
+        if (t < 0) t += seqLen;
+        const pct = (t / seqLen) * 100;
+        s.ui += (pct - s.ui) * 0.15;
         const display = Math.round(clamp(s.ui, 0, 100)).toString().padStart(2, "0");
         if (s.prog.textContent !== display) s.prog.textContent = display;
       }
 
-      s.raf = requestAnimationFrame(loop);
+      s.raf = requestAnimationFrame(tick);
     }
 
-    s.raf = requestAnimationFrame(loop);
+    s.raf = requestAnimationFrame(tick);
   }
 
-  // Reload on breakpoint cross (preserves original behaviour)
+  // Reload on breakpoint cross
   if (mq.addEventListener) mq.addEventListener("change", () => location.reload());
   else mq.addListener(() => location.reload());
 
-  // Public API: call initSlider(container) from the function registry
   return create;
 })();
