@@ -481,19 +481,24 @@ barba.init({
   timeout: 7000,
   preventRunning: true,
   transitions: [
-    {
-      name: "work-to-case",
-      sync: true,
-      from: { namespace: ["work"] },
-      to: { namespace: ["case"] },
-      custom: ({ trigger }) => trigger.hasAttribute("data-case-link"),
-      async leave(data) {
-        return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
-      },
-      async enter(data) {
-        return runCaseEnterAnimation(data.next.container);
-      }
-    },    
+{
+  name: "work-to-case",
+  sync: true,
+  from: { namespace: ["work"] },
+  to: { namespace: ["case"] },
+  custom: ({ trigger }) =>
+    trigger instanceof Element && trigger.hasAttribute("data-case-link"),
+  async leave(data) {
+    return runWorkLeaveAnimation(
+      data.current.container,
+      data.next.container,
+      data.trigger
+    );
+  },
+  async enter(data) {
+    return runCaseEnterAnimation(data.next.container);
+  }
+},
     {
       name: "default",
       sync: true,
