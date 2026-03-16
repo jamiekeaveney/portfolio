@@ -227,6 +227,7 @@ function runPageOnceAnimation(next) {
 function runPageLeaveAnimation(current, next) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
   const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
+  const currentScrollY = lenis ? lenis.scroll : window.scrollY || window.pageYOffset || 0;
 
   const tl = gsap.timeline({
     onComplete: () => {
@@ -243,6 +244,15 @@ function runPageLeaveAnimation(current, next) {
     tl.set(current, { autoAlpha: 0 }, 0);
     return tl;
   }
+
+  tl.set(current, {
+    position: "fixed",
+    top: -currentScrollY,
+    left: 0,
+    right: 0,
+    width: "100%",
+    zIndex: 2
+  });
 
   if (transitionWrap) {
     tl.set(transitionWrap, { zIndex: 2 });
@@ -263,7 +273,7 @@ function runPageLeaveAnimation(current, next) {
 
   tl.fromTo(
     current,
-    { y: "0vh" },
+    { y: 0 },
     {
       y: "-25vh",
       duration: 1.2,
@@ -334,81 +344,97 @@ function runPageEnterAnimation(next) {
 function runWorkLeaveAnimation(current, next, trigger) {
   const clicked = trigger.closest("[data-case-link]");
   const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector(".section")
+  const nextHero = next.querySelector(".section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
-  
+
   const tl = gsap.timeline({
     onComplete: () => current.remove()
   });
-  
+
   if (reducedMotion) {
     return tl.set(current, { autoAlpha: 0 });
   }
-  
-  tl.to(current,{
-    autoAlpha: 0,
-    duration: 0.6
-  }, 0)
-  
-  tl.set(nextHero,{backgroundColor: "transparent"}, 0)
-  
+
+  tl.to(
+    current,
+    {
+      autoAlpha: 0,
+      duration: 0.6
+    },
+    0
+  );
+
+  tl.set(nextHero, { backgroundColor: "transparent" }, 0);
+
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector(".section")
-  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]") 
-  
+  const nextHero = next.querySelector(".section");
+  const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
+
   const tl = gsap.timeline();
-  
+
   if (reducedMotion) {
     flippedThumbnail = null;
     flipState = null;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
     tl.call(resetPage, [next], "pageReady");
-    return new Promise(resolve => tl.call(resolve, null, "pageReady"));
+    return new Promise((resolve) => tl.call(resolve, null, "pageReady"));
   }
-  
+
   const placeholder = next.querySelector("[data-case-thumbnail]");
-  
+
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
-  
+
   tl.add("startEnter", 0.6);
-  
+
   tl.add(
     Flip.from(flipState, {
-      duration: 0.8,
-    }), 0);
-    
-  tl.fromTo(nextHero,{
-    backgroundColor: "transparent"
-  },{
-    backgroundColor: "#FFF",
-    duration: 0.5
-  }, "startEnter")
+      duration: 0.8
+    }),
+    0
+  );
 
-  tl.fromTo(revealTargets,{
-    autoAlpha:0,
-    yPercent: 25
-  },{
-    autoAlpha:1,
-    yPercent: 0,
-    stagger: 0.1
-  }, "startEnter+=0.1")
-  
+  tl.fromTo(
+    nextHero,
+    {
+      backgroundColor: "transparent"
+    },
+    {
+      backgroundColor: "#FFF",
+      duration: 0.5
+    },
+    "startEnter"
+  );
+
+  tl.fromTo(
+    revealTargets,
+    {
+      autoAlpha: 0,
+      yPercent: 25
+    },
+    {
+      autoAlpha: 1,
+      yPercent: 0,
+      stagger: 0.1
+    },
+    "startEnter+=0.1"
+  );
+
   tl.add("pageReady");
   tl.call(resetPage, [next], "pageReady");
-  
+
   tl.call(() => {
     flippedThumbnail = null;
     flipState = null;
   });
-  
-  return new Promise(resolve => {
+
+  return new Promise((resolve) => {
     tl.call(resolve, null, "pageReady");
   });
 }
@@ -425,7 +451,7 @@ barba.hooks.before((data) => {
   mobileMenuNavigation = false;
 
   const trigger = data?.trigger;
-  if (!trigger) return;
+  if (!(trigger instanceof Element)) return;
 
   if (isMobileTransition() && trigger.closest(".nav__mobile-panel")) {
     mobileMenuNavigation = true;
@@ -474,53 +500,51 @@ barba.hooks.afterEnter((data) => {
   if (hasScrollTrigger) {
     ScrollTrigger.refresh();
   }
+
+  document.documentElement.classList.remove("is-transitioning");
 });
 
 barba.init({
-  debug: false, // Set to 'false' in production
+  debug: false,
   timeout: 7000,
   preventRunning: true,
   transitions: [
-{
-  name: "work-to-case",
-  sync: true,
-  from: { namespace: ["work"] },
-  to: { namespace: ["case"] },
-  custom: ({ trigger }) =>
-    trigger instanceof Element && trigger.hasAttribute("data-case-link"),
-  async leave(data) {
-    return runWorkLeaveAnimation(
-      data.current.container,
-      data.next.container,
-      data.trigger
-    );
-  },
-  async enter(data) {
-    return runCaseEnterAnimation(data.next.container);
-  }
-},
+    {
+      name: "work-to-case",
+      sync: true,
+      from: { namespace: ["work"] },
+      to: { namespace: ["case"] },
+      custom: ({ trigger }) =>
+        trigger instanceof Element && trigger.hasAttribute("data-case-link"),
+      async leave(data) {
+        return runWorkLeaveAnimation(
+          data.current.container,
+          data.next.container,
+          data.trigger
+        );
+      },
+      async enter(data) {
+        return runCaseEnterAnimation(data.next.container);
+      }
+    },
     {
       name: "default",
       sync: true,
-      
-      // First load
+
       async once(data) {
         initOnceFunctions();
-
         return runPageOnceAnimation(data.next.container);
       },
 
-      // Current page leaves
       async leave(data) {
         return runPageLeaveAnimation(data.current.container, data.next.container);
       },
 
-      // New page enters
       async enter(data) {
         return runPageEnterAnimation(data.next.container);
       }
     }
-  ],
+  ]
 });
 
 
@@ -581,7 +605,7 @@ function resetPage(container) {
   window.scrollTo(0, 0);
   gsap.set(container, {
     clearProps:
-      "position,top,left,right,zIndex,borderTopLeftRadius,borderTopRightRadius"
+      "position,top,left,right,width,zIndex,borderTopLeftRadius,borderTopRightRadius,transform"
   });
 
   if (hasLenis) {
