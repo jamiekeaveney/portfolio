@@ -3,15 +3,17 @@
 // -----------------------------------------
 
 gsap.registerPlugin(CustomEase);
+CustomEase.create("osmo", "0.625, 0.05, 0, 1");
+CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
+gsap.defaults({ ease: "osmo", duration: 0.6 });
 
 history.scrollRestoration = "manual";
 
-let lenis = null;
-let nextPage = document;
-let onceFunctionsInitialized = false;
 
-let flipState = null;
-let flippedThumbnail = null;
+
+// -----------------------------------------
+// ENVIRONMENT
+// -----------------------------------------
 
 const hasLenis = typeof window.Lenis !== "undefined";
 const hasScrollTrigger = typeof window.ScrollTrigger !== "undefined";
@@ -21,45 +23,49 @@ let reducedMotion = rmMQ.matches;
 rmMQ.addEventListener?.("change", e => (reducedMotion = e.matches));
 rmMQ.addListener?.(e => (reducedMotion = e.matches));
 
-const has = (s) => !!nextPage.querySelector(s);
+const navEntry = performance.getEntriesByType("navigation")[0];
+const navType = navEntry ? navEntry.type : "navigate";
+// "navigate" = first visit | "reload" = refresh | "back_forward" = browser arrows caused full reload
 
-let staggerDefault = 0.05;
-let durationDefault = 0.6;
 
-CustomEase.create("osmo", "0.625, 0.05, 0, 1");
-gsap.defaults({ ease: "osmo", duration: durationDefault });
 
 // -----------------------------------------
-// TRANSITION STATE
+// STATE
 // -----------------------------------------
+
+let lenis = null;
+let nextPage = document;
+let onceFunctionsInitialized = false;
+
+let flipState = null;
+let flippedThumbnail = null;
 
 let skipPageTransition = false;
 let isPopstate = false;
 
-// Detect if this page load was a refresh or browser back/forward
-// (as opposed to a fresh first visit)
-const navEntry = performance.getEntriesByType("navigation")[0];
-const isReloadOrBackForward = navEntry && (navEntry.type === "reload" || navEntry.type === "back_forward");
+let staggerDefault = 0.05;
+let durationDefault = 0.6;
 
-// Persist scroll positions in sessionStorage so they survive refresh
+const has = (s) => !!nextPage.querySelector(s);
+
+
+
+// -----------------------------------------
+// SCROLL PERSISTENCE
+// -----------------------------------------
+
 const SCROLL_STORAGE_KEY = "osmo_scroll_positions";
 
 function getScrollPositions() {
-  try {
-    return JSON.parse(sessionStorage.getItem(SCROLL_STORAGE_KEY)) || {};
-  } catch (e) {
-    return {};
-  }
+  try { return JSON.parse(sessionStorage.getItem(SCROLL_STORAGE_KEY)) || {}; }
+  catch { return {}; }
 }
 
-function saveScrollPosition(url, scrollY) {
-  const positions = getScrollPositions();
-  positions[url] = scrollY;
-  try {
-    sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
-  } catch (e) {
-    // Storage full or unavailable
-  }
+function saveScrollPosition(url, y) {
+  const map = getScrollPositions();
+  map[url] = y;
+  try { sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(map)); }
+  catch { /* storage full */ }
 }
 
 function getSavedScroll(url) {
@@ -67,30 +73,147 @@ function getSavedScroll(url) {
 }
 
 function getCurrentScroll() {
-  if (lenis) return Math.round(lenis.scroll);
-  return window.scrollY;
+  return lenis ? Math.round(lenis.scroll) : window.scrollY;
 }
 
-// Continuously save scroll position so refresh always has the latest value
 function initScrollSaver() {
-  let saveTimer;
+  let timer;
   const save = () => {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
       saveScrollPosition(window.location.href, getCurrentScroll());
     }, 150);
   };
 
-  // Hook into Lenis if available, otherwise native scroll
-  if (lenis) {
-    lenis.on("scroll", save);
-  } else {
-    window.addEventListener("scroll", save, { passive: true });
-  }
+  if (lenis) lenis.on("scroll", save);
+  else window.addEventListener("scroll", save, { passive: true });
 
-  // Capture exact scroll position the instant the user refreshes or leaves
+  // Capture exact position on refresh / tab close
   window.addEventListener("beforeunload", () => {
     saveScrollPosition(window.location.href, getCurrentScroll());
+  });
+}
+
+
+
+// -----------------------------------------
+// LENIS
+// -----------------------------------------
+
+function initLenis() {
+  if (lenis || !hasLenis) return;
+
+  lenis = new Lenis({ lerp: 0.165, wheelMultiplier: 1.25 });
+
+  if (hasScrollTrigger) lenis.on("scroll", ScrollTrigger.update);
+
+  gsap.ticker.add(time => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+}
+
+
+
+// -----------------------------------------
+// HELPERS
+// -----------------------------------------
+
+function closeMenuIfOpen() {
+  const toggle = document.querySelector("#nav-toggle");
+  if (toggle?.checked) { toggle.checked = false; return true; }
+  return false;
+}
+
+/**
+ * Pin the outgoing container at its current scroll offset
+ * so native scroll can be zeroed without a visual jump.
+ */
+function freezeContainer(el) {
+  const scroll = getCurrentScroll();
+  if (lenis) lenis.stop();
+
+  gsap.set(el, {
+    position: "fixed",
+    top: -scroll,
+    left: 0,
+    right: 0,
+  });
+
+  window.scrollTo(0, 0);
+}
+
+/**
+ * Settle a page after transition completes.
+ */
+function resetPage(container, targetScroll) {
+  targetScroll = targetScroll ?? 0;
+
+  gsap.set(container, { clearProps: "position,top,left,right" });
+  window.scrollTo(0, targetScroll);
+
+  if (lenis) {
+    lenis.scrollTo(targetScroll, { immediate: true });
+    lenis.resize();
+    lenis.start();
+  }
+
+  if (hasScrollTrigger) ScrollTrigger.refresh();
+}
+
+function debounceOnWidthChange(fn, ms) {
+  let last = innerWidth, timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (innerWidth !== last) { last = innerWidth; fn.apply(this, args); }
+    }, ms);
+  };
+}
+
+
+
+// -----------------------------------------
+// THEME
+// -----------------------------------------
+
+const themeConfig = {
+  light: { nav: "dark",  transition: "light" },
+  dark:  { nav: "light", transition: "dark"  }
+};
+
+function applyThemeFrom(container) {
+  const theme = container?.dataset?.pageTheme || "light";
+  const cfg = themeConfig[theme] || themeConfig.light;
+
+  document.body.dataset.pageTheme = theme;
+
+  const t = document.querySelector("[data-theme-transition]");
+  if (t) t.dataset.themeTransition = cfg.transition;
+
+  const n = document.querySelector("[data-theme-nav]");
+  if (n) n.dataset.themeNav = cfg.nav;
+}
+
+
+
+// -----------------------------------------
+// NAV UPDATE (Barba)
+// -----------------------------------------
+
+function syncNavState(data) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = data.next.html.trim();
+  const nextNodes = tpl.content.querySelectorAll("[data-barba-update]");
+  const currNodes = document.querySelectorAll("nav [data-barba-update]");
+
+  currNodes.forEach((curr, i) => {
+    const next = nextNodes[i];
+    if (!next) return;
+
+    const aria = next.getAttribute("aria-current");
+    if (aria !== null) curr.setAttribute("aria-current", aria);
+    else curr.removeAttribute("aria-current");
+
+    curr.setAttribute("class", next.getAttribute("class") || "");
   });
 }
 
@@ -124,146 +247,126 @@ function initAfterEnterFunctions(next) {
   // Runs after enter animation completes
   if (has(".scroll-1_component")) initScroll1(nextPage);
 
-  if (hasLenis) {
-    lenis.resize();
-  }
-
-  if (hasScrollTrigger) {
-    ScrollTrigger.refresh();
-  }
+  if (lenis) lenis.resize();
+  if (hasScrollTrigger) ScrollTrigger.refresh();
 }
 
 
 
 // -----------------------------------------
-// PAGE TRANSITIONS
+// PAGE ONCE (First load / Refresh / Full-reload back-forward)
 // -----------------------------------------
 
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
-  // On refresh or back/forward that caused a full reload, restore scroll.
-  // On a genuine first visit, start at top. Either way the loader plays.
-  const onceScroll = isReloadOrBackForward
-    ? getSavedScroll(window.location.href)
-    : 0;
+  // Determine where to scroll after the loader:
+  //   - Refresh: restore saved position
+  //   - Back/forward full reload: restore saved position, skip loader
+  //   - First visit: top of page
+  const restoreScroll = navType !== "navigate";
+  const onceScroll = restoreScroll ? getSavedScroll(window.location.href) : 0;
 
-  if (reducedMotion) {
+  // Back/forward that caused a full page reload — skip the loader,
+  // just settle the page at its saved position
+  if (navType === "back_forward") {
     tl.call(() => {
+      const wrap = document.querySelector('[data-loader="wrap"]');
+      if (wrap) gsap.set(wrap, { display: "none", autoAlpha: 0, pointerEvents: "none" });
       resetPage(next, onceScroll);
     }, null, 0);
     return tl;
   }
 
+  // Reduced motion or missing loader elements — settle immediately
+  if (reducedMotion) {
+    tl.call(() => resetPage(next, onceScroll), null, 0);
+    return tl;
+  }
+
   const wrap = document.querySelector('[data-loader="wrap"]');
   if (!wrap) {
-    tl.call(() => { resetPage(next, onceScroll); }, null, 0);
+    tl.call(() => resetPage(next, onceScroll), null, 0);
     return tl;
   }
 
   const panel = wrap.querySelector(".loader-panel");
-  const bar = wrap.querySelector("[data-loader-bar]");
+  const bar   = wrap.querySelector("[data-loader-bar]");
   const block = wrap.querySelector("[data-loader-block]");
-  const top = wrap.querySelector("[data-loader-top]");
-  const bot = wrap.querySelector("[data-loader-bot]");
+  const top   = wrap.querySelector("[data-loader-top]");
+  const bot   = wrap.querySelector("[data-loader-bot]");
 
   if (!panel || !bar || !block || !top || !bot) {
-    tl.call(() => { resetPage(next, onceScroll); }, null, 0);
+    tl.call(() => resetPage(next, onceScroll), null, 0);
     return tl;
   }
 
-  const FLIP_DUR = 0.68;
+  // --- Loader constants ---
+  const FLIP_DUR     = 0.68;
   const FLIP_STAGGER = 0.07;
-  const FLIP_PAD = 0.02;
-  const HOLD_DUR = 0.25;
-  const STEP_GAP = 0.02;
-  const FADE_DUR = 0.5;
+  const FLIP_PAD     = 0.02;
+  const HOLD_DUR     = 0.25;
+  const STEP_GAP     = 0.02;
+  const FADE_DUR     = 0.5;
 
   const step1 = gsap.utils.random(25, 35, 1);
   const step2 = gsap.utils.random(65, 75, 1);
 
-  function makeDigits(value) {
-    return String(value)
-      .split("")
-      .map((char, i) => {
-        return `<span class="loader-digit" style="--d:${i}">${char}</span>`;
-      })
-      .join("");
-  }
+  // --- Loader helpers ---
+  const makeDigits = (v) =>
+    String(v).split("").map((c, i) =>
+      `<span class="loader-digit" style="--d:${i}">${c}</span>`
+    ).join("");
 
-  function getFlipWait(value) {
-    const digitCount = String(value).length;
-    return FLIP_DUR + (digitCount - 1) * FLIP_STAGGER + FLIP_PAD;
-  }
+  const getFlipWait = (v) =>
+    FLIP_DUR + (String(v).length - 1) * FLIP_STAGGER + FLIP_PAD;
 
-  function getTravel() {
-    const styles = getComputedStyle(panel);
-    const paddingTop = parseFloat(styles.paddingTop) || 0;
-    const paddingBottom = parseFloat(styles.paddingBottom) || 0;
-    const blockHeight = block.getBoundingClientRect().height;
+  const getTravel = () => {
+    const s = getComputedStyle(panel);
+    const pt = parseFloat(s.paddingTop) || 0;
+    const pb = parseFloat(s.paddingBottom) || 0;
+    return Math.max(0, panel.clientHeight - pt - pb - block.getBoundingClientRect().height);
+  };
 
-    return Math.max(
-      0,
-      panel.clientHeight - paddingTop - paddingBottom - blockHeight
-    );
-  }
-
-  function setBlockY(travel, pct) {
+  const setBlockY = (travel, pct) => {
     block.style.transform = `translate3d(0, ${-(travel * pct) / 100}px, 0)`;
-  }
+  };
 
-  function setStep(value, travel) {
-    bot.innerHTML = makeDigits(value);
+  const setStep = (v, travel) => {
+    bot.innerHTML = makeDigits(v);
     block.classList.add("is-flipping");
-    bar.style.width = value + "%";
-    setBlockY(travel, value);
-  }
+    bar.style.width = v + "%";
+    setBlockY(travel, v);
+  };
 
-  function commitStep(value) {
-    top.innerHTML = makeDigits(value);
+  const commitStep = (v) => {
+    top.innerHTML = makeDigits(v);
     bot.innerHTML = "";
     block.classList.remove("is-flipping");
-  }
+  };
 
-  function addFlipStep(value, travel, addGap) {
-    if (addGap) {
-      tl.to({}, { duration: STEP_GAP });
-    }
+  const addFlipStep = (v, travel, gap) => {
+    if (gap) tl.to({}, { duration: STEP_GAP });
+    tl.call(() => setStep(v, travel));
+    tl.to({}, { duration: getFlipWait(v) });
+    tl.call(() => commitStep(v));
+  };
 
-    tl.call(() => {
-      setStep(value, travel);
-    });
-
-    tl.to({}, { duration: getFlipWait(value) });
-
-    tl.call(() => {
-      commitStep(value);
-    });
-  }
-
-  // Step 1: Stop Lenis, lock the page, show the loader.
-  // Set scroll position NOW while the loader covers everything —
-  // the user can't see the page behind it.
+  // --- Step 1: Lock page, set scroll behind loader, show loader ---
   tl.call(() => {
     if (lenis) lenis.stop();
 
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
 
-    // Set scroll position behind the loader — Lenis is stopped so no drift
     gsap.set(next, { clearProps: "position,top,left,right" });
     window.scrollTo(0, onceScroll);
     if (lenis) {
       lenis.scrollTo(onceScroll, { immediate: true });
       lenis.resize();
-      // Do NOT call lenis.start() — keep it stopped during loader
     }
 
-    gsap.set(wrap, {
-      display: "block",
-      autoAlpha: 1,
-      pointerEvents: "auto"
-    });
+    gsap.set(wrap, { display: "block", autoAlpha: 1, pointerEvents: "auto" });
 
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
@@ -272,32 +375,24 @@ function runPageOnceAnimation(next) {
     setBlockY(getTravel(), 0);
   });
 
+  // --- Step 2: Animate the counter ---
   tl.to({}, { duration: HOLD_DUR });
 
   const travel = getTravel();
-
   addFlipStep(step1, travel, false);
   addFlipStep(step2, travel, true);
   addFlipStep(100, travel, true);
 
   tl.to({}, { duration: HOLD_DUR });
 
-  tl.to(wrap, {
-    autoAlpha: 0,
-    duration: FADE_DUR,
-    ease: "power2.out"
-  });
+  // --- Step 3: Fade out loader, unlock page ---
+  tl.to(wrap, { autoAlpha: 0, duration: FADE_DUR, ease: "power2.out" });
 
-  // Step 2: Loader is done — unlock everything and start Lenis
   tl.call(() => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
 
-    gsap.set(wrap, {
-      display: "none",
-      autoAlpha: 0,
-      pointerEvents: "none"
-    });
+    gsap.set(wrap, { display: "none", autoAlpha: 0, pointerEvents: "none" });
 
     block.classList.remove("is-flipping");
     block.style.transform = "";
@@ -305,162 +400,100 @@ function runPageOnceAnimation(next) {
     top.innerHTML = makeDigits(0);
     bot.innerHTML = "";
 
-    // NOW start Lenis — scroll is already in the right place
-    if (lenis) {
-      lenis.start();
-    }
-
-    if (hasScrollTrigger) {
-      ScrollTrigger.refresh();
-    }
+    if (lenis) lenis.start();
+    if (hasScrollTrigger) ScrollTrigger.refresh();
   });
 
   return tl;
 }
 
-function closeMenuIfOpen() {
-  const navToggle = document.querySelector("#nav-toggle");
-  if (navToggle && navToggle.checked) {
-    navToggle.checked = false;
-    return true;
-  }
-  return false;
-}
 
-/**
- * Freeze the current container in place so scroll changes
- * don't cause visible jumps during sync transitions.
- */
-function freezeCurrentContainer(container) {
-  const scroll = getCurrentScroll();
 
-  if (lenis) lenis.stop();
+// -----------------------------------------
+// DEFAULT PAGE TRANSITIONS
+// -----------------------------------------
 
-  gsap.set(container, {
-    position: "fixed",
-    top: -scroll,
-    left: 0,
-    right: 0,
-  });
-
-  window.scrollTo(0, 0);
-}
-
-function runPageLeaveAnimation(current, next) {
+function runPageLeaveAnimation(current) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
   const transitionDark = transitionWrap.querySelector("[data-transition-dark]");
 
-  const tl = gsap.timeline({
-    onComplete: () => {
-      current.remove();
-    }
-  });
+  const tl = gsap.timeline({ onComplete: () => current.remove() });
 
-  if (closeMenuIfOpen()) {
-    skipPageTransition = true;
-  }
-
-  CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
+  if (closeMenuIfOpen()) skipPageTransition = true;
 
   if (reducedMotion || skipPageTransition) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
-  tl.set(transitionWrap, {
-    zIndex: 2
-  });
+  tl.set(transitionWrap, { zIndex: 2 });
 
-  tl.fromTo(transitionDark, {
-    autoAlpha: 0
-  }, {
-    autoAlpha: 0.8,
-    duration: 1.2,
-    ease: "parallax"
-  }, 0);
+  tl.fromTo(transitionDark,
+    { autoAlpha: 0 },
+    { autoAlpha: 0.8, duration: 1.2, ease: "parallax" }, 0);
 
-  tl.fromTo(current, {
-    y: "0vh"
-  }, {
-    y: "-25vh",
-    duration: 1.2,
-    ease: "parallax",
-  }, 0);
+  tl.fromTo(current,
+    { y: "0vh" },
+    { y: "-25vh", duration: 1.2, ease: "parallax" }, 0);
 
-  tl.set(transitionDark, {
-    autoAlpha: 0,
-  });
+  tl.set(transitionDark, { autoAlpha: 0 });
 
   return tl;
 }
 
 function runPageEnterAnimation(next) {
   const tl = gsap.timeline();
+  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
 
   if (reducedMotion || skipPageTransition) {
     skipPageTransition = false;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next, 0], "pageReady");
+    tl.call(resetPage, [next, targetScroll], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
-  tl.add("startEnter", 0);
+  tl.set(next, { zIndex: 3 });
 
-  tl.set(next, {
-    zIndex: 3
-  });
-
-  tl.fromTo(next, {
-    y: "100vh"
-  }, {
-    y: "0vh",
-    duration: 1.2,
-    clearProps: "all",
-    ease: "parallax"
-  }, "startEnter");
+  tl.fromTo(next,
+    { y: "100vh" },
+    { y: "0vh", duration: 1.2, clearProps: "all", ease: "parallax" }, 0);
 
   tl.add("pageReady");
-
-  // On popstate, restore saved scroll; on normal nav, go to top
-  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
   tl.call(resetPage, [next, targetScroll], "pageReady");
 
-  return new Promise(resolve => {
-    tl.call(resolve, null, "pageReady");
-  });
+  return new Promise(resolve => tl.call(resolve, null, "pageReady"));
 }
 
+
+
+// -----------------------------------------
+// WORK ↔ CASE TRANSITIONS
+// -----------------------------------------
+
 function runWorkLeaveAnimation(current, next, trigger) {
-  const clicked = trigger.closest("[data-case-link]");
-  const thumbnail = clicked.querySelector("[data-case-thumbnail]");
-  const nextHero = next.querySelector(".section");
+  const clicked    = trigger.closest("[data-case-link]");
+  const thumbnail  = clicked.querySelector("[data-case-thumbnail]");
+  const nextHero   = next.querySelector(".section");
 
   flipState = Flip.getState(thumbnail);
   flippedThumbnail = thumbnail;
 
-  const tl = gsap.timeline({
-    onComplete: () => current.remove()
-  });
+  const tl = gsap.timeline({ onComplete: () => current.remove() });
 
   closeMenuIfOpen();
 
-  if (reducedMotion) {
-    return tl.set(current, { autoAlpha: 0 });
-  }
+  if (reducedMotion) return tl.set(current, { autoAlpha: 0 });
 
-  tl.to(current, {
-    autoAlpha: 0,
-    duration: 0.6
-  }, 0);
-
+  tl.to(current, { autoAlpha: 0, duration: 0.6 }, 0);
   tl.set(nextHero, { backgroundColor: "transparent" }, 0);
 
   return tl;
 }
 
 function runCaseEnterAnimation(next) {
-  const nextHero = next.querySelector(".section");
+  const nextHero      = next.querySelector(".section");
   const revealTargets = nextHero.querySelectorAll("[data-case-reveal]");
+  const targetScroll  = isPopstate ? getSavedScroll(window.location.href) : 0;
 
   const tl = gsap.timeline();
 
@@ -469,52 +502,33 @@ function runCaseEnterAnimation(next) {
     flipState = null;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next, 0], "pageReady");
+    tl.call(resetPage, [next, targetScroll], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
   const placeholder = next.querySelector("[data-case-thumbnail]");
-
   placeholder.parentNode.insertBefore(flippedThumbnail, placeholder);
   placeholder.remove();
 
+  tl.add(Flip.from(flipState, { duration: 0.8 }), 0);
+
   tl.add("startEnter", 0.6);
 
-  tl.add(
-    Flip.from(flipState, {
-      duration: 0.8,
-    }), 0);
+  tl.fromTo(nextHero,
+    { backgroundColor: "transparent" },
+    { backgroundColor: "#FFF", duration: 0.5 }, "startEnter");
 
-  tl.fromTo(nextHero, {
-    backgroundColor: "transparent"
-  }, {
-    backgroundColor: "#FFF",
-    duration: 0.5
-  }, "startEnter");
-
-  tl.fromTo(revealTargets, {
-    autoAlpha: 0,
-    yPercent: 25
-  }, {
-    autoAlpha: 1,
-    yPercent: 0,
-    stagger: 0.1
-  }, "startEnter+=0.1");
+  tl.fromTo(revealTargets,
+    { autoAlpha: 0, yPercent: 25 },
+    { autoAlpha: 1, yPercent: 0, stagger: 0.1 }, "startEnter+=0.1");
 
   tl.add("pageReady");
-
-  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
   tl.call(resetPage, [next, targetScroll], "pageReady");
+  tl.call(() => { flippedThumbnail = null; flipState = null; });
 
-  tl.call(() => {
-    flippedThumbnail = null;
-    flipState = null;
-  });
-
-  return new Promise(resolve => {
-    tl.call(resolve, null, "pageReady");
-  });
+  return new Promise(resolve => tl.call(resolve, null, "pageReady"));
 }
+
 
 
 // -----------------------------------------
@@ -523,47 +537,28 @@ function runCaseEnterAnimation(next) {
 
 barba.hooks.before(data => {
   isPopstate = data.trigger === "popstate";
-
-  // Save scroll position of the page we're leaving
   saveScrollPosition(data.current.url.href, getCurrentScroll());
-
-  // Freeze the outgoing page before any scroll manipulation
-  freezeCurrentContainer(data.current.container);
+  freezeContainer(data.current.container);
 });
 
 barba.hooks.beforeEnter(data => {
   gsap.set(data.next.container, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
+    position: "fixed", top: 0, left: 0, right: 0,
   });
-
   initBeforeEnterFunctions(data.next.container);
   applyThemeFrom(data.next.container);
 });
 
 barba.hooks.afterLeave(() => {
-  if (hasScrollTrigger) {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }
+  if (hasScrollTrigger) ScrollTrigger.getAll().forEach(t => t.kill());
 });
 
-barba.hooks.enter(data => {
-  initBarbaNavUpdate(data);
-});
+barba.hooks.enter(data => syncNavState(data));
 
 barba.hooks.afterEnter(data => {
   initAfterEnterFunctions(data.next.container);
-
-  if (hasLenis) {
-    lenis.resize();
-    lenis.start();
-  }
-
-  if (hasScrollTrigger) {
-    ScrollTrigger.refresh();
-  }
+  if (lenis) { lenis.resize(); lenis.start(); }
+  if (hasScrollTrigger) ScrollTrigger.refresh();
 });
 
 barba.hooks.after(() => {
@@ -580,11 +575,9 @@ barba.init({
       name: "work-to-case",
       sync: true,
       from: { namespace: ["work"] },
-      to: { namespace: ["case"] },
-      custom: ({ trigger }) => {
-        if (typeof trigger === "string") return false;
-        return trigger.hasAttribute("data-case-link");
-      },
+      to:   { namespace: ["case"] },
+      custom: ({ trigger }) =>
+        typeof trigger !== "string" && trigger.hasAttribute("data-case-link"),
       async leave(data) {
         return runWorkLeaveAnimation(data.current.container, data.next.container, data.trigger);
       },
@@ -595,135 +588,19 @@ barba.init({
     {
       name: "default",
       sync: true,
-
       async once(data) {
         initOnceFunctions();
         return runPageOnceAnimation(data.next.container);
       },
-
       async leave(data) {
-        return runPageLeaveAnimation(data.current.container, data.next.container);
+        return runPageLeaveAnimation(data.current.container);
       },
-
       async enter(data) {
         return runPageEnterAnimation(data.next.container);
       }
     }
   ],
 });
-
-
-
-// -----------------------------------------
-// GENERIC + HELPERS
-// -----------------------------------------
-
-const themeConfig = {
-  light: {
-    nav: "dark",
-    transition: "light"
-  },
-  dark: {
-    nav: "light",
-    transition: "dark"
-  }
-};
-
-function applyThemeFrom(container) {
-  const pageTheme = container?.dataset?.pageTheme || "light";
-  const config = themeConfig[pageTheme] || themeConfig.light;
-
-  document.body.dataset.pageTheme = pageTheme;
-  const transitionEl = document.querySelector('[data-theme-transition]');
-  if (transitionEl) {
-    transitionEl.dataset.themeTransition = config.transition;
-  }
-
-  const nav = document.querySelector('[data-theme-nav]');
-  if (nav) {
-    nav.dataset.themeNav = config.nav;
-  }
-}
-
-function initLenis() {
-  if (lenis) return;
-  if (!hasLenis) return;
-
-  lenis = new Lenis({
-    lerp: 0.165,
-    wheelMultiplier: 1.25,
-  });
-
-  if (hasScrollTrigger) {
-    lenis.on("scroll", ScrollTrigger.update);
-  }
-
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
-
-  gsap.ticker.lagSmoothing(0);
-}
-
-/**
- * Settle the page after a transition completes.
- * @param {Element} container - The new page container
- * @param {number}  targetScroll - Scroll position to restore
- */
-function resetPage(container, targetScroll) {
-  // Default to 0 if not provided (safety net)
-  if (targetScroll == null) targetScroll = 0;
-
-  gsap.set(container, { clearProps: "position,top,left,right" });
-
-  window.scrollTo(0, targetScroll);
-
-  if (lenis) {
-    lenis.scrollTo(targetScroll, { immediate: true });
-    lenis.resize();
-    lenis.start();
-  }
-
-  if (hasScrollTrigger) {
-    ScrollTrigger.refresh();
-  }
-}
-
-function debounceOnWidthChange(fn, ms) {
-  let last = innerWidth,
-    timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      if (innerWidth !== last) {
-        last = innerWidth;
-        fn.apply(this, args);
-      }
-    }, ms);
-  };
-}
-
-function initBarbaNavUpdate(data) {
-  var tpl = document.createElement('template');
-  tpl.innerHTML = data.next.html.trim();
-  var nextNodes = tpl.content.querySelectorAll('[data-barba-update]');
-  var currentNodes = document.querySelectorAll('nav [data-barba-update]');
-
-  currentNodes.forEach(function (curr, index) {
-    var next = nextNodes[index];
-    if (!next) return;
-
-    var newStatus = next.getAttribute('aria-current');
-    if (newStatus !== null) {
-      curr.setAttribute('aria-current', newStatus);
-    } else {
-      curr.removeAttribute('aria-current');
-    }
-
-    var newClassList = next.getAttribute('class') || '';
-    curr.setAttribute('class', newClassList);
-  });
-}
 
 
 
