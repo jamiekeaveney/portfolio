@@ -143,6 +143,16 @@ function runPageOnceAnimation(next) {
     const savedScroll = getSavedScroll(window.location.href);
 
     tl.call(() => {
+      // Hide the loader in case it's visible by default
+      const wrap = document.querySelector('[data-loader="wrap"]');
+      if (wrap) {
+        gsap.set(wrap, {
+          display: "none",
+          autoAlpha: 0,
+          pointerEvents: "none"
+        });
+      }
+
       resetPage(next, savedScroll);
     }, null, 0);
 
