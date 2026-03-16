@@ -36,6 +36,11 @@ gsap.defaults({ ease: "osmo", duration: durationDefault });
 let skipPageTransition = false;
 let isPopstate = false;
 
+// Detect if this page load was a refresh or browser back/forward
+// (as opposed to a fresh first visit)
+const navEntry = performance.getEntriesByType("navigation")[0];
+const isReloadOrBackForward = navEntry && (navEntry.type === "reload" || navEntry.type === "back_forward");
+
 // Persist scroll positions in sessionStorage so they survive refresh
 const SCROLL_STORAGE_KEY = "osmo_scroll_positions";
 
@@ -53,7 +58,7 @@ function saveScrollPosition(url, scrollY) {
   try {
     sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
   } catch (e) {
-    // Storage full or unavailable — degrade silently
+    // Storage full or unavailable
   }
 }
 
@@ -61,10 +66,27 @@ function getSavedScroll(url) {
   return getScrollPositions()[url] || 0;
 }
 
-// Get the true scroll value from whichever system owns it
 function getCurrentScroll() {
   if (lenis) return Math.round(lenis.scroll);
   return window.scrollY;
+}
+
+// Continuously save scroll position so refresh always has the latest value
+function initScrollSaver() {
+  let saveTimer;
+  const save = () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveScrollPosition(window.location.href, getCurrentScroll());
+    }, 150);
+  };
+
+  // Hook into Lenis if available, otherwise native scroll
+  if (lenis) {
+    lenis.on("scroll", save);
+  } else {
+    window.addEventListener("scroll", save, { passive: true });
+  }
 }
 
 
@@ -75,6 +97,8 @@ function getCurrentScroll() {
 
 function initOnceFunctions() {
   initLenis();
+  initScrollSaver();
+
   if (onceFunctionsInitialized) return;
   onceFunctionsInitialized = true;
 
@@ -113,8 +137,20 @@ function initAfterEnterFunctions(next) {
 function runPageOnceAnimation(next) {
   const tl = gsap.timeline();
 
+  // On reload or browser back/forward that caused a full page load,
+  // skip the loader entirely and restore scroll position
+  if (isReloadOrBackForward) {
+    const savedScroll = getSavedScroll(window.location.href);
+
+    tl.call(() => {
+      resetPage(next, savedScroll);
+    }, null, 0);
+
+    return tl;
+  }
+
   tl.call(() => {
-    resetPage(next);
+    resetPage(next, 0);
   }, null, 0);
 
   if (reducedMotion) return tl;
@@ -267,16 +303,13 @@ function closeMenuIfOpen() {
 
 /**
  * Freeze the current container in place so scroll changes
- * don't cause visible jumps. Converts it to position:fixed
- * offset by its current scroll, then resets window scroll to 0.
+ * don't cause visible jumps during sync transitions.
  */
 function freezeCurrentContainer(container) {
   const scroll = getCurrentScroll();
 
-  // Stop Lenis immediately so it can't fight our scroll reset
   if (lenis) lenis.stop();
 
-  // Pin the outgoing page exactly where the user sees it
   gsap.set(container, {
     position: "fixed",
     top: -scroll,
@@ -284,7 +317,6 @@ function freezeCurrentContainer(container) {
     right: 0,
   });
 
-  // Now safe to zero out native scroll — the fixed container won't move
   window.scrollTo(0, 0);
 }
 
@@ -298,7 +330,6 @@ function runPageLeaveAnimation(current, next) {
     }
   });
 
-  // Close mobile menu — if it was open, flag to skip parallax
   if (closeMenuIfOpen()) {
     skipPageTransition = true;
   }
@@ -343,7 +374,7 @@ function runPageEnterAnimation(next) {
     skipPageTransition = false;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
+    tl.call(resetPage, [next, 0], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
@@ -363,7 +394,10 @@ function runPageEnterAnimation(next) {
   }, "startEnter");
 
   tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
+
+  // On popstate, restore saved scroll; on normal nav, go to top
+  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
+  tl.call(resetPage, [next, targetScroll], "pageReady");
 
   return new Promise(resolve => {
     tl.call(resolve, null, "pageReady");
@@ -409,7 +443,7 @@ function runCaseEnterAnimation(next) {
     flipState = null;
     tl.set(next, { autoAlpha: 1 });
     tl.add("pageReady");
-    tl.call(resetPage, [next], "pageReady");
+    tl.call(resetPage, [next, 0], "pageReady");
     return new Promise(resolve => tl.call(resolve, null, "pageReady"));
   }
 
@@ -442,7 +476,9 @@ function runCaseEnterAnimation(next) {
   }, "startEnter+=0.1");
 
   tl.add("pageReady");
-  tl.call(resetPage, [next], "pageReady");
+
+  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
+  tl.call(resetPage, [next, targetScroll], "pageReady");
 
   tl.call(() => {
     flippedThumbnail = null;
@@ -462,15 +498,14 @@ function runCaseEnterAnimation(next) {
 barba.hooks.before(data => {
   isPopstate = data.trigger === "popstate";
 
-  // Save scroll position of the page we're leaving (survives refresh)
+  // Save scroll position of the page we're leaving
   saveScrollPosition(data.current.url.href, getCurrentScroll());
 
-  // Freeze the outgoing page visually before any scroll manipulation
+  // Freeze the outgoing page before any scroll manipulation
   freezeCurrentContainer(data.current.container);
 });
 
 barba.hooks.beforeEnter(data => {
-  // Next container sits on top — current is already frozen by hooks.before
   gsap.set(data.next.container, {
     position: "fixed",
     top: 0,
@@ -604,17 +639,20 @@ function initLenis() {
   gsap.ticker.lagSmoothing(0);
 }
 
-function resetPage(container) {
-  const targetScroll = isPopstate ? getSavedScroll(window.location.href) : 0;
+/**
+ * Settle the page after a transition completes.
+ * @param {Element} container - The new page container
+ * @param {number}  targetScroll - Scroll position to restore
+ */
+function resetPage(container, targetScroll) {
+  // Default to 0 if not provided (safety net)
+  if (targetScroll == null) targetScroll = 0;
 
-  // Clear fixed positioning from the enter transition
   gsap.set(container, { clearProps: "position,top,left,right" });
 
-  // Set native scroll
   window.scrollTo(0, targetScroll);
 
   if (lenis) {
-    // Sync Lenis internal value — immediate prevents lerp drift
     lenis.scrollTo(targetScroll, { immediate: true });
     lenis.resize();
     lenis.start();
