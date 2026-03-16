@@ -1,23 +1,25 @@
 // -----------------------------------------
-// HORIZONTAL SCROLL CAROUSEL
+// SLIDER — Horizontal scroll with vertical toggle
 // -----------------------------------------
 // Vertical scroll → horizontal movement (1:1 feel)
-// Infinite loop, drag, parallax, works with Barba + Lenis
+// Infinite loop, drag, parallax, GSAP Flip toggle
+// Works with Barba + Lenis
 //
-// Call: initSlider(container) from your function registry
-// Requires: .slider, .slide-track, .slide elements
+// Call: initSlider(container)
+// HTML: .slider > .slide-track > .slide
+// Toggle: [data-slider-toggle] button (optional)
 
 const initSlider = (() => {
   const BP = 991;
   const mq = matchMedia(`(max-width:${BP}px)`);
 
   const CFG = {
-    LERP:       0.1,     // Higher = snappier, more 1:1 feel
-    DRAG_MULT:  2,       // Pointer drag sensitivity
-    DRAG_T:     3,       // Pixels before drag registers
-    CLICK_MS:   300,     // Click suppression after drag
-    COPIES:     3,       // Clone sets for infinite loop
-    PARALLAX:   0.2,     // Default parallax amount (overridden by --work-page--slider-parallax)
+    LERP:       0.1,
+    DRAG_MULT:  2,
+    DRAG_T:     3,
+    CLICK_MS:   300,
+    COPIES:     3,
+    PARALLAX:   0.2,
   };
 
   const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
@@ -25,6 +27,7 @@ const initSlider = (() => {
   const now   = () => performance.now();
 
   let instance = null;
+
 
   // ── Helpers ──
 
@@ -37,7 +40,7 @@ const initSlider = (() => {
   }
 
   function getPitch(track) {
-    const slides = track.querySelectorAll(".slide");
+    const slides = track.querySelectorAll(".slide[data-slide-original]");
     if (slides.length > 1) {
       const a = slides[0].getBoundingClientRect().left;
       const b = slides[1].getBoundingClientRect().left;
@@ -46,12 +49,11 @@ const initSlider = (() => {
     const el = slides[0];
     if (!el) return 0;
     const cs = getComputedStyle(el);
-    return el.getBoundingClientRect().width + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight);
+    return el.getBoundingClientRect().width + parseFloat(cs.marginLeft || 0) + parseFloat(cs.marginRight || 0);
   }
 
-  function clearStyles(el) {
+  function clearImgStyles(el) {
     if (!el) return;
-    el.style.transform = "";
     el.style.objectPosition = "";
     el.style.opacity = "";
     el.style.transition = "";
@@ -66,24 +68,164 @@ const initSlider = (() => {
     if (instance.raf) cancelAnimationFrame(instance.raf);
     instance.abort.abort();
 
+    // Remove clones
     if (instance.track) {
-      [...instance.track.querySelectorAll(".slide")].forEach((el, i) => {
-        if (i >= instance.total) el.remove();
-      });
-      instance.imgs.forEach(clearStyles);
+      instance.track.querySelectorAll(".slide:not([data-slide-original])").forEach(el => el.remove());
+      instance.origImgs.forEach(clearImgStyles);
       instance.track.style.transform = "";
       instance.track.style.willChange = "";
+      instance.track.classList.remove("is-horizontal", "is-vertical");
+      instance.slider.classList.remove("is-horizontal", "is-vertical");
     }
 
     instance = null;
   }
 
 
+  // ── Horizontal scroll engine ──
+
+  function startHorizontalLoop(s) {
+    if (s.raf) cancelAnimationFrame(s.raf);
+
+    // Show clones
+    s.track.querySelectorAll(".slide:not([data-slide-original])").forEach(el => {
+      el.style.display = "";
+    });
+
+    // Recalculate
+    s.allSlides = [...s.track.querySelectorAll(".slide")];
+    s.allImgs = s.allSlides.map(el =>
+      el.querySelector(".slider-image") || el.querySelector(".slide-image img")
+    );
+
+    s.pitch = getPitch(s.track);
+    const seq = s.pitch * s.total;
+    const startX = -(seq * Math.floor((CFG.COPIES + 1) / 2));
+    s.current = s.target = startX;
+    s.track.style.transform = `translate3d(${startX}px,0,0)`;
+    s.track.style.willChange = "transform";
+
+    function tick() {
+      if (s.mode !== "horizontal") return;
+
+      s.current = lerp(s.current, s.target, CFG.LERP);
+      if (Math.abs(s.target - s.current) < 0.5) s.current = s.target;
+
+      const len = s.pitch * s.total;
+      if (len > 0) {
+        while (s.current > -len)              { s.current -= len; s.target -= len; s.allImgs.forEach(clearImgStyles); }
+        while (s.current < -len * CFG.COPIES) { s.current += len; s.target += len; s.allImgs.forEach(clearImgStyles); }
+      }
+
+      s.track.style.transform = `translate3d(${s.current}px,0,0)`;
+
+      // Parallax
+      if (s.parallax) {
+        const vp = innerWidth / 2;
+        const half = s.parallax * 100 / 2;
+        for (let i = 0; i < s.allSlides.length; i++) {
+          const img = s.allImgs[i];
+          if (!img) continue;
+          const r = s.allSlides[i].getBoundingClientRect();
+          if (r.right < -200 || r.left > innerWidth + 200) continue;
+          const n = clamp(((r.left + r.width / 2) - vp) / Math.max(1, vp), -1, 1);
+          img.style.objectPosition = `${50 - n * half}% 50%`;
+        }
+      }
+
+      // Progress counter
+      if (s.prog && s.total && s.pitch) {
+        const seqLen = s.pitch * s.total;
+        let t = (-s.current) % seqLen;
+        if (t < 0) t += seqLen;
+        const pct = (t / seqLen) * 100;
+        s.ui += (pct - s.ui) * 0.15;
+        const display = Math.round(clamp(s.ui, 0, 100)).toString().padStart(2, "0");
+        if (s.prog.textContent !== display) s.prog.textContent = display;
+      }
+
+      s.raf = requestAnimationFrame(tick);
+    }
+
+    s.raf = requestAnimationFrame(tick);
+  }
+
+  function stopHorizontalLoop(s) {
+    if (s.raf) {
+      cancelAnimationFrame(s.raf);
+      s.raf = null;
+    }
+    s.track.style.willChange = "";
+  }
+
+
+  // ── Mode toggle with GSAP Flip ──
+
+  function setMode(s, newMode, animate) {
+    if (s.mode === newMode) return;
+    const oldMode = s.mode;
+    s.mode = newMode;
+
+    // Get flip state from originals only
+    const originals = s.track.querySelectorAll(".slide[data-slide-original]");
+    const flipState = animate && typeof Flip !== "undefined"
+      ? Flip.getState(originals)
+      : null;
+
+    if (newMode === "vertical") {
+      // Stop horizontal engine
+      stopHorizontalLoop(s);
+
+      // Hide clones
+      s.track.querySelectorAll(".slide:not([data-slide-original])").forEach(el => {
+        el.style.display = "none";
+      });
+
+      // Switch CSS classes
+      s.track.classList.remove("is-horizontal");
+      s.track.classList.add("is-vertical");
+      s.slider.classList.remove("is-horizontal");
+      s.slider.classList.add("is-vertical");
+      s.track.style.transform = "";
+
+      // Update toggle label
+      if (s.toggleLabel) s.toggleLabel.textContent = "Carousel";
+
+    } else {
+      // Switch CSS classes
+      s.track.classList.remove("is-vertical");
+      s.track.classList.add("is-horizontal");
+      s.slider.classList.remove("is-vertical");
+      s.slider.classList.add("is-horizontal");
+
+      // Start horizontal engine
+      startHorizontalLoop(s);
+
+      // Update toggle label
+      if (s.toggleLabel) s.toggleLabel.textContent = "Grid";
+    }
+
+    // Animate with Flip
+    if (flipState) {
+      Flip.from(flipState, {
+        duration: 0.8,
+        ease: "power3.inOut",
+        stagger: 0.03,
+        absolute: true,
+        onComplete: () => {
+          if (newMode === "horizontal") {
+            // Recalculate after flip settles
+            s.pitch = getPitch(s.track);
+          }
+        }
+      });
+    }
+  }
+
+
   // ── Create ──
 
   function create(container) {
-    if (mq.matches) return;
-
     const root   = container || document;
     const slider = root.querySelector(".slider");
     const track  = root.querySelector(".slide-track");
@@ -94,72 +236,74 @@ const initSlider = (() => {
     const abort = new AbortController();
     const sig   = { signal: abort.signal };
 
+    // Mark originals
+    const originals = [...track.querySelectorAll(".slide")];
+    originals.forEach(el => el.setAttribute("data-slide-original", ""));
+
     const s = {
       slider, track, abort,
       raf: null,
-      total: 0,
+      total: originals.length,
       pitch: 0,
       parallax: CFG.PARALLAX,
-      slides: [],
-      imgs: [],
-      prog: null,
-
-      // Position state
+      originals,
+      origImgs: originals.map(el =>
+        el.querySelector(".slider-image") || el.querySelector(".slide-image img")
+      ),
+      allSlides: [],
+      allImgs: [],
+      prog: root.querySelector("[data-slider-progress]"),
+      mode: null,
       current: 0,
-      target:  0,
-
-      // Drag state
+      target: 0,
       dragging: false,
-      dragged:  false,
+      dragged: false,
       dragStartX: 0,
-      dragLastX:  0,
+      dragStartY: 0,
+      dragLastX: 0,
       clickUntil: 0,
-
-      // Progress display
       ui: 0,
+      toggleLabel: null,
     };
 
     instance = s;
-    track.style.willChange = "transform";
 
-    // Read parallax from CSS variable
+    if (!s.total) return;
+
+    // Read parallax
     const p = cssVarPercent(slider, "--work-page--slider-parallax");
     if (!Number.isNaN(p)) s.parallax = p;
 
-    // Clone slides for infinite loop
-    const originals = [...track.querySelectorAll(".slide")];
-    s.total = originals.length;
-    if (!s.total) return;
-
+    // Clone slides for infinite loop (hidden initially if vertical)
     const frag = document.createDocumentFragment();
     for (let i = 0; i < CFG.COPIES; i++) {
-      originals.forEach(el => frag.appendChild(el.cloneNode(true)));
+      originals.forEach(el => {
+        const clone = el.cloneNode(true);
+        clone.removeAttribute("data-slide-original");
+        frag.appendChild(clone);
+      });
     }
     track.appendChild(frag);
 
-    s.slides = [...track.querySelectorAll(".slide")];
-    s.imgs   = s.slides.map(el =>
-      el.querySelector(".slider-image") || el.querySelector(".slide-image img")
-    );
 
-    // Measure
-    s.pitch = getPitch(track);
-    const seq = s.pitch * s.total;
+    // ── Toggle button ──
 
-    // Start centred in the middle copy set
-    const startX = -(seq * Math.floor((CFG.COPIES + 1) / 2));
-    s.current = s.target = startX;
-    track.style.transform = `translate3d(${startX}px,0,0)`;
-
-    s.prog = root.querySelector("[data-slider-progress]");
+    const toggleBtn = root.querySelector("[data-slider-toggle]");
+    if (toggleBtn) {
+      s.toggleLabel = toggleBtn.querySelector("[data-slider-toggle-label]") || toggleBtn;
+      toggleBtn.addEventListener("click", () => {
+        const next = s.mode === "horizontal" ? "vertical" : "horizontal";
+        setMode(s, next, true);
+      }, sig);
+    }
 
 
-    // ── Events ──
+    // ── Events (horizontal mode only, but always bound) ──
 
-    // Wheel: 1:1 mapping — deltaY pixels of scroll = deltaY pixels horizontal
+    // Wheel
     slider.addEventListener("wheel", e => {
+      if (s.mode !== "horizontal") return;
       e.preventDefault();
-      // Use whichever axis has more movement (supports trackpad horizontal swipe too)
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       s.target -= delta;
     }, { passive: false, ...sig });
@@ -168,7 +312,13 @@ const initSlider = (() => {
     let programmaticClick = false;
     track.addEventListener("click", e => {
       if (programmaticClick) return;
-      if (s.dragged || now() < s.clickUntil) { e.preventDefault(); return; }
+      if (s.mode === "horizontal" && (s.dragged || now() < s.clickUntil)) {
+        e.preventDefault();
+        return;
+      }
+      // In vertical mode, let native clicks through
+      if (s.mode === "vertical") return;
+
       const link = e.target.closest(".slide")?.querySelector("a[href]");
       if (!link) return;
       e.preventDefault();
@@ -178,17 +328,19 @@ const initSlider = (() => {
       programmaticClick = false;
     }, sig);
 
-    // Pointer drag
+    // Drag (horizontal only)
     slider.addEventListener("pointerdown", e => {
+      if (s.mode !== "horizontal") return;
       if (e.pointerType === "mouse") e.preventDefault();
       s.dragging = true;
       s.dragged = false;
       s.dragStartX = s.dragLastX = e.clientX;
+      s.dragStartY = e.clientY;
       track.classList.add("dragging");
     }, sig);
 
     slider.addEventListener("pointermove", e => {
-      if (!s.dragging) return;
+      if (!s.dragging || s.mode !== "horizontal") return;
       const dx = e.clientX - s.dragLastX;
       s.target += dx * CFG.DRAG_MULT;
       s.dragLastX = e.clientX;
@@ -211,72 +363,54 @@ const initSlider = (() => {
     // Resize
     let resizeRaf;
     window.addEventListener("resize", () => {
-      if (mq.matches) return;
       cancelAnimationFrame(resizeRaf);
       resizeRaf = requestAnimationFrame(() => {
-        const oldSeq = s.pitch * s.total;
-        const ratio  = oldSeq ? (s.current / oldSeq) : 0;
-        s.pitch = getPitch(track);
-        const newSeq = s.pitch * s.total;
-        s.current = s.target = ratio * newSeq;
-        track.style.transform = `translate3d(${s.current}px,0,0)`;
+        if (mq.matches && s.mode === "horizontal") {
+          // Crossed to mobile — force vertical
+          setMode(s, "vertical", false);
+          return;
+        }
+        if (s.mode === "horizontal") {
+          const oldSeq = s.pitch * s.total;
+          const ratio  = oldSeq ? (s.current / oldSeq) : 0;
+          s.pitch = getPitch(s.track);
+          const newSeq = s.pitch * s.total;
+          s.current = s.target = ratio * newSeq;
+          s.track.style.transform = `translate3d(${s.current}px,0,0)`;
+        }
       });
     }, sig);
 
 
-    // ── Render loop ──
+    // ── Init mode ──
 
-    function tick() {
-      // Lerp toward target
-      s.current = lerp(s.current, s.target, CFG.LERP);
-
-      // Snap if close enough
-      if (Math.abs(s.target - s.current) < 0.5) s.current = s.target;
-
-      // Infinite wrap — keep both values in sync to avoid jump
-      const len = s.pitch * s.total;
-      if (len > 0) {
-        while (s.current > -len)          { s.current -= len; s.target -= len; s.imgs.forEach(clearStyles); }
-        while (s.current < -len * CFG.COPIES) { s.current += len; s.target += len; s.imgs.forEach(clearStyles); }
-      }
-
-      // Apply
-      track.style.transform = `translate3d(${s.current}px,0,0)`;
-
-      // Parallax
-      if (s.parallax) {
-        const vp   = innerWidth / 2;
-        const half = s.parallax * 100 / 2;
-        for (let i = 0; i < s.slides.length; i++) {
-          const img = s.imgs[i];
-          if (!img) continue;
-          const r = s.slides[i].getBoundingClientRect();
-          if (r.right < -200 || r.left > innerWidth + 200) continue;
-          const n = clamp(((r.left + r.width / 2) - vp) / Math.max(1, vp), -1, 1);
-          img.style.objectPosition = `${50 - n * half}% 50%`;
-        }
-      }
-
-      // Progress counter
-      if (s.prog && !mq.matches && s.total && s.pitch) {
-        const seqLen = s.pitch * s.total;
-        let t = (-s.current) % seqLen;
-        if (t < 0) t += seqLen;
-        const pct = (t / seqLen) * 100;
-        s.ui += (pct - s.ui) * 0.15;
-        const display = Math.round(clamp(s.ui, 0, 100)).toString().padStart(2, "0");
-        if (s.prog.textContent !== display) s.prog.textContent = display;
-      }
-
-      s.raf = requestAnimationFrame(tick);
+    if (mq.matches) {
+      // Mobile: always vertical, no toggle
+      s.mode = "vertical";
+      track.querySelectorAll(".slide:not([data-slide-original])").forEach(el => {
+        el.style.display = "none";
+      });
+      track.classList.add("is-vertical");
+      slider.classList.add("is-vertical");
+    } else {
+      // Desktop/tablet: start horizontal
+      track.classList.add("is-horizontal");
+      slider.classList.add("is-horizontal");
+      s.mode = "horizontal";
+      startHorizontalLoop(s);
+      if (s.toggleLabel) s.toggleLabel.textContent = "Grid";
     }
-
-    s.raf = requestAnimationFrame(tick);
   }
 
-  // Reload on breakpoint cross
-  if (mq.addEventListener) mq.addEventListener("change", () => location.reload());
-  else mq.addListener(() => location.reload());
+  // Breakpoint cross — force vertical on mobile
+  const onBreakpoint = () => {
+    if (!instance) return;
+    if (mq.matches && instance.mode === "horizontal") {
+      setMode(instance, "vertical", false);
+    }
+  };
+  if (mq.addEventListener) mq.addEventListener("change", onBreakpoint);
+  else mq.addListener(onBreakpoint);
 
   return create;
 })();
