@@ -1,23 +1,14 @@
 // -----------------------------------------
 // WORK PAGE — slide + list infinite scrollers
 // -----------------------------------------
-// Vertical centering of the slide track is handled in the
-// CSS. This script only moves things on the X (slide) and
-// Y (list) axes, and hands over to the static mobile layout
-// below 768px.
-//
-// Call: initWorkSlider(container) from initBeforeEnterFunctions
-// HTML: .work component with [data-work-*] attributes
-//
-// Structured like the proven .slider module — it manages its
-// own lifecycle, so the boilerplate needs NO destroy hook:
-//   1. create() tears down any previous instance first
-//   2. every listener binds through one AbortController
-//   3. the document wheel handler and both gsap.ticker
-//      callbacks self-destruct the moment their Barba
-//      container leaves the DOM (root.isConnected check),
-//      so scrolling on other pages is never hijacked
-//      regardless of hook order or sync timing
+// Call: initWorkSlider(container) from initBeforeEnterFunctions.
+// Self-managing lifecycle (no destroy hook needed):
+//   1. create() tears down any previous instance
+//   2. all listeners bind through one AbortController
+//   3. the document wheel handler and ticker callbacks
+//      self-destruct when the Barba container leaves the DOM
+// Input locks while lenis.isStopped — the exact window the
+// boilerplate freezes every page transition and the loader.
 
 const initWorkSlider = (() => {
 	/* Matches the 47.9375rem breakpoint used in the CSS. */
@@ -35,12 +26,7 @@ const initWorkSlider = (() => {
 		var scope = container || document;
 		var root = scope.querySelector('.work');
 
-		if (!root) return;
-
-		if (!window.gsap) {
-			console.warn('[work] GSAP not found - slider not initialised.');
-			return;
-		}
+		if (!root || !window.gsap) return;
 
 		var abort = new AbortController();
 		var sig = { signal: abort.signal };
@@ -59,8 +45,14 @@ const initWorkSlider = (() => {
 		var clamp = gsap.utils.clamp;
 		var pad = function (n) { return (n < 10 ? '0' : '') + n; };
 		var setStatus = function (s) { root.setAttribute('data-work-status', s); };
-
 		var isMobile = function () { return mq.matches; };
+
+		/* True during page transitions and the first-load loader:
+		   the boilerplate stops Lenis on freeze and starts it at
+		   "pageReady", so this mirrors the site-wide scroll lock. */
+		var locked = function () {
+			return typeof lenis !== 'undefined' && !!lenis && lenis.isStopped;
+		};
 
 		var track      = $('[data-work-track]');
 		var counterEl  = $('[data-work-counter]');
@@ -119,12 +111,8 @@ const initWorkSlider = (() => {
 		}
 
 		/* ------------------------------------------------------------
-		   TEARDOWN
-		   Idempotent. Removes everything that could outlive the
-		   Barba container: document/window listeners (via abort),
-		   gsap.ticker callbacks, snap tweens and pending timers.
-		   Listeners on elements inside the container are also on
-		   the abort signal, so one call cleans the lot.
+		   TEARDOWN — idempotent; removes everything that could
+		   outlive the Barba container.
 		   ------------------------------------------------------------ */
 		var dead = false;
 
@@ -224,7 +212,6 @@ const initWorkSlider = (() => {
 		}
 
 		function slideTick() {
-			/* Container left the DOM (Barba navigated away) — clean up. */
 			if (!root.isConnected) { teardown(); return; }
 
 			if (!S.snap.t) {
@@ -259,7 +246,7 @@ const initWorkSlider = (() => {
 		}
 
 		track.addEventListener('pointerdown', function (event) {
-			if (mode !== 'slide' || isMobile()) return;
+			if (mode !== 'slide' || isMobile() || locked()) return;
 
 			sDrag = true;
 			sMoved = false;
@@ -294,8 +281,9 @@ const initWorkSlider = (() => {
 			sPid = null;
 		}
 
-		track.addEventListener('pointerup', endSlideDrag, sig);
-		track.addEventListener('pointercancel', endSlideDrag, sig);
+		['pointerup', 'pointercancel'].forEach(function (type) {
+			track.addEventListener(type, endSlideDrag, sig);
+		});
 
 		track.addEventListener('click', function (event) {
 			if (mode === 'slide' && !isMobile() && sMoved) {
@@ -307,7 +295,7 @@ const initWorkSlider = (() => {
 		$$('[data-work-arrow]').forEach(function (button) {
 			button.addEventListener('click', function (event) {
 				event.preventDefault();
-				if (mode !== 'slide') return;
+				if (mode !== 'slide' || locked()) return;
 
 				snapSlideStep(
 					button.getAttribute('data-work-arrow') === 'prev' ? 1 : -1
@@ -433,7 +421,6 @@ const initWorkSlider = (() => {
 		}
 
 		function listTick() {
-			/* Container left the DOM (Barba navigated away) — clean up. */
 			if (!root.isConnected) { teardown(); return; }
 
 			if (!L.snap.t) {
@@ -520,7 +507,7 @@ const initWorkSlider = (() => {
 		}
 
 		listEl.addEventListener('pointerdown', function (event) {
-			if (mode !== 'list' || isMobile()) return;
+			if (mode !== 'list' || isMobile() || locked()) return;
 			if (event.target.closest('.work-list__arrow, .work-list__center')) return;
 
 			event.preventDefault();
@@ -555,13 +542,14 @@ const initWorkSlider = (() => {
 			scheduleListSnap();
 		}
 
-		listEl.addEventListener('pointerup', endListDrag, sig);
-		listEl.addEventListener('pointercancel', endListDrag, sig);
+		['pointerup', 'pointercancel'].forEach(function (type) {
+			listEl.addEventListener(type, endListDrag, sig);
+		});
 
 		$$('[data-work-list-arrow]').forEach(function (button) {
 			button.addEventListener('click', function (event) {
 				event.preventDefault();
-				if (mode !== 'list' || !L.rowH) return;
+				if (mode !== 'list' || !L.rowH || locked()) return;
 
 				var direction =
 					button.getAttribute('data-work-list-arrow') === 'up' ? -1 : 1;
@@ -571,19 +559,15 @@ const initWorkSlider = (() => {
 		});
 
 		/* ------------------------------------------------------------
-		   WHEEL
-		   Attached to document so scrolling anywhere on the page
-		   drives the slider. Self-neutralising: the isConnected
-		   check tears the whole instance down the moment the work
-		   page's container leaves the DOM, so this can never
-		   preventDefault scrolling on any other page — no matter
-		   what order Barba's hooks fire in.
+		   WHEEL — on document so scrolling anywhere drives the
+		   slider. Self-neutralising via the isConnected check, and
+		   inert while the boilerplate has the site scroll-locked.
 		   ------------------------------------------------------------ */
 		var wheelIdle = null;
 
 		function onWheel(event) {
 			if (!root.isConnected) { teardown(); return; }
-			if (isMobile() || fading) return;
+			if (isMobile() || fading || locked()) return;
 
 			var delta = clamp(
 				-120,
@@ -678,7 +662,7 @@ const initWorkSlider = (() => {
 		viewBtns.forEach(function (button) {
 			button.addEventListener('click', function (event) {
 				event.preventDefault();
-				if (isMobile() || fading) return;
+				if (isMobile() || fading || locked()) return;
 
 				var next = button.getAttribute('data-work-view');
 				if (next === mode) return;
@@ -690,10 +674,9 @@ const initWorkSlider = (() => {
 		});
 
 		/* ------------------------------------------------------------
-		   RESIZE
-		   Crossing the breakpoint tears the scroller down / brings it
-		   back; same-breakpoint desktop resizes re-measure, because
-		   card pitch and row heights are viewport-relative.
+		   RESIZE — breakpoint crossing is handled at module level;
+		   same-breakpoint desktop resizes re-measure, because card
+		   pitch and row heights are viewport-relative.
 		   ------------------------------------------------------------ */
 		var resizeRaf = null;
 
@@ -721,9 +704,8 @@ const initWorkSlider = (() => {
 		};
 	}
 
-	/* Breakpoint cross — handled at module level, exactly like the
-	   .slider module, so it survives for the life of the site and
-	   always acts on whichever instance is current. */
+	/* Breakpoint cross — module level, so it lives for the life of
+	   the site and always acts on whichever instance is current. */
 	function handleBreakpoint(event) {
 		if (!instance) return;
 		if (!instance.isConnected()) { destroy(); return; }
