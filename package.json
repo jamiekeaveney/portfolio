@@ -1,6 +1,6 @@
 {
   "name": "portfolio",
-  "version": "1.0.144",
+  "version": "1.0.145",
   "private": true,
   "scripts": {
     "build": "node build.js"
