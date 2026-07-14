@@ -239,6 +239,7 @@ function initBeforeEnterFunctions(next) {
 
   // Runs before the enter animation
   if (has(".slider")) initSlider(nextPage);
+  if (has(".work")) initWorkSlider(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
