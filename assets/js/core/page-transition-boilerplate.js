@@ -3,8 +3,6 @@
 // -----------------------------------------
 
 gsap.registerPlugin(CustomEase);
-if (typeof Flip !== "undefined") gsap.registerPlugin(Flip);
-
 CustomEase.create("osmo", "0.625, 0.05, 0, 1");
 CustomEase.create("parallax", "0.7, 0.05, 0.13, 1");
 gsap.defaults({ ease: "osmo", duration: 0.6 });
@@ -241,7 +239,6 @@ function initBeforeEnterFunctions(next) {
 
   // Runs before the enter animation
   if (has(".slider")) initSlider(nextPage);
-  if (has(".work")) initWorkSlider(nextPage);
 }
 
 function initAfterEnterFunctions(next) {
@@ -252,27 +249,6 @@ function initAfterEnterFunctions(next) {
 
   if (lenis) lenis.resize();
   if (hasScrollTrigger) ScrollTrigger.refresh();
-}
-
-/**
- * Tear down page-scoped modules that attach listeners to
- * document / window / matchMedia or the GSAP ticker — anything
- * that outlives the Barba container.
- *
- * IMPORTANT — this must run from the `beforeLeave` hook, never
- * `afterLeave`. With sync:true, leave and enter run concurrently,
- * so the ORDER of hooks is:
- *
- *   before → beforeLeave → beforeEnter (new page inits!)
- *   → leave + enter animations → afterLeave → afterEnter
- *
- * Destroying in afterLeave would kill modules the incoming page
- * just initialised in beforeEnter (e.g. navigating TO the work
- * page would build the slider, then destroy it 1.2s later).
- */
-function destroyBeforeLeaveFunctions() {
-  destroyWorkSlider();
-  // destroySomethingElse();
 }
 
 
@@ -439,13 +415,13 @@ function runPageOnceAnimation(next) {
 
 function runPageLeaveAnimation(current) {
   const transitionWrap = document.querySelector("[data-transition-wrap]");
-  const transitionDark = transitionWrap?.querySelector("[data-transition-dark]");
+  const transitionDark = transitionWrap.querySelector("[data-transition-dark]");
 
   const tl = gsap.timeline({ onComplete: () => current.remove() });
 
   if (closeMenuIfOpen()) skipPageTransition = true;
 
-  if (reducedMotion || skipPageTransition || !transitionWrap || !transitionDark) {
+  if (reducedMotion || skipPageTransition) {
     return tl.set(current, { autoAlpha: 0 });
   }
 
@@ -563,13 +539,6 @@ barba.hooks.before(data => {
   isPopstate = data.trigger === "popstate";
   saveScrollPosition(data.current.url.href, getCurrentScroll());
   freezeContainer(data.current.container);
-});
-
-// Tear down the OUTGOING page's global listeners here — this is
-// the only hook guaranteed to fire before the incoming page's
-// beforeEnter in sync mode. See destroyBeforeLeaveFunctions().
-barba.hooks.beforeLeave(() => {
-  destroyBeforeLeaveFunctions();
 });
 
 barba.hooks.beforeEnter(data => {
