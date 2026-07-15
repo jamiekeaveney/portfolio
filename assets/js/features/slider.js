@@ -192,7 +192,7 @@ const initWorkSlider = (() => {
 			});
 
 			if (counterEl) {
-				counterEl.textContent = pad(index + 1) + ' / ' + pad(N);
+				counterEl.querySelector('[data-work-counter-current]').textContent = pad(index + 1); counterEl.querySelector('[data-work-counter-total]').textContent = pad(N);
 			}
 		}
 

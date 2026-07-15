@@ -129,16 +129,6 @@ svg[viewBox] {
 }
 
 /* ==========================================================================
-   Page transitions
-   ========================================================================== */
-
-/* Block all interaction and show busy cursor during transitions */
-html[data-transitioning],
-html[data-transitioning] * {
-  cursor: progress !important;
-}
-
-/* ==========================================================================
    Pinned project footer
    ========================================================================== */
 
