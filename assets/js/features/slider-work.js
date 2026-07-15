@@ -47,11 +47,19 @@ const initWorkSlider = (() => {
 		var setStatus = function (s) { root.setAttribute('data-work-status', s); };
 		var isMobile = function () { return mq.matches; };
 
-		/* True during page transitions and the first-load loader:
-		   the boilerplate stops Lenis on freeze and starts it at
-		   "pageReady", so this mirrors the site-wide scroll lock. */
+		/* True during page transitions and the first-load loader.
+		   The boilerplate pins Barba containers position:fixed for
+		   the whole transition (freezeContainer on leave, the
+		   beforeEnter hook on enter) and clears it at "pageReady";
+		   the loader locks documentElement overflow until it fades.
+		   Both are inline styles the boilerplate writes itself, so
+		   this reads live DOM state — no shared variables, immune
+		   to bundling and minification. */
+		var barbaContainer = root.closest('[data-barba="container"]') || root;
+
 		var locked = function () {
-			return typeof lenis !== 'undefined' && !!lenis && lenis.isStopped;
+			return barbaContainer.style.position === 'fixed' ||
+				document.documentElement.style.overflow === 'hidden';
 		};
 
 		var track      = $('[data-work-track]');
