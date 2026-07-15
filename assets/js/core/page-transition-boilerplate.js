@@ -238,7 +238,6 @@ function initBeforeEnterFunctions(next) {
   nextPage = next || document;
 
   // Runs before the enter animation
-  if (has(".slider")) initSlider(nextPage);
   if (has(".work")) initWorkSlider(nextPage);
 }
 
@@ -540,6 +539,7 @@ barba.hooks.before(data => {
   isPopstate = data.trigger === "popstate";
   saveScrollPosition(data.current.url.href, getCurrentScroll());
   freezeContainer(data.current.container);
+  document.documentElement.setAttribute("data-transitioning", "");
 });
 
 barba.hooks.beforeEnter(data => {
@@ -565,6 +565,7 @@ barba.hooks.afterEnter(data => {
 barba.hooks.after(() => {
   isPopstate = false;
   skipPageTransition = false;
+  document.documentElement.removeAttribute("data-transitioning");
 });
 
 barba.init({
