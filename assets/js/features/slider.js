@@ -1,3 +1,4 @@
+
 // -----------------------------------------
 // WORK PAGE — slide + list infinite scrollers
 // -----------------------------------------
@@ -40,21 +41,29 @@ const initWorkSlider = (() => {
 
 	function onTransitionEnd() {
 		transitioning = false;
+        instance?.resume();
 	}
 
-	if (window.barba && window.barba.hooks) {
-		barba.hooks.before(onTransitionStart);
-		barba.hooks.afterEnter(onTransitionEnd);
-		barba.hooks.after(onTransitionEnd);
-	}
+    let hooksReady = false;
+    function connectHooks() {
+        if(hooksReady || !window.barba) return;
+        hooksReady = true;
+        barba.hooks.before(onTransitionStart);
+        barba.hooks.afterEnter(onTransitionEnd);
+        barba.hooks.after(onTransitionEnd);
+        barba.hooks.afterLeave(d=>{if(instance?.page===d.current.container)destroy();});
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',connectHooks,{once:true});else connectHooks();
 
 	function create(container) {
-		destroy();
-
 		var scope = container || document;
 		var root = scope.querySelector('.work');
 
 		if (!root || !window.gsap) return;
+        if(instance?.root===root)return window.JKWork;
+        destroy();connectHooks();
+        let frozen = transitioning || document.documentElement.hasAttribute('data-transitioning');
+        let modeTween=null,modeGhost=null,modeContentTween=null,modeTarget=null;
 
 		var abort = new AbortController();
 		var sig = { signal: abort.signal };
@@ -80,7 +89,7 @@ const initWorkSlider = (() => {
 		   has the document locked (inline overflow the boilerplate
 		   sets from the loader's first step until it fades). */
 		var locked = function () {
-			return transitioning ||
+			return frozen || transitioning || document.documentElement.hasAttribute('data-transitioning') ||
 				document.documentElement.style.overflow === 'hidden';
 		};
 
@@ -93,7 +102,8 @@ const initWorkSlider = (() => {
 		var numLeft    = $('[data-work-list-num="left"]');
 		var numRight   = $('[data-work-list-num="right"]');
 		var viewBtns   = $$('[data-work-view]');
-		var originals  = $$('[data-work-item]', track);
+		if(!track||!listEl||!listLeft||!listRight||!listCenter||!numLeft||!numRight)return;
+		var originals  = $$('[data-work-item]:not([data-work-clone])', track);
 		var N = originals.length;
 		if (!N) return;
 
@@ -117,6 +127,17 @@ const initWorkSlider = (() => {
 		var userMode = readStored() === 'list' ? 'list' : 'slide';
 		var mode = userMode;
 		var activeIdx = 0;
+        try {
+            var savedProject = sessionStorage.getItem('work-return-project');
+            var savedIndex = originals.findIndex(function(item){ return item.querySelector('a[href]')?.getAttribute('href') === savedProject; });
+            if(savedIndex >= 0) activeIdx = savedIndex;
+        } catch(_) {}
+        root.addEventListener('click',function(event){
+            var link=event.target.closest('a[href]');
+            if(!event.defaultPrevented && !locked() && link && /\/project\//.test(link.getAttribute('href')||'')) {
+                try { sessionStorage.setItem('work-return-project',link.getAttribute('href'));api.capture(link); } catch(_) {}
+            }
+        },sig);
 		var fading = false;
 
 		function killSnap(ref) {
@@ -144,11 +165,45 @@ const initWorkSlider = (() => {
 		   TEARDOWN — idempotent; removes everything that could
 		   outlive the Barba container.
 		   ------------------------------------------------------------ */
+        const api = window.JKWork = {
+            root,
+            freeze,resume,
+            capture(link){
+                if(sMoved)return null;
+                freeze();
+                const href=new URL(link.href,location.href).pathname;
+                const thumb=link.querySelector('.work-card__thumb')||link.querySelector('[data-work-state="active"]')||link;
+                const saved={href,mode,phase:S.pitch?S.cur/S.pitch:0,listPhase:L.rowH?L.cur/L.rowH:0,left:thumb.getBoundingClientRect().left/innerWidth};
+                try{sessionStorage.setItem('work-return-project',href);sessionStorage.setItem('work-return-state',JSON.stringify(saved));}catch(_){}
+                return saved;
+            },
+            restore(href){
+                let saved;try{saved=JSON.parse(sessionStorage.getItem('work-return-state'));}catch(_){}
+                const index=originals.findIndex(item=>new URL(item.querySelector('a[href]').href,location.href).pathname===href);
+                if(index<0)return null;
+                root.setAttribute('data-work-restoring','');
+                activeIdx=index;
+                if(isMobile())return originals[index].querySelector('a[href]');
+                if(saved?.href===href&&saved.mode!==mode)applyMode(saved.mode);
+                if(mode==='list'){
+                    setupList();if(saved?.href===href&&saved.mode==='list'&&Number.isFinite(saved.listPhase))L.cur=L.tgt=saved.listPhase*L.rowH;
+                    applyList(L.cur);
+                    return $('[data-work-state="active"]',listCenter);
+                }
+                setupSlide();if(saved?.mode==='slide'&&Number.isFinite(saved.phase))S.cur=S.tgt=saved.phase*S.pitch;
+                renderSlide();
+                const desired=saved?.href===href?saved.left*innerWidth:root.getBoundingClientRect().left;
+                return $$('.work-card__link',track).filter(a=>new URL(a.href).pathname===href).sort((a,b)=>Math.abs(a.getBoundingClientRect().left-desired)-Math.abs(b.getBoundingClientRect().left-desired))[0];
+            }
+        };
+
 		var dead = false;
 
 		function teardown() {
 			if (dead) return;
 			dead = true;
+            cancelModeFlip();
+            if(window.JKWork===api)delete window.JKWork;
 
 			killSlide();
 			killList();
@@ -199,6 +254,8 @@ const initWorkSlider = (() => {
 		function cloneItem(el) {
 			var clone = el.cloneNode(true);
 			clone.setAttribute('data-work-clone', '');
+            [clone,...clone.querySelectorAll('[id]')].forEach(node=>node.removeAttribute('id'));
+            clone.querySelectorAll('[data-flip-id]').forEach(node=>node.removeAttribute('data-flip-id'));
 			return clone;
 		}
 
@@ -238,17 +295,22 @@ const initWorkSlider = (() => {
 			S.wrap = gsap.utils.wrap(-span * (COPIES + 1), -span * COPIES);
 			S.cur = S.tgt = -span * COPIES - activeIdx * S.pitch;
 
-			gsap.ticker.add(slideTick);
+			if(!frozen&&!fading)gsap.ticker.add(slideTick);
 		}
 
-		function slideTick() {
+		function slideTick(time, deltaTime=16.667) {
 			if (!root.isConnected) { teardown(); return; }
 
+            if(frozen||fading)return;
 			if (!S.snap.t) {
-				S.cur += (S.tgt - S.cur) * 0.085;
+				S.cur += (S.tgt - S.cur) * (1-Math.exp(-5.33*Math.min(deltaTime,50)/1000));
 				if (Math.abs(S.tgt - S.cur) < 0.5) S.cur = S.tgt;
 			}
 
+            renderSlide();
+        }
+        function renderSlide(){
+            if(!S.wrap)return;
 			track.style.transform = 'translate3d(' + S.wrap(S.cur) + 'px,0,0)';
 
 			var span = S.pitch * N;
@@ -315,6 +377,9 @@ const initWorkSlider = (() => {
 			track.addEventListener(type, endSlideDrag, sig);
 		});
 
+        window.addEventListener('pointerup',endSlideDrag,sig);
+        window.addEventListener('pointercancel',endSlideDrag,sig);
+        root.addEventListener('pointermove',()=>{if(!locked())root.removeAttribute('data-work-restoring');},{passive:true,...sig});
 		track.addEventListener('click', function (event) {
 			if (mode === 'slide' && !isMobile() && sMoved) {
 				event.preventDefault();
@@ -325,7 +390,11 @@ const initWorkSlider = (() => {
 		$$('[data-work-arrow]').forEach(function (button) {
 			button.addEventListener('click', function (event) {
 				event.preventDefault();
-				if (mode !== 'slide' || locked()) return;
+				if (locked()) return;
+                if(mode === 'list'){
+                    if(L.rowH)listSnapTo((Math.round(L.tgt/L.rowH)+(button.getAttribute('data-work-arrow')==='prev'?-1:1))*L.rowH);
+                    return;
+                }
 
 				snapSlideStep(
 					button.getAttribute('data-work-arrow') === 'prev' ? 1 : -1
@@ -355,11 +424,12 @@ const initWorkSlider = (() => {
 		var prevLeftLabel = null;
 		var prevRightLabel = null;
 
+        function escapeText(value){const text=document.createElement('span');text.textContent=value;return text.innerHTML;}
 		function row(side, index, label) {
 			return (
 				'<div class="work-list__row work-list__row--' + side +
 				'" data-work-row-' + side + '="' + index + '">' +
-				'<span class="work-list__label">' + label + '</span>' +
+				'<span class="work-list__label">' + escapeText(label) + '</span>' +
 				'</div>'
 			);
 		}
@@ -447,14 +517,15 @@ const initWorkSlider = (() => {
 			prevLeftLabel = null;
 			prevRightLabel = null;
 
-			gsap.ticker.add(listTick);
+			if(!frozen&&!fading)gsap.ticker.add(listTick);
 		}
 
-		function listTick() {
+		function listTick(time, deltaTime=16.667) {
 			if (!root.isConnected) { teardown(); return; }
 
+            if(frozen||fading)return;
 			if (!L.snap.t) {
-				L.cur += (L.tgt - L.cur) * 0.14;
+				L.cur += (L.tgt - L.cur) * (1-Math.exp(-9.05*Math.min(deltaTime,50)/1000));
 				if (Math.abs(L.tgt - L.cur) < 0.5) L.cur = L.tgt;
 			}
 
@@ -502,6 +573,7 @@ const initWorkSlider = (() => {
 
 			L.prevIdx = index;
 			activeIdx = index;
+            markCurrentSlide(index);
 
 			var currentMedia = $('[data-work-list-media][data-work-state="active"]', listCenter);
 			if (currentMedia) currentMedia.removeAttribute('data-work-state');
@@ -631,10 +703,10 @@ const initWorkSlider = (() => {
 		function rebuild() {
 			if (mode === 'slide') {
 				buildSlide();
-				requestAnimationFrame(setupSlide);
+				setupSlide();renderSlide();
 			} else {
 				buildList();
-				requestAnimationFrame(setupList);
+				setupList();applyList(L.cur);
 			}
 		}
 
@@ -669,25 +741,69 @@ const initWorkSlider = (() => {
 			rebuild();
 		}
 
-		function switchMode(next) {
-			if (fading) return;
-
-			fading = true;
-			root.setAttribute('data-work-fading', '');
-
-			setTimeout(function () {
-				if (dead) return;
-
-				applyMode(next);
-
-				requestAnimationFrame(function () {
-					requestAnimationFrame(function () {
-						root.removeAttribute('data-work-fading');
-						fading = false;
-					});
-				});
-			}, FADE_MS);
-		}
+        function currentMedia(index=activeIdx) {
+            if(mode==='list')return $('[data-work-state="active"]',listCenter);
+            return $$('.work-card',track).filter(el=>+el.dataset.workIndex===index)
+                .sort((a,b)=>Math.abs(a.getBoundingClientRect().left+a.offsetWidth/2-innerWidth/2)-Math.abs(b.getBoundingClientRect().left+b.offsetWidth/2-innerWidth/2))[0]?.querySelector('.work-card__thumb');
+        }
+        function mediaStill(source){
+            const video=source.querySelector('video');
+            if(video?.readyState>=2&&!video.paused){
+                const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+                try{canvas.getContext('2d').drawImage(video,0,0);return canvas;}catch(_){}
+            }
+            const image=source.querySelector('.project-preview__poster')||source.querySelector('img');
+            const still=document.createElement('img');still.src=image?.currentSrc||image?.src||video?.poster||'';still.alt='';
+            return still;
+        }
+        function cancelModeFlip(){
+            modeTween?.kill();modeContentTween?.kill();modeGhost?.remove();
+            if(modeTarget)gsap.set(modeTarget,{clearProps:'visibility'});
+            modeTween=modeContentTween=modeGhost=modeTarget=null;fading=false;
+        }
+        function freeze(){
+            if(fading)modeTween?.progress(1);
+            frozen=true;killSlide();killList();clearTimeout(L.snapTimer);
+            S.tgt=S.cur;L.tgt=L.cur;sDrag=false;lDrag=false;
+        }
+        function resume(){
+            if(dead||!root.isConnected||transitioning)return;
+            frozen=false;
+            if(!isMobile()&&!fading)gsap.ticker.add(mode==='list'?listTick:slideTick);
+        }
+        function switchMode(next) {
+            if(fading||next===mode)return;
+            if(!window.Flip||matchMedia('(prefers-reduced-motion: reduce)').matches){applyMode(next);return;}
+            if(mode==='slide'){
+                const centered=$$('.work-card',track).sort((a,b)=>Math.abs(a.getBoundingClientRect().left+a.offsetWidth/2-innerWidth/2)-Math.abs(b.getBoundingClientRect().left+b.offsetWidth/2-innerWidth/2))[0];
+                if(centered)activeIdx=Number(centered.dataset.workIndex);
+            }
+            const selected=activeIdx;
+            const source=currentMedia(selected);
+            if(!source){applyMode(next);return;}
+            const rect=(mode==='list'?listCenter:source).getBoundingClientRect();
+            const still=mediaStill(source);
+            fading=true;killSlide();killList();
+            const ghost=modeGhost=document.createElement('div');ghost.className='work-mode-flip';ghost.append(still);document.body.append(ghost);
+            gsap.set(ghost,{position:'fixed',left:rect.left,top:rect.top,width:rect.width,height:rect.height,zIndex:30,overflow:'hidden',borderRadius:getComputedStyle(source).borderRadius,pointerEvents:'none'});
+            gsap.set(still,{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'});
+            const state=Flip.getState(ghost);
+            applyMode(next);killSlide();killList();
+            let target=currentMedia(selected);
+            if(mode==='slide'&&target){
+                const r=target.getBoundingClientRect();S.cur+=innerWidth/2-r.left-r.width/2;S.tgt=S.cur;renderSlide();target=currentMedia(selected);
+            }
+            modeTarget=target;
+            if(!target){cancelModeFlip();resume();return;}
+            const to=(mode==='list'?listCenter:target).getBoundingClientRect();gsap.set(target,{visibility:'hidden'});
+            gsap.set(ghost,{left:to.left,top:to.top,width:to.width,height:to.height});
+            const content=mode==='list'?[listLeft,listRight,numLeft,numRight]:$$('.work-card',track).filter(el=>!el.contains(target));
+            if(content.length)modeContentTween=gsap.fromTo(content,{autoAlpha:0},{autoAlpha:1,duration:.6,delay:.25,ease:'expo.out',clearProps:'opacity,visibility'});
+            modeTween=gsap.timeline({onComplete(){cancelModeFlip();resume();}});
+            modeTween.add(Flip.from(state,{duration:1,ease:'expo.inOut',absolute:true}));
+            modeTween.set(target,{visibility:'visible'});
+            modeTween.to(ghost,{opacity:0,duration:.25,ease:'power1.out'});
+        }
 
 		viewBtns.forEach(function (button) {
 			button.addEventListener('click', function (event) {
@@ -714,7 +830,8 @@ const initWorkSlider = (() => {
 			cancelAnimationFrame(resizeRaf);
 
 			resizeRaf = requestAnimationFrame(function () {
-				if (dead) return;
+				if (dead || frozen) return;
+                cancelModeFlip();
 				if (!isMobile()) rebuild();
 			});
 		}
@@ -723,20 +840,12 @@ const initWorkSlider = (() => {
 
 		applyMode(isMobile() ? 'slide' : userMode);
 
-		instance = {
-			teardown: teardown,
-			freeze: function () {
-				/* Called by the barba.hooks.before handler: halt any
-				   in-flight momentum and pending snaps so the slider
-				   sits fully static during the transition, exactly
-				   like the rest of the page. */
-				killSnap(S.snap);
-				killSnap(L.snap);
-				clearTimeout(L.snapTimer);
-				S.tgt = S.cur;
-				L.tgt = L.cur;
-			},
+        instance = {
+            root,page:root.closest('[data-barba="container"]'),
+            teardown,freeze,resume,
+
 			onBreakpoint: function (matches) {
+                cancelModeFlip();
 				applyMode(matches ? 'slide' : userMode);
 			},
 			isConnected: function () {
@@ -756,5 +865,6 @@ const initWorkSlider = (() => {
 	if (mq.addEventListener) mq.addEventListener('change', handleBreakpoint);
 	else mq.addListener(handleBreakpoint);
 
+	create.version = "2026-11-14.2";
 	return create;
 })();
