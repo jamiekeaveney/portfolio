@@ -167,7 +167,7 @@ const initWorkSlider = (() => {
 		   ------------------------------------------------------------ */
         const api = window.JKWork = {
             root,
-            freeze,resume,
+            freeze,resume,destroy:teardown,
             capture(link){
                 if(sMoved)return null;
                 freeze();
@@ -181,7 +181,7 @@ const initWorkSlider = (() => {
                 let saved;try{saved=JSON.parse(sessionStorage.getItem('work-return-state'));}catch(_){}
                 const index=originals.findIndex(item=>new URL(item.querySelector('a[href]').href,location.href).pathname===href);
                 if(index<0)return null;
-                root.setAttribute('data-work-restoring','');
+                root.removeAttribute('data-work-restoring');
                 activeIdx=index;
                 if(isMobile())return originals[index].querySelector('a[href]');
                 if(saved?.href===href&&saved.mode!==mode)applyMode(saved.mode);
@@ -379,7 +379,7 @@ const initWorkSlider = (() => {
 
         window.addEventListener('pointerup',endSlideDrag,sig);
         window.addEventListener('pointercancel',endSlideDrag,sig);
-        root.addEventListener('pointermove',()=>{if(!locked())root.removeAttribute('data-work-restoring');},{passive:true,...sig});
+        
 		track.addEventListener('click', function (event) {
 			if (mode === 'slide' && !isMobile() && sMoved) {
 				event.preventDefault();
@@ -706,7 +706,7 @@ const initWorkSlider = (() => {
 				setupSlide();renderSlide();
 			} else {
 				buildList();
-				setupList();applyList(L.cur);
+				setupList();applyList(L.cur);alignListFrame();
 			}
 		}
 
@@ -741,10 +741,21 @@ const initWorkSlider = (() => {
 			rebuild();
 		}
 
+        function alignListFrame(){
+            if(isMobile())return;
+            const thumb=originals[0]?.querySelector('.work-card__thumb');if(!thumb)return;
+            const previous=track.parentElement.parentElement.style.cssText;
+            const slide=track.parentElement.parentElement;
+            const wasHidden=getComputedStyle(slide).display==='none';
+            if(wasHidden)slide.style.cssText+=';display:flex!important;visibility:hidden!important;';
+            const rect=thumb.getBoundingClientRect(),base=listEl.getBoundingClientRect();
+            if(rect.height>0){listCenter.style.top=(rect.top-base.top)+'px';listCenter.style.height=rect.height+'px';listCenter.style.transform='translateX(-50%)';}
+            if(wasHidden)slide.style.cssText=previous;
+        }
         function currentMedia(index=activeIdx) {
             if(mode==='list')return $('[data-work-state="active"]',listCenter);
             return $$('.work-card',track).filter(el=>+el.dataset.workIndex===index)
-                .sort((a,b)=>Math.abs(a.getBoundingClientRect().left+a.offsetWidth/2-innerWidth/2)-Math.abs(b.getBoundingClientRect().left+b.offsetWidth/2-innerWidth/2))[0]?.querySelector('.work-card__thumb');
+                .sort((a,b)=>Math.abs(a.getBoundingClientRect().left-parseFloat(getComputedStyle(track).paddingLeft))-Math.abs(b.getBoundingClientRect().left-parseFloat(getComputedStyle(track).paddingLeft)))[0]?.querySelector('.work-card__thumb');
         }
         function mediaStill(source){
             const video=source.querySelector('video');
@@ -768,16 +779,12 @@ const initWorkSlider = (() => {
         }
         function resume(){
             if(dead||!root.isConnected||transitioning)return;
-            frozen=false;
+            frozen=false;root.removeAttribute('data-work-restoring');
             if(!isMobile()&&!fading)gsap.ticker.add(mode==='list'?listTick:slideTick);
         }
         function switchMode(next) {
             if(fading||next===mode)return;
             if(!window.Flip||matchMedia('(prefers-reduced-motion: reduce)').matches){applyMode(next);return;}
-            if(mode==='slide'){
-                const centered=$$('.work-card',track).sort((a,b)=>Math.abs(a.getBoundingClientRect().left+a.offsetWidth/2-innerWidth/2)-Math.abs(b.getBoundingClientRect().left+b.offsetWidth/2-innerWidth/2))[0];
-                if(centered)activeIdx=Number(centered.dataset.workIndex);
-            }
             const selected=activeIdx;
             const source=currentMedia(selected);
             if(!source){applyMode(next);return;}
@@ -790,9 +797,6 @@ const initWorkSlider = (() => {
             const state=Flip.getState(ghost);
             applyMode(next);killSlide();killList();
             let target=currentMedia(selected);
-            if(mode==='slide'&&target){
-                const r=target.getBoundingClientRect();S.cur+=innerWidth/2-r.left-r.width/2;S.tgt=S.cur;renderSlide();target=currentMedia(selected);
-            }
             modeTarget=target;
             if(!target){cancelModeFlip();resume();return;}
             const to=(mode==='list'?listCenter:target).getBoundingClientRect();gsap.set(target,{visibility:'hidden'});
@@ -865,6 +869,7 @@ const initWorkSlider = (() => {
 	if (mq.addEventListener) mq.addEventListener('change', handleBreakpoint);
 	else mq.addListener(handleBreakpoint);
 
-	create.version = "2026-11-14.2";
+	create.destroy=destroy;
+	create.version = "2026-11-14.3";
 	return create;
 })();
