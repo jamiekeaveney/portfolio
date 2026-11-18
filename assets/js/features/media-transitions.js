@@ -350,6 +350,10 @@
     gsap.set(next.querySelector(".case-featured"), {
       clearProps: "transform,clipPath,opacity,visibility"
     });
+    // Lower media is revealed only after the destination returns to document flow.
+    // This avoids exposing its fixed-container layout during the mobile handoff.
+    const deferredSections = innerWidth < 992 ? [...next.querySelectorAll('.case-section')] : [];
+    if (deferredSections.length) gsap.set(deferredSections, {autoAlpha:0});
     const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".mini-showreel__cover-image") || media.querySelector("video");
     let video, videoParent, videoSibling, videoStyle, videoClass, ready = false;
     if (actualVideo) {
@@ -443,6 +447,7 @@
         });
         window.scrollTo(0, 0);
         if (typeof resetPage === "function") resetPage(next, 0);
+        if (deferredSections.length) gsap.to(deferredSections, {autoAlpha:1,duration:.25,clearProps:'opacity,visibility'});
         window.JKHeader?.endMediaTransition();
         JKProject.transitioning = false;
         active = null;

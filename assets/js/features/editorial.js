@@ -199,14 +199,15 @@
         },
         scrollTrigger: {
           trigger: section,
-          start: "top top",
-          end: () => "+=" + 2 * sticky.offsetHeight,
+          start: "top 75%",
+          end: () => "+=" + 2 * sticky.offsetHeight + innerHeight * .75,
           scrub: true,
           invalidateOnRefresh: true
         }
       });
+      gsap.set(items,{autoAlpha:0,filter:'blur(.75em)'});
       items.forEach(((item, i) => {
-        const dx = Math.cos(angles[i]), dy = Math.sin(angles[i]), at = i * .22;
+        const dx = Math.cos(angles[i]), dy = Math.sin(angles[i]), at = .08 + i * .22;
         timeline.fromTo(item, {
           xPercent: -50,
           yPercent: -50,

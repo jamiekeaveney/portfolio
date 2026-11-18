@@ -544,9 +544,6 @@ body:has([data-mini-showreel-status="active"]) .progressive-blur { visibility:hi
 [data-bunny-player-init]:fullscreen video{width:100%;height:100%;object-fit:contain;}
 
 @media(max-width:991px){
- [data-lightbox-phase="opening"] .mini-showreel__card,[data-lightbox-phase="open"] .mini-showreel__card{row-gap:0;}
- [data-lightbox-phase="opening"] .mini-showreel__info,[data-lightbox-phase="open"] .mini-showreel__info{display:none;}
- [data-lightbox-phase="opening"] .mini-showreel__media,[data-lightbox-phase="open"] .mini-showreel__media{height:100%;width:100%;flex:none;}
 }
 
 /* Shared interaction states. Layout is stored in the native Webflow classes/variants. */
@@ -557,12 +554,6 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 [data-wf--super-button--variant="footer-back-to-top"] .btn_icon{transition:translate 1s cubic-bezier(.19,1,.22,1);}
 [data-wf--super-button--variant="footer-back-to-top"]:is(:hover,:focus-visible) .btn_icon{translate:0 -.15em;}
 [data-wf--super-button--variant^="footer-"] .btn_main,[data-wf--super-button--variant="copy-email-footer"] .btn_main{color:inherit;}
-[data-lightbox-phase="opening"],[data-lightbox-phase="open"]{background:#000;}
-[data-lightbox-phase="opening"] .mini-showreel__card,[data-lightbox-phase="open"] .mini-showreel__card{width:100%;height:100%;row-gap:0;}
-[data-lightbox-phase="opening"] .mini-showreel__media,[data-lightbox-phase="open"] .mini-showreel__media{width:100%;height:100%;flex:none;background:#000;}
-[data-lightbox-phase="opening"] .mini-showreel__info,[data-lightbox-phase="open"] .mini-showreel__info{display:none;}
-[data-lightbox-phase="opening"] [data-bunny-player-init],[data-lightbox-phase="open"] [data-bunny-player-init]{width:100%;height:100%;aspect-ratio:auto;background:#000;}
-[data-lightbox-phase="opening"] [data-bunny-player-init] video,[data-lightbox-phase="open"] [data-bunny-player-init] video{object-fit:contain;}
 @media(min-width:992px) and (pointer:fine){.lightbox-close{display:none;}}
 @media(max-width:991px),(hover:none),(pointer:coarse){
  .home-slide,.home-slide *, .work-card__link,.work-card__link *{--_trigger---on:1!important;--_trigger---off:0!important;}

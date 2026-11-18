@@ -93,6 +93,7 @@ function closeMenuIfOpen() {
 }
 
 function freezeContainer(t) {
+  window.JKFooter?.freeze(t);
   const e = getCurrentScroll();
   lenis && lenis.stop(), gsap.set(t, {
     position: "fixed",
@@ -157,6 +158,10 @@ function initOnceFunctions() {
 }
 
 function initBeforeEnterFunctions(t) {
+  t?.querySelectorAll('.project-hero__meta-cell,.case-details__row').forEach(row=>{
+    const value=row.querySelector('.case-meta-value');
+    row.style.display=value && !value.textContent.trim() ? 'none' : '';
+  });
   nextPage = t || document, has(".work") && initWorkSlider(nextPage);
 }
 
@@ -166,51 +171,43 @@ function initAfterEnterFunctions(t) {
 }
 
 function runPageOnceAnimation(page) {
-  const timeline = gsap.timeline();
-  const y = navType !== "navigate" ? getSavedScroll(location.href) : 0;
-  const wrap = document.querySelector("[data-load-wrap]");
-  if (!wrap || reducedMotion || navType === "back_forward") {
-    if (wrap) gsap.set(wrap, {
-      display: "none"
-    });
-    return timeline.call((() => resetPage(page, y)));
+  const y=navType!=='navigate'?getSavedScroll(location.href):0;
+  const wrap=document.querySelector('[data-load-wrap]');
+  if(!wrap || reducedMotion || navType==='back_forward') {
+    if(wrap)gsap.set(wrap,{display:'none'});
+    return gsap.timeline().call(()=>resetPage(page,y));
   }
-  const bar=wrap.querySelector('[data-load-progress]'), content=wrap.querySelector('[data-load-container]');
-  const finish=()=>{
-    gsap.set(wrap,{display:'none',clearProps:'opacity,visibility,transform'});
-    document.documentElement.style.overflow='';document.body.style.overflow='';
-    resetPage(page,y);
-  };
-  if(!bar||!content)return timeline.call(finish);
-  // One local mask around identically sized wordmarks, never a viewport-sized text mask.
-  content.replaceChildren();
+  const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader-panel');
+  if(!bar||!content||!bg)return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));
+  CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
+  content.replaceChildren();bar.replaceChildren();
   const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
-  const base=document.createElement('div'), fill=document.createElement('div');
-  base.className='sitenav__wordmark loader-logo__base';
-  fill.className='sitenav__wordmark loader-logo__fill';fill.dataset.loadLogo='';
+  const base=document.createElement('div'),fill=document.createElement('div');
+  base.className='sitenav__wordmark loader-logo__base';fill.className='sitenav__wordmark loader-logo__fill';fill.dataset.loadLogo='';
   base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
   const texts=document.createElement('div');texts.className='loader-messages';
-  ['Hold tight','Hi there!'].forEach(label=>{const el=document.createElement('span');el.textContent=label;el.dataset.loadText='';el.dataset.loadReset='';texts.append(el);});
+  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
   content.append(logoWrap,texts);
-  const second=document.createElement('div');second.className='sitenav__wordmark loader-logo__second';second.textContent='Jamie Keaveney';bar.replaceChildren(second);
-  const [firstText,lastText]=texts.children;
-  timeline.eventCallback('onInterrupt',finish);
-  timeline.set(wrap,{display:'block',autoAlpha:1,pointerEvents:'auto'})
-    .call(()=>{lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';})
-    .set(bar,{scaleX:0,height:6,transformOrigin:'left bottom'})
-    .set(content,{autoAlpha:1}).set(fill,{clipPath:'inset(0 100% 0 0)'})
-    .set([firstText,lastText],{yPercent:125,autoAlpha:0}).set(second,{autoAlpha:0})
-    .to(firstText,{yPercent:0,autoAlpha:1,duration:.6,ease:'expo.out'},.1)
-    .to(bar,{scaleX:1,duration:2,ease:'expo.inOut'},0)
-    .to(fill,{clipPath:'inset(0 0% 0 0)',duration:2,ease:'expo.inOut'},0)
-    .to(firstText,{yPercent:-125,autoAlpha:0,duration:.45},.95)
-    .to(lastText,{yPercent:0,autoAlpha:1,duration:.6},1.05)
-    .to(content,{autoAlpha:0,duration:.3},1.85)
-    .to(bar,{height:()=>window.innerHeight,duration:.8,ease:'expo.inOut'},2)
-    .to(second,{autoAlpha:1,duration:.3},2.55)
-    .to(wrap,{yPercent:-100,duration:1,ease:'expo.inOut'},3.05)
-    .call(finish);
-  return timeline;
+  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
+  const finish=()=>{gsap.set(wrap,{display:'none'});gsap.set(page,{clearProps:'transform'});document.documentElement.style.overflow='';document.body.style.overflow='';resetPage(page,y);};
+  gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
+  gsap.set(bg,{yPercent:0});gsap.set(bar,{scaleX:0,height:8,transformOrigin:'left center'});
+  gsap.set(content,{autoAlpha:1});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
+  gsap.set(splits.flatMap(s=>s.chars),{autoAlpha:0,yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
+  const tl=gsap.timeline({defaults:{ease:'loader',duration:3},onComplete:finish,onInterrupt:finish})
+    .to(bar,{scaleX:1})
+    .to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
+    .to(content,{autoAlpha:0,duration:.5})
+    .to(bar,{scaleX:0,transformOrigin:'right center',duration:.5},'<')
+    .add('hideContent','<')
+    .to(bg,{yPercent:-101,duration:1},'hideContent')
+    .fromTo(page,{y:'10vh'},{y:0,duration:1,clearProps:'transform'},'hideContent');
+  tl.to(splits[0].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.02}},0)
+    .to(splits[0].chars,{autoAlpha:0,yPercent:-125,duration:.4,stagger:{each:.02}},'>+=0.4')
+    .to(splits[1].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.02}},'<')
+    .to(splits[1].chars,{autoAlpha:0,yPercent:-125,duration:.4,stagger:{each:.02}},'hideContent-=0.5');
+  return tl;
 }
 
 function runPageLeaveAnimation(t) {

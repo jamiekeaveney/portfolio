@@ -6,6 +6,6 @@ html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
 .loader-logo{position:relative;width:max-content;height:max-content}
 .loader-logo__base{opacity:.2}
 .loader-logo__fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
-.loader-logo__second{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#000}
-.loader-messages{position:absolute;bottom:3.5rem;left:0;width:100%;height:1.4em;overflow:hidden;text-align:center;color:#fff}
-.loader-messages span{position:absolute;inset:0;display:block}
+.loader-messages{position:absolute;bottom:3.5em;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:#fff}
+.loader-messages [data-load-text]{position:absolute;white-space:nowrap;text-transform:uppercase;padding-bottom:.25em;margin-bottom:-.25em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.875rem;letter-spacing:.04em}
+.loader-messages [data-load-text]>div{padding-bottom:.25em;margin-bottom:-.25em}

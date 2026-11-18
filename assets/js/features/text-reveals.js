@@ -121,14 +121,19 @@
         }));
       } else if (effect === "inline-media") {
         const bounds = el.getBoundingClientRect(), w = bounds.width;
-        el.style.height = bounds.height + "px";
+        const slot=document.createElement('span');
+        slot.className='editorial-media-slot';
+        slot.style.height=(bounds.height + (parseFloat(getComputedStyle(el).marginBottom)||0))+'px';
+        el.before(slot);slot.append(el);
         el.dataset.inlineWidth = String(w);
         el.style.setProperty("--inline-media-width", w + "px");
         const t = gsap.fromTo(el, {
           width: 0,
+          height: 0,
           autoAlpha: 0
         }, {
           width: w,
+          height: bounds.height,
           autoAlpha: 1,
           duration: 1,
           ease: SETTINGS.ease,
@@ -138,7 +143,7 @@
         function completeInline() {
           entry.completed = true;
           gsap.set(el, {
-            clearProps: "width,clipPath,opacity,visibility"
+            clearProps: "width,height,clipPath,opacity,visibility"
           });
           el.dispatchEvent(new CustomEvent("jk:inline-ready", {
             bubbles: true
