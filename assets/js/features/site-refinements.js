@@ -48,7 +48,7 @@
         top: from.y,
         width: from.w,
         height: from.h,
-        transformOrigin: "0 0",
+        transformOrigin: "50% 50%",
         zIndex: 8,
         pointerEvents: "none",
         borderRadius: getComputedStyle(target).borderRadius,
@@ -65,27 +65,33 @@
       source.style.marginRight = (1 - collapse) * .12 + "em";
       gsap.set(clone, {
         visibility: p > 0 && p < 1 ? "visible" : "hidden",
-        x: (to.x - from.x) * p,
-        y: (to.y - from.y) * p,
+        x: (to.x - from.x + (to.w-from.w)/2) * p,
+        y: (to.y - from.y + (to.h-from.h)/2) * p + (tween?.scrollTrigger ?
+          Math.max(tween.scrollTrigger.start, Math.min(tween.scrollTrigger.end, scrollY)) -
+          (tween.scrollTrigger.start + (tween.scrollTrigger.end-tween.scrollTrigger.start)*p) : 0),
         scaleX: 1 + (to.w / from.w - 1) * p,
         scaleY: 1 + (to.h / from.h - 1) * p,
-        rotation: 0
+        rotation: Math.sin(Math.PI*p)*-7,
+        rotationY: Math.sin(Math.PI*p)*14,
+        transformPerspective: 900
       });
     }
     const playhead = {
       value: 0
     };
     measure();
-    const tween = gsap.to(playhead, {
+    let tween;
+    tween = gsap.to(playhead, {
       value: 1,
       ease: "none",
       onUpdate: () => paint(playhead.value),
       scrollTrigger: {
-        trigger: page.querySelector(".editorial-hero") || source,
-        start: "top top",
+        trigger: source,
+        start: "center center",
         endTrigger: target,
         end: "center center",
-        scrub: .22,
+        scrub: .18,
+        onUpdate: () => paint(playhead.value),
         invalidateOnRefresh: true,
         onRefresh() {
           measure();

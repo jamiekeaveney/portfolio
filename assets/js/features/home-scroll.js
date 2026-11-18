@@ -12,7 +12,7 @@
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
     const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask")));
-    let timeline, timer, suspended = false, dead = false;
+    let timeline, render, timer, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
     function build() {
       if (dead || suspended || target.dataset.miniShowreelStatus === "active") return;
@@ -20,25 +20,25 @@
       timeline?.kill();
       restore();
       if (matchMedia("(max-width: 991px), (prefers-reduced-motion: reduce)").matches) return;
-      // Measure each visit from the resting pose, never from a partially scaled player.
-            const vars = Flip.fit(target, destination, {
-        getVars: true,
-        scale: false
-      });
-      timeline = gsap.timeline({
-        scrollTrigger: {
-          id: "jk-home-showreel",
-          trigger: end,
-          start: 0,
-          end: "bottom bottom",
-          scrub: .22
-        }
-      });
-      timeline.to(target, {
-        ...vars,
-        duration: 1,
-        ease: "none"
-      }, 0);
+      // Interpolate one viewport rectangle. Scroll compensation is immediate;
+      // only the A-to-B playhead is scrubbed, so vertical movement cannot lag twice.
+      const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
+      const from = {x:startRect.left,y:startRect.top + scrollY,w:startRect.width,h:startRect.height};
+      const to = {x:endRect.left,y:endRect.top + scrollY,w:endRect.width,h:endRect.height};
+      const playhead = {value:0};
+      render = () => {
+        if (dead || suspended || !timeline?.scrollTrigger) return;
+        const st=timeline.scrollTrigger, p=playhead.value, y=scrollY;
+        const beyond=Math.max(0,y-st.end), before=Math.min(0,y-st.start);
+        const host=home.getBoundingClientRect();
+        const viewportY=(from.y-st.start)*(1-p)+(to.y-st.end)*p-beyond-before;
+        gsap.set(target,{position:'absolute',left:0,top:0,
+          x:from.x+(to.x-from.x)*p-host.left,y:viewportY-host.top,
+          width:from.w+(to.w-from.w)*p,height:from.h+(to.h-from.h)*p});
+      };
+      timeline=gsap.timeline({scrollTrigger:{id:'jk-home-showreel',trigger:end,
+        start:0,end:'bottom bottom',scrub:.18,onUpdate:()=>render?.()}});
+      timeline.to(playhead,{value:1,duration:1,ease:'none',onUpdate:()=>render?.()},0);
       if (fade.length) timeline.fromTo(fade, {
         autoAlpha: 1
       }, {
@@ -48,6 +48,8 @@
       }, 0);
       timeline.scrollTrigger.refresh();
       timeline.scrollTrigger.update();
+      timeline.progress(timeline.scrollTrigger.progress);
+      render();
     }
     let viewportWidth = innerWidth;
     const resize = () => {

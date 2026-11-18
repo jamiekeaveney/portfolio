@@ -165,8 +165,8 @@
     function syncPosition() {
       routeY = null;
       locked = false;
-      update();
-      moveHero(compact);
+      update(true);
+      moveHero(compact, true);
     }
     function update(immediate = false) {
       const y = routeY ?? scrollY;
@@ -211,6 +211,19 @@
         if (text) button.setAttribute("aria-label", text);
       }));
     }
+    function syncGroups(path = location.pathname) {
+      nav.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const group = a.closest('ul') || a.parentElement.parentElement;
+        const primary = href.startsWith('/');
+        group.dataset.navGroup = primary ? 'primary' : 'social';
+        const current = primary && new URL(a.href, location.href).pathname === path;
+        a.classList.toggle('w--current', current);
+        if (current) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+      });
+      nav.querySelectorAll('[data-nav-group="primary"]').forEach(g => g.dataset.hasCurrent = String(!!g.querySelector('[aria-current="page"]')));
+    }
+    syncGroups();
     nameButtons(document);
     if (window.barba) barba.hooks.afterEnter((d => nameButtons(d.next.container)));
     applyLayout();
@@ -273,6 +286,7 @@
     };
     if (window.syncNavState) window.syncNavState = function(data) {
       const path = new URL(data.next.url.href).pathname;
+      syncGroups(path);
       document.querySelectorAll("a[data-barba-update],.cta-section a.secondary-link,[data-footer-link]").forEach((a => {
         const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === path;
         a.classList.toggle("w--current", current);
@@ -286,7 +300,8 @@
           saved = JSON.parse(sessionStorage.getItem("jk-project-origin"));
         } catch {}
         routeY = d.current.container?.matches("[data-case-page]") && d.next.url.path === saved?.path ? saved.path === "/about" ? 0 : saved.y : [ "popstate", "back", "forward" ].includes(d.trigger) && typeof getSavedScroll === "function" ? getSavedScroll(d.next.url.href) : 0;
-        update();
+        update(true);
+        moveHero(compact, true);
       }));
       barba.hooks.afterEnter((() => {
         applyTheme(root.dataset.themeStatus);

@@ -46,6 +46,7 @@
     SETTINGS.lineStagger = parseFloat(motion.getPropertyValue("--motion-line-stagger")) || .1;
     if (!page || pages.has(page) && !responsive || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     window.JKLightbox?.mount(page);
+    const restoring = page.dataset.restoreScroll === "true";
     const s = pages.get(page) || {
       entries: [],
       splits: [],
@@ -65,9 +66,9 @@
       if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case-featured,.case-featured *")) return;
       const entry = {
         el: el,
-        played: responsive,
-        started: responsive,
-        completed: responsive,
+        played: responsive || restoring && el.dataset.reveal === "load",
+        started: responsive || restoring && el.dataset.reveal === "load",
+        completed: responsive || restoring && el.dataset.reveal === "load",
         tween: null
       };
       s.entries.push(entry);
@@ -119,16 +120,15 @@
           }
         }));
       } else if (effect === "inline-media") {
-        const w = el.getBoundingClientRect().width;
+        const bounds = el.getBoundingClientRect(), w = bounds.width;
+        el.style.height = bounds.height + "px";
         el.dataset.inlineWidth = String(w);
         el.style.setProperty("--inline-media-width", w + "px");
         const t = gsap.fromTo(el, {
           width: 0,
-          marginRight: 0,
           autoAlpha: 0
         }, {
           width: w,
-          marginRight: innerWidth >= 992 ? ".12em" : 0,
           autoAlpha: 1,
           duration: 1,
           ease: SETTINGS.ease,
@@ -138,7 +138,7 @@
         function completeInline() {
           entry.completed = true;
           gsap.set(el, {
-            clearProps: "width,clipPath,opacity,visibility,marginRight"
+            clearProps: "width,clipPath,opacity,visibility"
           });
           el.dispatchEvent(new CustomEvent("jk:inline-ready", {
             bubbles: true
@@ -298,9 +298,14 @@
         clearProps: "opacity,visibility"
       });
     }
-    barba.hooks.beforeEnter((d => prepare(d.next.container, d.next.container.dataset.mediaHandoff === "true" || d.trigger?.dataset?.caseTransition === "continuation")));
+    barba.hooks.beforeEnter((d => {
+      const historyVisit = ["popstate", "back", "forward"].includes(d.trigger);
+      d.next.container.dataset.restoreScroll = String(historyVisit && getSavedScroll(d.next.url.href) > 0);
+      prepare(d.next.container, d.next.container.dataset.mediaHandoff === "true" || d.trigger?.dataset?.caseTransition === "continuation");
+      if (d.next.container.dataset.restoreScroll === "true") showLoad(d.next.container);
+    }));
     barba.hooks.enter((d => {
-      if (d.next.container.dataset.mediaHandoff === "true") return;
+      if (d.next.container.dataset.mediaHandoff === "true" || d.next.container.dataset.restoreScroll === "true") return;
       const casePair = d.current.container?.matches("[data-case-page]") && d.next.container?.matches("[data-case-page]");
       if (casePair) {
         if (d.trigger?.dataset?.caseTransition !== "continuation") showLoad(d.next.container);

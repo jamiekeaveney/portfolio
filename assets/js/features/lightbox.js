@@ -724,6 +724,8 @@
           closeControl.className = "lightbox-close";
           closeControl.type = "button";
           closeControl.textContent = "Close";
+          const menu = nativeWindow.document.querySelector('.sitenav__menu');
+          if (menu) closeControl.style.top = menu.getBoundingClientRect().top + 'px';
           closeControl.setAttribute("aria-label", "Close video");
           nativeWindow.document.body.append(closeControl);
           closeControl.addEventListener("click", (() => closeBy("")), {
@@ -850,10 +852,10 @@
         Flip.from(state, {
           duration: duration,
           ease: ease,
-          absolute: true,
+          absolute: false,
           scale: false,
           onComplete: () => {
-            if (isOpen) root.dataset.lightboxPhase = "open";
+            if (isOpen) { place(pw, rectFor(tg)); root.dataset.lightboxPhase = "open"; }
           }
         });
       }
@@ -879,7 +881,7 @@
         Flip.from(state, {
           duration: duration,
           ease: ease,
-          absolute: true,
+          absolute: false,
           scale: false,
           onComplete: () => {
             if (typeof lenis !== "undefined") lenis?.start();
