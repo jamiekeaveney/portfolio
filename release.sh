@@ -1,31 +1,25 @@
-#!/bin/bash
-set -e
-
-git checkout main
-
-STASHED=0
-if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-  git stash push -u -m "pre-release-$(date +%s)" >/dev/null
-  STASHED=1
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$(git branch --show-current)" != main ]]; then
+  echo 'Switch to main before releasing.' >&2
+  exit 1
 fi
-
-git pull --rebase origin main
-
-if [ "$STASHED" -eq 1 ]; then
-  git stash pop
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo 'Commit or stash your changes before releasing.' >&2
+  exit 1
 fi
-
-npm install
+git pull --ff-only origin main
+npm ci
+npm run check
 npm run build
-
-while :; do
-  npm version patch --no-git-tag-version >/dev/null
-  VER="v$(node -p "require('./package.json').version")"
-  git rev-parse "$VER" >/dev/null 2>&1 || break
-done
-
-git add -A
-git commit -m "Release $VER"
-git tag "$VER"
-git push origin main
-git push origin "$VER"
+npm version patch --no-git-tag-version
+release_tag="v$(node -p "require('./package.json').version")"
+if git rev-parse "$release_tag" >/dev/null 2>&1; then
+  echo "Tag $release_tag already exists." >&2
+  exit 1
+fi
+git add package.json package-lock.json dist
+git commit -m "Release $release_tag"
+git tag "$release_tag"
+git push --atomic origin main "$release_tag"
+echo "Use $release_tag in both Webflow snippets, then publish staging and verify."

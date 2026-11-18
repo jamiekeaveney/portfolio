@@ -1,55 +1,11 @@
-const fs = require("fs");
-const path = require("path");
-const { minify } = require("terser");
-
-const projectRoot = __dirname;
-
-const inputFiles = [
-  "assets/js/core/helpers.js",
-  "assets/js/core/sitewide.js",
-  "assets/js/features/scroll-1.js",
-  "assets/js/features/slider.js",
-  "assets/js/features/page-transitions.js",
-  "assets/js/core/page-transition-boilerplate.js"
-];
-
-const outputFile = path.join(projectRoot, "dist/js/app.min.js");
-
-async function build() {
-  try {
-    const contents = inputFiles
-      .map((file) => {
-        const fullPath = path.join(projectRoot, file);
-
-        if (!fs.existsSync(fullPath)) {
-          throw new Error(`Missing file: ${file}`);
-        }
-
-        return `\n/* ===== ${file} ===== */\n` + fs.readFileSync(fullPath, "utf8");
-      })
-      .join("\n");
-
-    const result = await minify(contents, {
-      compress: true,
-      mangle: true,
-      format: {
-        comments: false
-      }
-    });
-
-    if (!result.code) {
-      throw new Error("Minification failed: no output generated.");
-    }
-
-    fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-    fs.writeFileSync(outputFile, result.code, "utf8");
-
-    console.log(`Built: ${outputFile}`);
-  } catch (error) {
-    console.error("Build failed.");
-    console.error(error);
-    process.exit(1);
-  }
-}
-
-build();
+const fs=require('node:fs');
+const {minify}=require('terser');
+(async()=>{
+ const manifest=JSON.parse(fs.readFileSync('manifest.json','utf8'));
+ const sources=manifest.js.map(p=>`/* ${p} */\n${fs.readFileSync(p,'utf8')}`).join('\n;\n');
+ const result=await minify(sources,{compress:true,mangle:true,format:{comments:/@license|@preserve|@alpacka/}});
+ fs.mkdirSync('dist/js',{recursive:true});fs.mkdirSync('dist/css',{recursive:true});
+ fs.writeFileSync('dist/js/app.min.js',result.code+'\n');
+ fs.writeFileSync('dist/css/site.css',manifest.css.map(p=>`/* ${p} */\n${fs.readFileSync(p,'utf8')}`).join('\n'));
+ console.log('Built '+manifest.js.length+' scripts and '+manifest.css.length+' stylesheets.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

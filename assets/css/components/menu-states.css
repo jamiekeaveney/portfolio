@@ -1,0 +1,10 @@
+[data-state~="checked"]:is(:checked, :has(:checked)) .transition.mobile,
+[data-state~="checked"]:is(:checked, :has(:checked)) .transition__dark,
+[data-state~="checked"]:is(:checked, :has(:checked)) .sitenav__mobile {
+  pointer-events: auto;
+}
+
+[data-state~="checked"]:is(:checked, :has(:checked)) .sitenav__mobile-row,
+[data-state~="checked"]:is(:checked, :has(:checked)) .nav-mobile__group {
+  transition-delay: calc(var(--i, 0) * 100ms);
+}

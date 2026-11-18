@@ -1,0 +1,37 @@
+{
+  "js": [
+    "assets/js/core/site.js",
+    "assets/js/features/project-lifecycle.js",
+    "assets/js/features/home-scroll.js",
+    "assets/js/features/media-transitions.js",
+    "assets/js/features/project-controls.js",
+    "assets/js/features/project-header.js",
+    "assets/js/features/project-details.js",
+    "assets/js/features/related-projects.js",
+    "assets/js/features/text-reveals.js",
+    "assets/js/features/inline-video.js",
+    "assets/js/features/marquees.js",
+    "assets/js/features/footer-parallax.js",
+    "assets/js/features/editorial.js",
+    "assets/js/features/lightbox.js",
+    "assets/js/vendor/sticky-library.js",
+    "assets/js/features/site-refinements.js",
+    "assets/js/features/project-navigation.js",
+    "assets/js/features/copy-email.js",
+    "assets/js/features/lightbox-cursor.js",
+    "assets/js/features/navigation.js",
+    "assets/js/features/anchors.js",
+    "assets/js/features/client-previews.js",
+    "assets/js/features/services.js",
+    "assets/js/features/projects.js",
+    "assets/js/core/page-transitions.js",
+    "assets/js/core/clock.js"
+  ],
+  "css": [
+    "assets/css/components/loader-styles.css",
+    "assets/css/components/global-styles.css",
+    "assets/css/components/menu-states.css",
+    "assets/css/components/bunny-player.css",
+    "assets/css/components/projects.css"
+  ]
+}
