@@ -1,6 +1,7 @@
 /* Two sequential parallax reveals. Geometry, rather than an opaque mask, hides the name. */
 (() => {
   const states=new Map();
+  const OVERLAP=.7; // Half of the visible glyph, allowing for the font’s line box.
   function init(page) {
     page.querySelectorAll('.footer-editorial-panel').forEach(panel=>{
       if(states.has(panel))return;
@@ -12,12 +13,19 @@
       let tint=panel.querySelector(':scope > .footer-parallax__tint');
       if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
       let frozen=false;const mm=gsap.matchMedia();
-      const measure=()=>{if(!frozen)wrap.style.setProperty('--footer-overlap',name.offsetHeight*.5+'px');};
+      const measure=()=>{if(!frozen)wrap.style.setProperty('--footer-overlap',name.offsetHeight*OVERLAP+'px');};
       const ro=new ResizeObserver(measure);ro.observe(name);measure();
       mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
         // The half-height overlap follows normal flow until the panel bottom arrives.
         // Read the actual flow box, so a resize or a preceding pin cannot leave a stale end.
         let lastOffset,lastEntry;
+        const legal=inner.querySelector('.footer-legal');
+        let placeholder,legalStyle;
+        if(legal){
+          legalStyle=legal.getAttribute('style');placeholder=document.createElement('div');
+          placeholder.className='footer-legal-placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
+          legal.before(placeholder);wrap.append(legal);legal.dataset.footerLegalFloating='';
+        }
         const paint=()=>{
           if(frozen)return;
           const entry=Math.max(0,Math.min(1,(innerHeight-panel.getBoundingClientRect().top)/innerHeight));
@@ -28,11 +36,12 @@
           const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
           if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
-          const offset=-height*.5*(1-progress);
+          const offset=-height*OVERLAP*(1-progress);
           if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
+          if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
         paint();gsap.ticker.add(paint);
-        return ()=>{gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
+        return ()=>{if(legal){placeholder.replaceWith(legal);delete legal.dataset.footerLegalFloating;if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
       });
       states.set(panel,{
         freeze(){if(frozen)return;frozen=true;ro.disconnect();},

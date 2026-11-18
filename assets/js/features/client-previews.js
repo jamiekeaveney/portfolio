@@ -176,6 +176,8 @@
       void row.offsetHeight;
       row.removeAttribute("data-hover-preparing");
     }
+    const swingTick=()=>{if(inner)inner.style.rotate=selected&&!suspended&&!reduced.matches?(window.JKPointerMotion?.angle||0).toFixed(3)+'deg':'0deg';};
+    gsap.ticker.add(swingTick);
     function sample() {
       raf = 0;
       if (collection?.hasAttribute("data-return-preview")) return;
@@ -236,6 +238,8 @@
     }), events);
     const destroy = () => {
       abort.abort();
+      gsap.ticker.remove(swingTick);
+      inner?.style.removeProperty("rotate");
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
       xTo?.tween.kill();

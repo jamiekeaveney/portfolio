@@ -47,7 +47,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 
 /* Navigation groups keep the original white / current / peer-hover states. */
 .nav-root [data-wf--super-button--variant="navigation-desktop"]{color:var(--_theme---color--foreground,#fff)!important}
-.nav-root [data-nav-group="primary"][data-has-current="true"] [data-wf--super-button--variant="navigation-desktop"]:not([aria-current="page"]){color:var(--_theme---color--text-muted,#8a8a8a)!important}
+.nav-root [data-nav-group="primary"][data-has-current="true"] [data-wf--super-button--variant="navigation-desktop"]:not([aria-current="page"]):not(:hover):not(:focus-visible){color:var(--_theme---color--text-muted,#8a8a8a)!important}
 @media(min-width:992px) and (hover:hover) and (pointer:fine){
  .nav-root [data-nav-group]:has(a:hover) [data-wf--super-button--variant="navigation-desktop"]:not(:hover){color:var(--_theme---color--text-muted,#8a8a8a)!important}
  .nav-root [data-nav-group] [data-wf--super-button--variant="navigation-desktop"]:hover{color:var(--_theme---color--foreground,#fff)!important}
@@ -74,10 +74,10 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 .footer-wrap{background:var(--_theme---color--background,#000);isolation:isolate;overflow:clip}
 .sticky-footer{position:relative!important;top:auto!important;bottom:auto!important}
 .footer{color:var(--_theme---color--foreground,#fff);transform:translateY(var(--footer-reveal-y,0px))!important;translate:none!important}
-.footer .marquee-advanced__name{color:inherit;overflow:visible;padding-right:.08em;margin-right:-.08em}
+.footer .marquee-advanced__name{color:inherit;overflow:visible;padding-right:0;margin-right:0}
 .footer [data-marquee-collection-target]{overflow:visible}
 .footer-editorial-panel:before,.footer-editorial-panel:after{content:none!important}
-.footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;background:#808080;z-index:3;pointer-events:none;opacity:0}
+.footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;display:block;background:#808080;z-index:3;pointer-events:none;opacity:0}
 @media(min-width:992px) and (prefers-reduced-motion:no-preference){
  .footer-editorial-panel{min-height:calc(100svh + var(--footer-overlap,18rem));background:color-mix(in srgb,var(--_theme---color--background,#000) 12%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
  .footer-editorial{min-height:inherit;z-index:1;transform:translateY(var(--footer-entry-y,0%))!important;translate:none!important}
@@ -93,4 +93,17 @@ html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!impor
 html.is-lightbox-open .jk-close-cursor{display:none!important}
 
 /* A backdrop-filter creates an isolated blend surface. Use theme ink for legibility on light glass. */
-html[data-theme-status="light"] .footer-legal{mix-blend-mode:normal;color:var(--_theme---color--foreground,#111)}
+
+
+/* Difference blending must live outside the backdrop-filter stacking context. */
+.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:5;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
+.footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:#fff!important}
+.footer-wrap > .footer-legal[data-footer-legal-floating] .btn:hover{color:#8a8a8a!important}
+.footer .marquee-advanced__text{padding-right:.24em;margin-right:0;overflow:visible}
+[data-wf--super-button--variant="button-large"] .btn_main{border-radius:var(--radius--radius,.75rem)}
+@media(max-width:991px),(hover:none),(pointer:coarse){.cv-row,.cv-credit{padding-left:0!important;padding-right:0!important}}
+@media(min-width:992px){
+ .edit-grid > .edit-label{grid-row:1 / span 2;align-self:start;position:sticky;top:8rem}
+ .cv-sticky-label,.cv-clients-label{position:sticky;top:8rem;align-self:start}
+ .section-header > .section-subheading{position:sticky;top:8rem;align-self:start}
+}

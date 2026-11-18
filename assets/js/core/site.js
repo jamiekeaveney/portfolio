@@ -1,4 +1,4 @@
-document.documentElement.dataset.portfolioBuild = "2026-11-18.13";
+document.documentElement.dataset.portfolioBuild = "2026-11-18.14";
 
 function initBunnyPlayer() {
   window.JKLightbox?.mount();

@@ -674,7 +674,8 @@
         x: 0
       } : {},
       autoAlpha: 1,
-      duration: .94
+      duration: .94,
+      stagger: work ? {each:.055,from:'center'} : 0
     }, .36);
     if (card) tl.to(card, {
       autoAlpha: 1,

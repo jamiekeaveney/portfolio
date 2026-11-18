@@ -80,7 +80,14 @@
       value: 0
     };
     measure();
-    let tween;
+    let tween, swing=0;
+    const swingTick=(time,dt=16.667)=>{
+      const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
+      const target=gsap.utils.clamp(-4,4,velocity*.0015)*Math.sin(Math.PI*p);
+      swing+=(target-swing)*(1-Math.exp(-12*Math.min(dt,50)/1000));
+      clone.style.rotate=swing.toFixed(3)+'deg';
+    };
+    gsap.ticker.add(swingTick);
     tween = gsap.to(playhead, {
       value: 1,
       ease: "none",
@@ -103,6 +110,7 @@
     portrait = {
       destroy() {
         disposed = true;
+        gsap.ticker.remove(swingTick);
         tween.scrollTrigger?.kill();
         tween.kill();
         clone.remove();

@@ -1,6 +1,7 @@
 {
   "js": [
     "assets/js/core/site.js",
+    "assets/js/features/pointer-motion.js",
     "assets/js/features/project-lifecycle.js",
     "assets/js/features/home-scroll.js",
     "assets/js/features/media-transitions.js",
@@ -34,6 +35,8 @@
     "assets/css/components/navigation.css",
     "assets/css/components/bunny-player.css",
     "assets/css/components/projects.css",
-    "assets/css/components/interactions.css"
+    "assets/css/components/interactions.css",
+    "assets/css/components/cursor.css",
+    "assets/css/base/scaling.css"
   ]
 }
