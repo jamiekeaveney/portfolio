@@ -294,6 +294,7 @@ function runCaseEnterAnimation(t) {
 }
 
 barba.hooks.before((t => {
+    closeMenuIfOpen();
     isPopstate = "popstate" === t.trigger, saveScrollPosition(t.current.url.href, getCurrentScroll()), 
     freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
 })), barba.hooks.beforeEnter((t => {

@@ -170,7 +170,7 @@ const SETTINGS = {
  function returnToWork(current,next,href){
   if(active)return active;
   const work=next.querySelector('.work'),savedOrigin=origin();
-  const returnY=work&&innerWidth>=992?0:(savedOrigin?.y||0);
+  let returnY=work?(innerWidth>=992||savedOrigin?.path!=='/projects'?0:(savedOrigin?.y||0)):(savedOrigin?.y||0);
   gsap.set(next,{position:'fixed',top:-returnY,left:0,right:0,width:'100%',autoAlpha:0,zIndex:0});
   gsap.set(current,{zIndex:1});window.JKReveals?.showLoad(next);
   let target,contextPreview;
@@ -193,6 +193,10 @@ const SETTINGS = {
   }
   // Land in the exact inner hover frame, then release to native CSS hover at completion.
   if(!touch&&!contextPreview)card?.setAttribute('data-jk-return-hover','');card?.setAttribute('data-jk-return-measure','');
+  if(work&&touch){
+   const r=targetMedia.getBoundingClientRect(),navBottom=document.querySelector('.sitenav__bar')?.getBoundingClientRect().bottom||80;
+   if(r.top<navBottom||r.bottom>innerHeight){returnY=Math.max(0,returnY+r.top-navBottom-24);gsap.set(next,{top:-returnY});}
+  }
   const from=source.getBoundingClientRect(),to=targetMedia.getBoundingClientRect();
   card?.removeAttribute('data-jk-return-measure');
   const v=source.querySelector('.mini-showreel__cover-image')||source.querySelector('video');
