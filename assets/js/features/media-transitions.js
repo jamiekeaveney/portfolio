@@ -273,7 +273,7 @@ const SETTINGS = {
   const workLeave=window.runWorkLeaveAnimation,workEnter=window.runCaseEnterAnimation;
   if(workLeave)window.runWorkLeaveAnimation=(current,next,trigger)=>pair?.continuation&&!JKProject.reduced()?continuation(current,next):workLeave(current,next,trigger);
   if(workEnter)window.runCaseEnterAnimation=next=>pair?.continuation&&!JKProject.reduced()?(active||Promise.resolve()):workEnter(next);
-  barba.hooks.after(d=>{frozen.delete(d.current.container);delete d.next.container.dataset.mediaHandoff;pair=null;pending=null;});
+  barba.hooks.after(d=>{frozen.delete(d.current.container);delete d.next.container.dataset.mediaHandoff;pair=null;pending=null;active=null;});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
