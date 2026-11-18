@@ -21,7 +21,7 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.0`).
+- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.1`).
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -39,7 +39,7 @@ Run `./release.sh` from a clean `main` checkout. It checks the source, builds, u
 
 ## Motion and responsive behaviour
 
-Desktop uses Lenis and subtle Expo sticky landings. Scroll-driven media Flips use a 0.22-second catch-up. The related-project footer eases only on entry; its final progress window remains pinned. The Approach horizontal section has no extra sticky easing.
+Desktop uses Lenis and subtle Expo sticky landings. Scroll-driven media uses one viewport-coordinate playhead with a 0.18-second catch-up. Scroll compensation is immediate, avoiding a second vertical lag. The related-project footer eases only on entry; its final progress window remains pinned. The Approach horizontal section has no extra sticky easing.
 
 Mobile and tablet use native scrolling and ordinary stacked footer panels. Cursor-follow UI and pointer hover motion are disabled there. The menu fits its content, leaving an outside dismissal area.
 

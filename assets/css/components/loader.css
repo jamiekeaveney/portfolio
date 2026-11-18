@@ -1,7 +1,7 @@
 /* Loader is hidden on the Designer canvas; its motion only runs in published pages. */
 :is(.wf-design-mode,.wf-editor) [data-load-wrap]{display:none!important}
 html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
-.loader-bar{transition:none;will-change:transform,height;overflow:hidden}
+.loader-bar{min-height:6px;transition:none;will-change:transform,height;overflow:hidden}
 .loader-brand{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:inherit;color:#fff}
 .loader-logo{position:relative;width:max-content;height:max-content}
 .loader-logo__base{opacity:.2}

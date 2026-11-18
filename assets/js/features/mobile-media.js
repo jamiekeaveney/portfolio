@@ -27,6 +27,8 @@
         exit.type = "button";
         exit.className = "lightbox-close";
         exit.textContent = "Close";
+        const menu = document.querySelector(".sitenav__menu");
+        if (menu) exit.style.top = menu.getBoundingClientRect().top + "px";
         video.controls = true;
         video.playsInline = true;
         video.poster = source.poster || "";

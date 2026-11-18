@@ -197,7 +197,7 @@ function runPageOnceAnimation(page) {
   timeline.eventCallback('onInterrupt',finish);
   timeline.set(wrap,{display:'block',autoAlpha:1,pointerEvents:'auto'})
     .call(()=>{lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';})
-    .set(bar,{scaleX:0,height:'.35rem',transformOrigin:'left bottom'})
+    .set(bar,{scaleX:0,height:6,transformOrigin:'left bottom'})
     .set(content,{autoAlpha:1}).set(fill,{clipPath:'inset(0 100% 0 0)'})
     .set([firstText,lastText],{yPercent:125,autoAlpha:0}).set(second,{autoAlpha:0})
     .to(firstText,{yPercent:0,autoAlpha:1,duration:.6,ease:'expo.out'},.1)
@@ -206,7 +206,7 @@ function runPageOnceAnimation(page) {
     .to(firstText,{yPercent:-125,autoAlpha:0,duration:.45},.95)
     .to(lastText,{yPercent:0,autoAlpha:1,duration:.6},1.05)
     .to(content,{autoAlpha:0,duration:.3},1.85)
-    .to(bar,{height:'100dvh',duration:.8,ease:'expo.inOut'},2)
+    .to(bar,{height:()=>window.innerHeight,duration:.8,ease:'expo.inOut'},2)
     .to(second,{autoAlpha:1,duration:.3},2.55)
     .to(wrap,{yPercent:-100,duration:1,ease:'expo.inOut'},3.05)
     .call(finish);
