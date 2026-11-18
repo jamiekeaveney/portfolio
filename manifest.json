@@ -14,6 +14,7 @@
     "assets/js/features/footer-parallax.js",
     "assets/js/features/editorial.js",
     "assets/js/features/lightbox.js",
+    "assets/js/features/mobile-media.js",
     "assets/js/vendor/sticky-library.js",
     "assets/js/features/site-refinements.js",
     "assets/js/features/project-navigation.js",
@@ -28,10 +29,11 @@
     "assets/js/core/clock.js"
   ],
   "css": [
-    "assets/css/components/loader-styles.css",
-    "assets/css/components/global-styles.css",
-    "assets/css/components/menu-states.css",
+    "assets/css/components/loader.css",
+    "assets/css/base/site.css",
+    "assets/css/components/navigation.css",
     "assets/css/components/bunny-player.css",
-    "assets/css/components/projects.css"
+    "assets/css/components/projects.css",
+    "assets/css/components/interactions.css"
   ]
 }

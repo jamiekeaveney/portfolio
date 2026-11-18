@@ -178,7 +178,7 @@
 }
 
 [data-mini-showreel-status="active"] .mini-showreel__stage {
-  border-radius: 0;
+  border-radius: var(--radius--radius, .75rem);
 }
 
 [data-mini-showreel-status="not-active"] .bunny-player.is-showreel {

@@ -19,8 +19,9 @@ npm run build
 - `assets/js/core/`: shared bootstrap, Barba/Lenis page transitions and Dublin clock.
 - `assets/js/features/`: one file per interaction, including navigation, projects, media transitions, lightbox, copy email, reveals, services and footer parallax.
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
-- `assets/css/components/`: loader, shared states, menu states, video player and projects styles. The shared file preserves the original cascade ordering.
-- `webflow/`: the only site-wide head/footer snippets. Replace `RELEASE_REF` with the tested commit SHA or release tag in both snippets.
+- `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
+- `assets/css/components/`: loader, navigation, video player, projects and interaction states.
+- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.0`).
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -36,12 +37,20 @@ Layout refinements are native Webflow styles and variants, not a second HTML sit
 
 Run `./release.sh` from a clean `main` checkout. It checks the source, builds, commits a patch version and pushes a matching tag. Update **both** Webflow snippets to that tag, publish staging and verify before publishing custom domains. A GitHub push alone does not change Webflow's pinned asset URLs.
 
+## Motion and responsive behaviour
+
+Desktop uses Lenis and subtle Expo sticky landings. Scroll-driven media Flips use a 0.22-second catch-up. The related-project footer eases only on entry; its final progress window remains pinned. The Approach horizontal section has no extra sticky easing.
+
+Mobile and tablet use native scrolling and ordinary stacked footer panels. Cursor-follow UI and pointer hover motion are disabled there. The menu fits its content, leaving an outside dismissal area.
+
+Only elements with `data-current-year` update automatically. `data-year-template` accepts `{year}` and `{short}`; historical CMS project years are deliberately unchanged.
+
 ## Regression checks
 
-- At desktop width: Home → project → Home; Projects gallery ↔ list; project → Projects; About client → project → About at the remembered scroll position.
+- At desktop width: Home → project → Home; Projects gallery ↔ list; project → Projects; About client → project → About at the top of About.
 - Refresh and resize desktop → tablet → desktop; verify nav visibility, hero width reveal, showreel scroll animation and one active project/client pair.
 - Lightbox: open, play/pause, close from the black letterbox or Escape; on mobile use Close. Confirm black fills the viewport and no lower collection item overlaps.
 - At 390, 768 and 991 CSS pixels: check full-width 9:10 cards, captions below media without hover transforms, service-heading masks, content-height menu and outside-tap dismissal.
-- Footer: copy email, Super Button hover, back to top, copyright placement, compact frosted marquee and project scroll-to-next completion.
+- Footer: copy email, Super Button hover, back to top, copyright placement, frosted first panel over the marquee and project scroll-to-next completion.
 
 Browser emulation does not replace a final physical iPhone/iPad touch-scroll check.

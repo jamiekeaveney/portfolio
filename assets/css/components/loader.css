@@ -1,0 +1,4 @@
+/* Loader geometry is native in the Global component. */
+:is(.wf-design-mode,.wf-editor) [data-load-wrap]{display:none!important}
+html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
+.loader-bar{transition:none;will-change:transform,height}
