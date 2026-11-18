@@ -711,7 +711,7 @@ const initWorkSlider = (() => {
       // Both views share the same native frame dimensions and vertical centre.
       listCenter.style.removeProperty("height");
       listCenter.style.removeProperty("top");
-      gsap.set(listCenter,{x:0,y:0,yPercent:0});listCenter.style.rotate="0deg";previewPlaced=false;
+      gsap.set(listCenter,{x:0,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";previewPlaced=false;
     }
     function currentMedia(index = activeIdx) {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
