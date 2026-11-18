@@ -837,3 +837,6 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 
 /* Difference blending needs a white source in both colour themes. */
 @media(max-width:991px){.nav-root .sitenav,.nav-root .sitenav__brand,.nav-root .sitenav__menu{color:#fff!important;}}
+
+/* Keep clipped navigation text in stable compositor layers across layout Flips. */
+.sitenav .btn_text_contain,.sitenav .nav-logo__char{backface-visibility:hidden;will-change:transform;}

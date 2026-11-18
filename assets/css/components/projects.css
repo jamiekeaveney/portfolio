@@ -129,7 +129,7 @@
 	font-size: inherit;
 	font-weight: 500;
 	line-height: inherit;
-	letter-spacing: var(--spacing--spacing);
+	letter-spacing: var(--spacing--heading-spacing);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;

@@ -87,6 +87,9 @@ function init(){
   endMediaTransition(){locked=false;requestAnimationFrame(syncPosition);},
   update,syncPosition,refreshHero(){moveHero(compact,true);}
  };
+ function nameButtons(scope){scope.querySelectorAll('a.btn:not([aria-label])').forEach(button=>{const text=button.querySelector('.btn_text')?.textContent.trim();if(text)button.setAttribute('aria-label',text);});}
+ nameButtons(document);
+ if(window.barba)barba.hooks.afterEnter(d=>nameButtons(d.next.container));
  applyLayout();
  async function updateProjectCount(){
  try{
