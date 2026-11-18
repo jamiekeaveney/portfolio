@@ -193,7 +193,7 @@ function runPageOnceAnimation(page) {
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
   const finish=()=>{gsap.set(wrap,{display:'none'});gsap.set(page,{clearProps:'transform'});document.documentElement.style.overflow='';document.body.style.overflow='';resetPage(page,y);};
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
-  gsap.set(bg,{yPercent:0});gsap.set(bar,{scaleX:0,height:8,yPercent:0,transformOrigin:'left center'});gsap.set(welcomeText,{autoAlpha:0,y:18});
+  gsap.set(bg,{yPercent:0,autoAlpha:1,backgroundColor:'#000'});gsap.set(bar,{scaleX:0,height:8,yPercent:0,transformOrigin:'left center'});gsap.set(welcomeText,{autoAlpha:0,y:18});
   gsap.set(content,{autoAlpha:1});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
   gsap.set(splits.flatMap(s=>s.chars),{autoAlpha:0,yPercent:125});gsap.set(texts.children,{autoAlpha:1});
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
@@ -204,7 +204,7 @@ function runPageOnceAnimation(page) {
     .to(content,{y:'-20vh',autoAlpha:0,duration:1.05},'hideContent')
     .to(bar,{height:'100dvh',duration:1.05},'hideContent')
     .to(welcomeText,{autoAlpha:1,y:0,duration:.65},'hideContent+=.45')
-    .set(bg,{autoAlpha:0},'hideContent+=1.05')
+    .set(bg,bg.contains(bar)?{backgroundColor:'transparent'}:{autoAlpha:0},'hideContent+=1.05')
     .add('revealPage','hideContent+=1.45')
     .to(bar,{yPercent:-101,duration:1.2},'revealPage')
     .to(welcomeText,{y:'-12vh',duration:1.2},'revealPage')
