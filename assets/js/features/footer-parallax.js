@@ -19,10 +19,17 @@
         entry.fromTo(inner,{yPercent:-20},{yPercent:0,ease:'none',duration:1},0)
           .fromTo(tint,{opacity:.55},{opacity:0,ease:'none',duration:1},0);
         // The half-height overlap follows normal flow until the panel bottom arrives.
-        const reveal=gsap.fromTo(name,{'--footer-reveal-y':()=>-name.offsetHeight*.5+'px'},
-          {'--footer-reveal-y':'0px',ease:'none',scrollTrigger:{trigger:stage,start:'top bottom',end:'bottom bottom',scrub:true,invalidateOnRefresh:true}});
-        animations.push(entry,reveal);
-        return ()=>{animations.length=0;};
+        // Read the actual flow box, so a resize or a preceding pin cannot leave a stale end.
+        let lastOffset;
+        const paint=()=>{
+          if(frozen)return;
+          const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
+          const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
+          const offset=-height*.5*(1-progress);
+          if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
+        };
+        paint();gsap.ticker.add(paint);animations.push(entry);
+        return ()=>{gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');animations.length=0;};
       });
       states.set(panel,{
         freeze(){if(frozen)return;frozen=true;ro.disconnect();animations.forEach(a=>{a.scrollTrigger?.kill(false);a.pause();});},

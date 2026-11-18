@@ -1033,13 +1033,8 @@ html.is-lightbox-open,html.is-lightbox-open body{overflow:hidden!important}
  .cv-credits .client-name{display:inline;text-decoration:underline;text-underline-offset:.2em;background-image:none!important;box-decoration-break:clone;-webkit-box-decoration-break:clone}
  .cv-credits .client-name:after,.cv-credits .client-name:before{display:none!important}
 }
-/* The portalled player fills its fitted frame, replacing its inline centring. */
-
 /* Layout guides stay available in Designer, never over published content. */
 html:not(.wf-design-mode) .guide-wrap{display:none!important}
-
-@media(max-width:991px),(pointer:coarse){
-}
 
 /* Navigation groups keep the original white / current / peer-hover states. */
 .nav-root [data-wf--super-button--variant="navigation-desktop"]{color:var(--_theme---color--foreground,#fff)!important}
@@ -1087,3 +1082,6 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 .mobile-media-dialog .lightbox-close span{display:block}
 html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 html.is-lightbox-open .jk-close-cursor{display:none!important}
+
+/* A backdrop-filter creates an isolated blend surface. Use theme ink for legibility on light glass. */
+html[data-theme-status="light"] .footer-legal{mix-blend-mode:normal;color:var(--_theme---color--foreground,#111)}
