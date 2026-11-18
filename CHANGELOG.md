@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.2 — 18 November 2026
+
+- Restore the R8 desktop lightbox from after the project z-index fix; remove the later player-frame overrides. Keep a separate fitted mobile/tablet dialog with animated Close aligned with Menu.
+- Restore Osmo loader easing, three-second fill and staggered bottom messages; reveal the page beneath the dark loader without a full white screen.
+- Increase native Super Button Large padding to 1.5em vertically and 2–2.25em horizontally.
+- Replace the footer gradient with a real half-height marquee overlap, two sequential desktop parallax reveals and full-panel glass. Keep endpoints correct after resizing and freeze the current layout before page transitions.
+- Support light-theme footer colour and readable legal text.
+- Animate both dimensions of inline heading media while reserving block space; update that reservation after breakpoint changes.
+- Apply the same blur/opacity entrance and exit to all three Approach media items.
+- Reveal mobile project-detail media after the destination returns to document flow, avoiding the visible fixed-layout jump.
+- Keep mobile marquees travelling in one direction at the document boundary and give the name glyphs right-side breathing room.
+
+Designer edits to the Jamie heading clipping and client-logo sizes are retained.
+
+### Validation
+
+Source/build checks, sticky-entry and year-rollover tests, and footer geometry tests pass. The footer tests cover entry tint, half-height overlap, resizing at the page end, and freezing before navigation. Browser validation is recorded in `VALIDATION.md`.
+
 ## 1.2.1 — 18 November 2026
 
 - Use a single viewport-space playhead for the Home showreel, avoiding double scroll lag.

@@ -29,3 +29,5 @@ SOFTWARE.
 ## Existing interaction sources
 
 The Webflow site's existing Osmo-derived video-player and interaction code is retained as part of the private site implementation. Its use remains subject to the original licence. GSAP, Barba and Lenis are external dependencies, not vendored into this archive. Microsoft Clarity retains the existing site tracking ID.
+
+The loader uses the user-supplied Osmo Logo Reveal Loader timing and CustomEase, adapted to the site's wordmark and dark parallax exit. The supplied Arc Scroll example informed the exit direction only; no arc shape or additional dependency is included.

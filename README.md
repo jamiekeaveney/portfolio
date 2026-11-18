@@ -21,7 +21,7 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.1`).
+- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.2`).
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -44,6 +44,20 @@ Desktop uses Lenis and subtle Expo sticky landings. Scroll-driven media uses one
 Mobile and tablet use native scrolling and ordinary stacked footer panels. Cursor-follow UI and pointer hover motion are disabled there. The menu fits its content, leaving an outside dismissal area.
 
 Only elements with `data-current-year` update automatically. `data-year-template` accepts `{year}` and `{short}`; historical CMS project years are deliberately unchanged.
+
+## Desktop lightbox restoration
+
+`assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. The only routing addition is a separate conventional player for mobile/tablet; do not apply its dimensions or Close UI to desktop.
+
+## Footer geometry
+
+Desktop has two reveals. The editorial panel enters with its existing grey tint and parallax. Its entire surface is translucent glass. The name section starts half its own height above its normal-flow box, which puts its upper half behind the bottom of the glass. That overlap follows the page until the panel bottom enters the viewport; the second reveal then resolves to zero offset at the document end. Both stages read current DOM geometry, so earlier pins and resizing cannot leave an outdated endpoint. Before a page is fixed for navigation, the footer freezes its current offset.
+
+Mobile/tablet keeps ordinary stacked sections and a constant marquee direction. The light theme uses theme ink for the legal row because backdrop-filter isolates its blending surface.
+
+## Loader
+
+Uses the supplied Osmo Logo Reveal Loader's three-second CustomEase curve, progress fill, logo wipe and character-message timings. Both messages are retained. The requested adaptation replaces the white-screen phase with the original dark background lifting away over a small page parallax. The logo uses `sitenav__wordmark`.
 
 ## Regression checks
 
