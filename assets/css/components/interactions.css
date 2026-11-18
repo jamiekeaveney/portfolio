@@ -92,11 +92,8 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 html.is-lightbox-open .jk-close-cursor{display:none!important}
 
-/* A backdrop-filter creates an isolated blend surface. Use theme ink for legibility on light glass. */
-
-
 /* Difference blending must live outside the backdrop-filter stacking context. */
-.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:5;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
+.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:#fff!important}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn:hover{color:#8a8a8a!important}
 .footer .marquee-advanced__text{padding-right:.24em;margin-right:0;overflow:visible}
@@ -107,3 +104,5 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
  .cv-sticky-label,.cv-clients-label{position:sticky;top:8rem;align-self:start}
  .section-header > .section-subheading{position:sticky;top:8rem;align-self:start}
 }
+
+@media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}

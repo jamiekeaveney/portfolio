@@ -1102,11 +1102,8 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 html.is-lightbox-open .jk-close-cursor{display:none!important}
 
-/* A backdrop-filter creates an isolated blend surface. Use theme ink for legibility on light glass. */
-
-
 /* Difference blending must live outside the backdrop-filter stacking context. */
-.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:5;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
+.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:#fff!important}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn:hover{color:#8a8a8a!important}
 .footer .marquee-advanced__text{padding-right:.24em;margin-right:0;overflow:visible}
@@ -1118,13 +1115,15 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
  .section-header > .section-subheading{position:sticky;top:8rem;align-self:start}
 }
 
+@media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}
+
 /* assets/css/components/cursor.css */
-.site-cursor-dot{position:fixed;left:0;top:0;z-index:15000;width:.65rem;height:.65rem;border-radius:50%;background:#fff;mix-blend-mode:difference;pointer-events:none;translate:-50% -50%;scale:0;transition:scale .35s cubic-bezier(.19,1,.22,1);will-change:transform}
-.site-cursor-dot[data-cursor-state="idle"]{scale:1}
-.site-cursor-dot[data-cursor-state="interactive"]{scale:3.5}
-.site-cursor-dot[data-cursor-state="text"],.site-cursor-dot[data-cursor-state="hidden"]{scale:0}
+.site-cursor-dot{position:fixed;left:0;top:0;z-index:15000;width:.65rem;height:.65rem;mix-blend-mode:difference;pointer-events:none;will-change:transform}
+.site-cursor-dot:before{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;transform:scale(0);transition:transform .35s cubic-bezier(.19,1,.22,1)}
+.site-cursor-dot[data-cursor-state="idle"]:before{transform:scale(1)}
+.site-cursor-dot[data-cursor-state="interactive"]:before{transform:scale(3.5)}
 @media(max-width:991px),(hover:none),(pointer:coarse){.site-cursor-dot{display:none!important}}
-@media(prefers-reduced-motion:reduce){.site-cursor-dot{transition:none}}
+@media(prefers-reduced-motion:reduce){.site-cursor-dot:before{transition:none}}
 
 /* assets/css/base/scaling.css */
 /* Osmo Scaling System — calibrated opt-in, preserving existing rem-based page layouts. */

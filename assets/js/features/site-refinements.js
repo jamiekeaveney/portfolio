@@ -1,7 +1,7 @@
 /* R9: native sticky easing, section navigation and one portrait handoff. */
 (() => {
   "use strict";
-  let stickies = null, portrait = null, resizeTimer;
+  let stickies = null, portrait = null, sectionLabels = null, resizeTimer;
   const desktop = matchMedia("(min-width:992px) and (hover:hover) and (pointer:fine)");
   const reduced = matchMedia("(prefers-reduced-motion:reduce)");
   function disposePortrait() {
@@ -120,7 +120,22 @@
       }
     };
   }
+  function mountSectionLabels(page) {
+    sectionLabels?.destroy();sectionLabels=null;
+    if(!desktop.matches)return;
+    const labels=[...page.querySelectorAll('.section-header .grey-label')].filter(el=>!el.closest('.projects-sticky')).map(el=>({el,section:el.closest('.section'),offset:0,translate:el.style.translate})).filter(s=>s.section);
+    let frozen=false;
+    const tick=()=>{
+      if(frozen)return;
+      const top=8*parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const positions=labels.map(s=>{const r=s.el.getBoundingClientRect(),natural=r.top-s.offset,end=s.section.getBoundingClientRect().bottom;return Math.max(0,Math.min(top-natural,end-natural-r.height-40));});
+      labels.forEach((s,i)=>{s.offset=positions[i];s.el.style.translate='0 '+s.offset+'px';});
+    };
+    gsap.ticker.add(tick);tick();
+    sectionLabels={freeze(){frozen=true;},destroy(){gsap.ticker.remove(tick);labels.forEach(s=>{s.el.style.translate=s.translate;});}};
+  }
   function mount(page) {
+    mountSectionLabels(page);
     stickies?.destroy();
     const library = window.JKStickyLibrary;
     if (library) {
@@ -179,15 +194,15 @@
     if (!window.gsap || !window.ScrollTrigger) return;
     const freeze = window.freezeContainer;
     if (freeze) window.freezeContainer = function(page) {
-      stickies?.freeze();
+      stickies?.freeze();sectionLabels?.freeze();
       return freeze(page);
     };
     if (window.barba) {
-      barba.hooks.beforeLeave((() => stickies?.freeze()));
+      barba.hooks.beforeLeave((() => {stickies?.freeze();sectionLabels?.freeze();}));
       barba.hooks.afterLeave((() => {
         stickies?.destroy();
         stickies = null;
-        disposePortrait();
+        disposePortrait();sectionLabels?.destroy();sectionLabels=null;
       }));
       barba.hooks.afterEnter((d => mount(d.next.container)));
       barba.hooks.afterOnce((d => mount(d.next.container)));

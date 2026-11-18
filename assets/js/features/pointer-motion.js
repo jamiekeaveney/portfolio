@@ -14,6 +14,7 @@
     if(!window.gsap)return;
     const dot=document.createElement('div');dot.className='site-cursor-dot';dot.setAttribute('aria-hidden','true');document.body.append(dot);
     const duration=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-cursor-duration'))||.35;
+    gsap.set(dot,{xPercent:-50,yPercent:-50});
     const xTo=gsap.quickTo(dot,'x',{duration,ease:'expo.out'}),yTo=gsap.quickTo(dot,'y',{duration,ease:'expo.out'});
     let placed=false,lastKind='',labels=[];
     const refresh=()=>{labels=[...document.querySelectorAll('.jk-close-cursor,.case-cursor,[data-cursor-marquee]')];};
