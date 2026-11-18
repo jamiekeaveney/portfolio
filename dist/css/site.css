@@ -1117,6 +1117,9 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
 
 @media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}
 
+/* The glass owns the panel fill in both themes; its outer section stays transparent. */
+.footer-wrap .cta-section{background-color:transparent!important}
+
 /* assets/css/components/cursor.css */
 .site-cursor-dot{position:fixed;left:0;top:0;z-index:15000;width:.65rem;height:.65rem;mix-blend-mode:difference;pointer-events:none;will-change:transform}
 .site-cursor-dot:before{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;transform:scale(0);transition:transform .35s cubic-bezier(.19,1,.22,1)}

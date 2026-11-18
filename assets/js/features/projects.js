@@ -439,7 +439,7 @@ const initWorkSlider = (() => {
       }
     }
     var lDrag = false;
-    var lLastY = 0;
+    var lLastY = 0, lStartY = 0, lStartX = 0, lMoved = false;
     var leftRows = null;
     var rightRows = null;
     var prevLeftLabel = null;
@@ -598,36 +598,29 @@ const initWorkSlider = (() => {
       previewXTo.tween.pause();
       listVideos.forEach(({el})=>{el._previewPlaying=false;el.removeAttribute('data-preview-playing');});
     }
-    listEl.addEventListener("pointerdown", (function(event) {
-      if (mode !== "list" || isMobile() || locked()) return;
-      if (event.target.closest(".work-list__arrow, .work-list__center")) return;
+    listEl.addEventListener("pointerdown", function(event) {
+      if (mode !== "list" || isMobile() || locked() || event.button!==0) return;
+      if (event.target.closest(".work-list__arrow")) return;
+      killSnap(L.snap);clearTimeout(L.snapTimer);
+      lDrag=true;lMoved=false;lLastY=lStartY=event.clientY;lStartX=event.clientX;
+    },sig);
+    listEl.addEventListener("pointermove", function(event) {
+      if(!lDrag||mode!=="list")return;
+      if(!lMoved&&Math.hypot(event.clientX-lStartX,event.clientY-lStartY)<DRAG_THRESHOLD)return;
+      if(!lMoved){lMoved=true;try{listEl.setPointerCapture(event.pointerId);}catch(_){}setStatus("dragging");}
       event.preventDefault();
-      try {
-        listEl.setPointerCapture(event.pointerId);
-      } catch (_) {}
-      killSnap(L.snap);
-      clearTimeout(L.snapTimer);
-      lDrag = true;
-      lLastY = event.clientY;
-      setStatus("dragging");
-    }), sig);
-    listEl.addEventListener("pointermove", (function(event) {
-      if (!lDrag || mode !== "list") return;
-      var deltaY = event.clientY - lLastY;
-      lLastY = event.clientY;
-      L.tgt -= deltaY;
-      L.cur -= deltaY * .5;
-    }), sig);
+      const deltaY=event.clientY-lLastY;lLastY=event.clientY;
+      L.tgt-=deltaY;L.cur-=deltaY*.5;
+    },sig);
     function endListDrag() {
-      if (!lDrag) return;
-      lDrag = false;
-      setStatus("idle");
-      L.tgt = L.cur;
-      scheduleListSnap();
+      if(!lDrag)return;
+      lDrag=false;setStatus("idle");
+      if(lMoved){L.tgt=L.cur;scheduleListSnap();}
     }
-    [ "pointerup", "pointercancel" ].forEach((function(type) {
-      listEl.addEventListener(type, endListDrag, sig);
-    }));
+    ["pointerup","pointercancel"].forEach(type=>window.addEventListener(type,endListDrag,sig));
+    listEl.addEventListener("click",event=>{
+      if(lMoved){event.preventDefault();event.stopImmediatePropagation();lMoved=false;}
+    },{capture:true,signal:abort.signal});
     $$("[data-work-list-arrow]").forEach((function(button) {
       button.addEventListener("click", (function(event) {
         event.preventDefault();

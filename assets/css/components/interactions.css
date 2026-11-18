@@ -106,3 +106,6 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
 }
 
 @media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}
+
+/* The glass owns the panel fill in both themes; its outer section stays transparent. */
+.footer-wrap .cta-section{background-color:transparent!important}
