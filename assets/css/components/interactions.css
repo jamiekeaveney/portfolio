@@ -80,7 +80,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 .footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;background:#808080;z-index:3;pointer-events:none;opacity:0}
 @media(min-width:992px) and (prefers-reduced-motion:no-preference){
  .footer-editorial-panel{min-height:calc(100svh + var(--footer-overlap,18rem));background:color-mix(in srgb,var(--_theme---color--background,#000) 12%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
- .footer-editorial{min-height:inherit;z-index:1}
+ .footer-editorial{min-height:inherit;z-index:1;transform:translateY(var(--footer-entry-y,0%))!important;translate:none!important}
  .footer-legal{margin-top:auto}
 }
 /* The reveal grows in both dimensions inside a slot that reserves block space. */

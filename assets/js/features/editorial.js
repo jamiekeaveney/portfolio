@@ -200,7 +200,7 @@
         scrollTrigger: {
           trigger: section,
           start: "top 75%",
-          end: () => "+=" + 2 * sticky.offsetHeight + innerHeight * .75,
+          end: () => "+=" + (2 * sticky.offsetHeight + innerHeight * .75),
           scrub: true,
           invalidateOnRefresh: true
         }

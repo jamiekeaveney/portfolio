@@ -7,5 +7,5 @@ html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
 .loader-logo__base{opacity:.2}
 .loader-logo__fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
 .loader-messages{position:absolute;bottom:3.5em;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:#fff}
-.loader-messages [data-load-text]{position:absolute;white-space:nowrap;text-transform:uppercase;padding-bottom:.25em;margin-bottom:-.25em;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.875rem;letter-spacing:.04em}
+.loader-messages [data-load-text]{position:absolute;white-space:nowrap;text-transform:uppercase;padding-bottom:.25em;margin-bottom:-.25em;font-family:"Haffer Mono",Arial,sans-serif;font-size:1rem;letter-spacing:normal}
 .loader-messages [data-load-text]>div{padding-bottom:.25em;margin-bottom:-.25em}

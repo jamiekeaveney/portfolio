@@ -31,6 +31,7 @@
     const s = pages.get(page);
     if (!s) return;
     s.triggers.forEach((t => t.kill()));
+    s.observers?.forEach(o=>o.disconnect());
     s.tweens.forEach((t => t.kill()));
     s.splits.forEach((t => t.revert()));
     pages.delete(page);
@@ -52,6 +53,7 @@
       splits: [],
       tweens: [],
       triggers: [],
+      observers: [],
       started: false
     };
     pages.set(page, s);
@@ -145,6 +147,15 @@
           gsap.set(el, {
             clearProps: "width,height,clipPath,opacity,visibility"
           });
+          if(!entry.resizeObserver){
+            // Reserve the final block height during entry, then follow real breakpoint sizes.
+            entry.resizeObserver=new ResizeObserver(()=>{
+              if(!entry.completed||!el.isConnected)return;
+              const css=getComputedStyle(el);
+              slot.style.height=(el.offsetHeight+(parseFloat(css.marginBottom)||0))+'px';
+            });
+            entry.resizeObserver.observe(el);s.observers.push(entry.resizeObserver);
+          }
           el.dispatchEvent(new CustomEvent("jk:inline-ready", {
             bubbles: true
           }));

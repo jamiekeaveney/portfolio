@@ -73,3 +73,5 @@ assert.deepEqual(dates.map((x => x.textContent)), [ "2027", "’27", "© 2027 Ja
 assert.equal(historic.textContent, "2024");
 
 console.log("Sticky entry stability and year rollover checks passed.");
+
+require("./check-footer.js");

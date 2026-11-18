@@ -11,28 +11,31 @@
       if(title){title.removeAttribute('href');title.removeAttribute('tabindex');title.removeAttribute('data-trigger');title.setAttribute('role','heading');title.setAttribute('aria-level','2');}
       let tint=panel.querySelector(':scope > .footer-parallax__tint');
       if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
-      let frozen=false;const animations=[],mm=gsap.matchMedia();
+      let frozen=false;const mm=gsap.matchMedia();
       const measure=()=>{if(!frozen)wrap.style.setProperty('--footer-overlap',name.offsetHeight*.5+'px');};
       const ro=new ResizeObserver(measure);ro.observe(name);measure();
       mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
-        const entry=gsap.timeline({scrollTrigger:{trigger:panel,start:'clamp(top bottom)',end:'clamp(top top)',scrub:true,invalidateOnRefresh:true}});
-        entry.fromTo(inner,{yPercent:-20},{yPercent:0,ease:'none',duration:1},0)
-          .fromTo(tint,{opacity:.55},{opacity:0,ease:'none',duration:1},0);
         // The half-height overlap follows normal flow until the panel bottom arrives.
         // Read the actual flow box, so a resize or a preceding pin cannot leave a stale end.
-        let lastOffset;
+        let lastOffset,lastEntry;
         const paint=()=>{
           if(frozen)return;
+          const entry=Math.max(0,Math.min(1,(innerHeight-panel.getBoundingClientRect().top)/innerHeight));
+          if(entry!==lastEntry){
+            inner.style.setProperty('--footer-entry-y',(-20*(1-entry))+'%');
+            tint.style.opacity=String(.55*(1-entry));lastEntry=entry;
+          }
           const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
+          if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
           const offset=-height*.5*(1-progress);
           if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
         };
-        paint();gsap.ticker.add(paint);animations.push(entry);
-        return ()=>{gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');animations.length=0;};
+        paint();gsap.ticker.add(paint);
+        return ()=>{gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
       });
       states.set(panel,{
-        freeze(){if(frozen)return;frozen=true;ro.disconnect();animations.forEach(a=>{a.scrollTrigger?.kill(false);a.pause();});},
+        freeze(){if(frozen)return;frozen=true;ro.disconnect();},
         dispose(){this.freeze();mm.revert();}
       });
     });
