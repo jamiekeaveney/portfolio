@@ -18,7 +18,14 @@ if git rev-parse "$release_tag" >/dev/null 2>&1; then
   echo "Tag $release_tag already exists." >&2
   exit 1
 fi
-git add package.json package-lock.json dist
+node - <<'NODE'
+const fs = require('node:fs');
+const tag = 'v' + require('./package.json').version;
+for (const file of ['webflow/head.html', 'webflow/footer.html']) {
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/v\d+\.\d+\.\d+/g, tag));
+}
+NODE
+git add package.json package-lock.json dist webflow
 git commit -m "Release $release_tag"
 git tag "$release_tag"
 git push --atomic origin main "$release_tag"

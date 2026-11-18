@@ -56,3 +56,7 @@ body > .mini-showreel .bunny-player { transform: none !important; translate: non
 
 /* Layout guides stay available in Designer, never over published content. */
 html:not(.wf-design-mode) .guide-wrap{display:none!important}
+
+@media(max-width:991px),(pointer:coarse){
+ body>[data-mini-showreel-status="active"] .bunny-player__interface{opacity:1!important;transform:none!important}
+}

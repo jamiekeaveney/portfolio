@@ -268,121 +268,6 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 .mini-showreel-lightbox__dark{background-color:#000}
 [data-mini-showreel-status] .mini-showreel__cover-image{opacity:1;visibility:visible;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 
-/* Animation */
-[data-bunny-player-init] :is(.bunny-player__placeholder, .bunny-player__dark, .bunny-player__playpause, .bunny-player__loading) {
-  transition: opacity 0.3s linear, visibility 0.3s linear;
-}
-
-/* Placeholder */
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__placeholder,
-[data-bunny-player-init][data-player-status="paused"] .bunny-player__placeholder,
-[data-bunny-player-init][data-player-activated="true"][data-player-status="ready"] .bunny-player__placeholder {
-  opacity: 0;
-  visibility: hidden;
-}
-
-/* Dark Overlay */
-[data-bunny-player-init][data-player-status="paused"] .bunny-player__dark,
-[data-bunny-player-init][data-player-status="playing"][data-player-hover="active"] .bunny-player__dark{
-  opacity: 0.3;
-}
-
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__dark {
-  opacity: 0;
-}
-
-/* Play/Pause */
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__playpause,
-[data-bunny-player-init][data-player-status="loading"] .bunny-player__playpause {
-  opacity: 0;
-}
-
-[data-bunny-player-init][data-player-status="playing"][data-player-hover="active"] .bunny-player__playpause {
-  opacity: 1;
-}
-
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__play-svg,
-[data-bunny-player-init][data-player-status="loading"] .bunny-player__play-svg {
-  display: none;
-}
-
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__pause-svg,
-[data-bunny-player-init][data-player-status="loading"] .bunny-player__pause-svg{
-  display: block;
-}
-
-/* Loading */
-[data-bunny-player-init][data-player-status="loading"] .bunny-player__loading {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Interface */
-.bunny-player__interface {
-  transition: all 0.6s cubic-bezier(0.625, 0.05, 0, 1);
-}
-
-[data-bunny-player-init][data-player-status="playing"] .bunny-player__interface,
-[data-bunny-player-init][data-player-status="loading"] .bunny-player__interface{
-  opacity: 0;
-  transform: translateY(1em) rotate(0.001deg);
-}
-
-[data-bunny-player-init][data-player-status="playing"][data-player-hover="active"] .bunny-player__interface,
-[data-bunny-player-init][data-player-status="loading"][data-player-hover="active"] .bunny-player__interface {
-  opacity: 1;
-  transform: translateY(0em) rotate(0.001deg);
-}
-
-/* Timeline */
-[data-bunny-player-init][data-player-status="idle"][data-player-activated="false"] .bunny-player__timeline,
-[data-bunny-player-init][data-player-status="ready"][data-player-activated="false"] .bunny-player__timeline {
-  pointer-events: none;
-}
-
-/* Timeline Handle */
-[data-bunny-player-init] .bunny-player__timeline-handle {
-  transition: transform 0.15s ease-in-out;
-}
-
-[data-bunny-player-init][data-timeline-drag="true"] .bunny-player__timeline-handle {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-/* Fullscreen */
-[data-bunny-player-init][data-player-fullscreen="true"] .bunny-player__fullscreen-shrink-svg {
-  display: block;
-}
-
-[data-bunny-player-init][data-player-fullscreen="true"] .bunny-player__fullscreen-scale-svg {
-  display: none;
-}
-
-/* Mute */
-[data-bunny-player-init][data-player-muted="true"] .bunny-player__volume-mute-svg {
-  display: block;
-}
-
-[data-bunny-player-init][data-player-muted="true"] .bunny-player__volume-up-svg {
-  display: none;
-}
-
-/* Cover Mode */
-[data-bunny-player-init][data-player-update-size="cover"] {
-  height: 100%;
-  top: 0;
-  left: 0;
-  position: absolute;
-}
-
-[data-bunny-player-init][data-player-update-size="cover"] [data-player-before] {
-  display: none;
-}
-
-[data-bunny-player-init][data-player-update-size="cover"][data-player-fullscreen="false"] .bunny-player__video {
-  object-fit: cover;
-}
-
 /* Shared controls occupy one bottom rail in both project index views. */
 @media(min-width:768px){
  
@@ -1164,3 +1049,7 @@ body > .mini-showreel .bunny-player { transform: none !important; translate: non
 
 /* Layout guides stay available in Designer, never over published content. */
 html:not(.wf-design-mode) .guide-wrap{display:none!important}
+
+@media(max-width:991px),(pointer:coarse){
+ body>[data-mini-showreel-status="active"] .bunny-player__interface{opacity:1!important;transform:none!important}
+}
