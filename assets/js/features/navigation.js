@@ -229,7 +229,7 @@
     }
     updateProjectCount();
     document.querySelectorAll(".cta-section a.secondary-link,[data-footer-link]").forEach((a => {
-      const current = new URL(a.href, location.href).pathname === location.pathname;
+      const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === location.pathname;
       a.classList.toggle("w--current", current);
       if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     }));
@@ -274,7 +274,7 @@
     if (window.syncNavState) window.syncNavState = function(data) {
       const path = new URL(data.next.url.href).pathname;
       document.querySelectorAll("a[data-barba-update],.cta-section a.secondary-link,[data-footer-link]").forEach((a => {
-        const current = new URL(a.href, location.href).pathname === path;
+        const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === path;
         a.classList.toggle("w--current", current);
         if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
       }));

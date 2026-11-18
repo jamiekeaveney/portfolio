@@ -47,7 +47,7 @@ function initScrollSaver() {
       saveScrollPosition(window.location.href, getCurrentScroll());
     }), 150);
   };
-  lenis ? lenis.on("scroll", e) : window.addEventListener("scroll", e, {
+  window.addEventListener("scroll", e, {
     passive: !0
   }), window.addEventListener("beforeunload", (() => {
     saveScrollPosition(window.location.href, getCurrentScroll());

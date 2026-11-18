@@ -51,3 +51,8 @@ body:has(.lightbox-close) .jk-close-cursor{display:none!important}
  .cv-credits .client-name{display:inline;text-decoration:underline;text-underline-offset:.2em;background-image:none!important;box-decoration-break:clone;-webkit-box-decoration-break:clone}
  .cv-credits .client-name:after,.cv-credits .client-name:before{display:none!important}
 }
+/* The portalled player fills its fitted frame, replacing its inline centring. */
+body > .mini-showreel .bunny-player { transform: none !important; translate: none !important; }
+
+/* Layout guides stay available in Designer, never over published content. */
+html:not(.wf-design-mode) .guide-wrap{display:none!important}
