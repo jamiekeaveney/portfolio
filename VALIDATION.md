@@ -1,32 +1,39 @@
-# Release validation — v1.2.2
+# Release validation — v1.2.3
 
 Checked on 18 November 2026 against Webflow staging.
 
 ## Automated checks
 
-- `npm run check`: source syntax, manifest ownership, sticky entry stability and dynamic-year rollover pass.
-- Footer controller tests: first-stage offset/tint, half-height name overlap, resized document endpoint and frozen navigation geometry pass.
-- `npm run build`: 27 JavaScript modules and 6 CSS files compiled successfully.
+- `npm run check`: syntax, manifest ownership, sticky entry stability, dynamic-year rollover and footer geometry tests pass.
+- Footer tests exercise entry tint, deeper glyph overlap, resized document endpoint and frozen navigation geometry.
+- `npm run build`: 28 JavaScript modules and 8 stylesheets compiled.
+- The restored desktop `lightbox.js` matches v1.2.2 byte for byte.
 
 ## Browser checks
 
-- Desktop lightbox on Home and Sonic: full-viewport black root, fitted rounded inner video and controls inside the player. Open/close restored from the R8 source after the project z-index fix. Resized from 1728 × 904 to 1365 × 768; the 1024 × 576 video remained inside the latter viewport.
-- At 390 × 844, the mobile dialog filled the viewport. Close and Menu shared a right edge at 365.99px and top at 24px; Menu was hidden while the player was open and returned after closing.
-- Mobile Home → Sonic: the finished media occupied y=482.18–674.55 and the description section began at y=722.55. The destination detail section stays hidden until normal document flow is restored.
-- Footer at 1365 × 768: the name finished at the viewport bottom within subpixel rounding. At the start of the second reveal, roughly half the name section overlapped the glass. First-stage offset/tint responded correctly after responsive resizing.
-- Light theme: copyright, Back to top and marquee remained visible with dark theme ink on the light surface.
-- Approach first media entered partially transparent and blurred, using the same entrance/exit timeline as the following items.
-- Mobile heading media reserved its final block space; the reservation updated after changing to tablet width.
-- Mobile marquee retained its direction at the page end and after additional downward wheel input.
-- All three Home prominent buttons measured 24px vertical padding, 32px right and 36px left, with a 72.4px total height at the tested desktop size.
-- No JavaScript errors were captured during the final browser pass.
+- Desktop Projects list: 76.03px labels at 1728px viewport width; 656.63 × 369.35 preview centred vertically at y=424 in an 848px viewport. Horizontal pointer movement changes its x coordinate while its vertical centre remains fixed.
+- During list scrolling, posters slide continuously and no preview video plays. At rest, exactly one selected video plays. The opposing project/client tracks agree at the selected row.
+- Dragging changes the selected project and remains on `/projects`; clicking a settled preview enters the project. All Projects returns to the list without leftover transition ghosts. Gallery/list switching retains the selected media.
+- Gallery scroll shows progressively increasing independent lag on subsequent visible cards, settling back to zero.
+- Primary nav: Approach is white at rest on Approach; hovering About makes About white and its peers grey.
+- Cursor dot uses a separate visual scale and shared Expo following, with desktop-only display. Velocity rotation decays to neutral.
+- Footer: deeper frosted-name overlap and legal-row difference blending inspected in dark and light themes. Final name section ends within subpixel rounding of the viewport bottom.
+- Prominent Home buttons retain 24px vertical, 32px right and 36px left padding, measuring 72.4px high with the 12px site radius.
+- Loader: Hold tight and Hi there retain the staggered sequence in Delight at 16px. The neutral-800 line expands to the centred Welcome panel, then reveals the page.
+- Approach section label remains near 128px from the top while its section scrolls, bounded by the section’s end. About labels are sticky on desktop and static on mobile.
+- At 390 × 844, CV rows have zero internal horizontal padding and align at the 24px page gutter. The custom dot is hidden and document scroll width equals 390px.
 
 ## Native Webflow changes
 
-- Super Button / Button Large: 1.5em vertical padding, 2em right, 2.25em left and 1em gap.
-- Tablet editorial hero: twelve explicit grid columns and a full-width title. This prevents desktop arrow placement from creating implicit columns outside the four-column tablet grid.
-- The user's Jamie heading clipping/margin edits and client-logo sizing were retained.
+- Projects list column sizing/alignment and preview frame geometry.
+- Footer entry tint restored to display:block.
+- Super Button / Button Large uses `--radius--radius`; generous padding preserved.
+- Tablet CV row inset removed and editorial-label positioning updated.
+- A Responsive scaling section added to the native Style Guide with Osmo breakpoint values and opt-in usage guidance. Utility pages without a Barba wrapper skip transition initialisation.
+- The user’s Jamie clipping/margins and client-logo dimensions retained.
 
-## Limits
+## Scope and limits
 
-Responsive checks use Chrome viewport emulation, not a physical iPhone or iPad. Native touch momentum and Safari-specific playback still require a device check. Loader timing matches the supplied resource in code; its dark parallax exit is the requested adaptation, not an identical white-screen ending.
+Osmo’s tokens are installed and used by the new list, with opt-in utilities for future components. A global body/font-size conversion was deliberately not applied because it would change established page proportions. Existing rem typography remains unchanged.
+
+Responsive validation used Chrome viewport emulation. Physical iPhone/iPad momentum, Safari playback and the subjective feel of the new velocity effects still benefit from device review. The loader’s neutral Welcome ending is the requested adaptation, not a copy of Osmo’s white-screen ending.

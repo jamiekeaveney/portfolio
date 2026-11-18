@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.3 — 18 November 2026
+
+- Refine the approved footer: deeper glass overlap, repeated-name spacing, grey entry tint and effective difference blending for the legal row in both themes.
+- Add a shared white cursor dot, subtle preview/portrait velocity swing and progressive gallery-card lag.
+- Redesign desktop Projects list with large edge-aligned labels and a horizontally following 16:9 poster-to-video preview. Preserve opposing client movement, snapping, dragging and project transitions.
+- Use the site corner radius for prominent buttons, correct primary-nav hover highlighting and remove mobile CV row insets.
+- Introduce a neutral-800 Welcome loader panel using the existing site typography and Osmo message cadence.
+- Add bounded desktop section labels and opt-in Osmo scaling tokens, documented in the native Style Guide.
+- Preserve the restored desktop lightbox implementation unchanged.
+
 ## 1.2.2 — 18 November 2026
 
 - Restore the R8 desktop lightbox from after the project z-index fix; remove the later player-frame overrides. Keep a separate fitted mobile/tablet dialog with animated Close aligned with Menu.

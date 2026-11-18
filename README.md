@@ -21,7 +21,7 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.2`).
+- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same short, immutable release tag (`v1.2.3`).
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -51,13 +51,13 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 ## Footer geometry
 
-Desktop has two reveals. The editorial panel enters with its existing grey tint and parallax. Its entire surface is translucent glass. The name section starts half its own height above its normal-flow box, which puts its upper half behind the bottom of the glass. That overlap follows the page until the panel bottom enters the viewport; the second reveal then resolves to zero offset at the document end. Both stages read current DOM geometry, so earlier pins and resizing cannot leave an outdated endpoint. Before a page is fixed for navigation, the footer freezes its current offset.
+Desktop has two reveals. The editorial panel enters with its existing grey tint and parallax. Its entire surface is translucent glass. The name section starts at 70% of its line-box height above its normal-flow box, placing approximately half the visible glyph behind the glass. That overlap follows the page until the panel bottom enters the viewport; the second reveal then resolves to zero offset at the document end. Both stages read current DOM geometry, so earlier pins and resizing cannot leave an outdated endpoint. Before a page is fixed for navigation, the footer freezes its current offset.
 
-Mobile/tablet keeps ordinary stacked sections and a constant marquee direction. The light theme uses theme ink for the legal row because backdrop-filter isolates its blending surface.
+Mobile/tablet keeps ordinary stacked sections and a constant marquee direction. The legal row is positioned over the glass outside its isolated backdrop-filter context, allowing white difference-blended text to remain legible in both themes. A placeholder preserves its original layout.
 
 ## Loader
 
-Uses the supplied Osmo Logo Reveal Loader's three-second CustomEase curve, progress fill, logo wipe and character-message timings. Both messages are retained. The requested adaptation replaces the white-screen phase with the original dark background lifting away over a small page parallax. The logo uses `sitenav__wordmark`.
+Uses the supplied Osmo Logo Reveal Loader's three-second CustomEase curve, progress fill, logo wipe and character-message timings. Both messages are retained. The neutral-800 progress line grows into a flat Welcome panel, then lifts away over a small page parallax. The logo and Welcome use `sitenav__wordmark`; the staggered messages use the site’s base font.
 
 ## Regression checks
 
@@ -68,3 +68,17 @@ Uses the supplied Osmo Logo Reveal Loader's three-second CustomEase curve, progr
 - Footer: copy email, Super Button hover, back to top, copyright placement, frosted first panel over the marquee and project scroll-to-next completion.
 
 Browser emulation does not replace a final physical iPhone/iPad touch-scroll check.
+
+## Pointer and Projects motion
+
+`pointer-motion.js` provides a shared pointer sample and a maximum four-degree velocity angle. The white difference-blended dot uses the same 0.35-second Expo following response as text cursors. Its visual scale is on a pseudo-element, separate from GSAP translation. It shrinks while a text follower is visible and is disabled on tablet/touch.
+
+The desktop list has opposing text tracks and a horizontally following 16:9 preview. Continuous scroll position slides the posters vertically; after 140ms at rest, the selected preview fades into video. A drag threshold separates dragging from clicking the preview. Gallery card lag is capped at 64px and increases with each following card; a restrained return stagger complements the existing project Flip transition. Reduced motion disables the velocity swing.
+
+## Scaling
+
+The supplied Osmo breakpoint tokens are in `assets/css/base/scaling.css` and documented on `/info/styleguide`. They are used by the new Projects list. `.osmo-scale` and `.osmo-container` are opt-in utilities. The existing root/body size and rem-based page design remain unchanged; applying a global body scale would alter the established layouts. Keep full-viewport media outside a capped container.
+
+## Section labels
+
+Editorial and CV labels use bounded native sticky positioning. Home section labels with a short header parent follow the section bounds without changing their grid layout. Labels freeze with the outgoing page during navigation; mobile uses normal document flow.

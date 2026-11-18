@@ -323,6 +323,8 @@ barba.hooks.before((t => {
 }));
 
 function startPortfolio() {
+  // Utility pages such as the Style Guide are outside the transition shell.
+  if (!document.querySelector('[data-barba="wrapper"]')) return;
   barba.init({
     debug: !1,
     timeout: 7e3,
