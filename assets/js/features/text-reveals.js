@@ -250,7 +250,7 @@
     const s = pages.get(page);
     if (!s || s.started) return;
     if (navIntro) {
-      navIntro.play();
+      navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.38:0).play();
       navIntro = null;
     }
     page.dataset.pageIntroStarted = "true";
