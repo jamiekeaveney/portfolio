@@ -12,6 +12,7 @@
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
     const label=document.createElement('span'),replacement=document.createElement('span');
+    label.className=replacement.className='btn_text';
     replacement.setAttribute('aria-hidden','true');
     start.textContent='';
     start.append(label,replacement);
@@ -67,6 +68,7 @@
       }
       if(!playing){
         const font=Math.min(width*.36,height*.58);ctx.font='600 '+font+'px '+style.fontFamily;
+        ctx.letterSpacing=style.letterSpacing||'0px';
         const m=ctx.measureText('404'),left=m.actualBoundingBoxLeft||0,ascent=m.actualBoundingBoxAscent||font*.75,descent=m.actualBoundingBoxDescent||0;
         const glyphW=(m.actualBoundingBoxRight||m.width)+left,glyphH=ascent+descent;
         const maxX=Math.max(0,width-glyphW),maxY=Math.max(0,height-glyphH);

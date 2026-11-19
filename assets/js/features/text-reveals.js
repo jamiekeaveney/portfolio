@@ -320,9 +320,9 @@
       },{once:true});
       navIntro = gsap.from(nav, {
         autoAlpha: 0,
-        duration: SETTINGS.navDuration,
+        duration: .9,
         stagger: 0,
-        ease: SETTINGS.ease,
+        ease: "sine.inOut",
         paused: true,
         clearProps: "opacity,visibility"
       });

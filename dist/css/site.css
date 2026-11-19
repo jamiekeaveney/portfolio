@@ -1211,7 +1211,7 @@ html[data-touch-input] :is(.mini-showreel__card,.mini-showreel):focus-within{out
 @media(max-width:767px){[data-style-guide] .work-slide__track{grid-template-columns:1fr}.error-game{padding-top:7rem}}
 
 /* Twelve-column perimeter: content is left aligned, playfield reaches every edge. */
-.error-game{--error-gutter:var(--grid--padding,2.5rem);--error-column:calc((100vw - 2 * var(--error-gutter)) / 12);position:relative;display:block;width:100%;height:100svh;min-height:30rem;max-width:none;margin:0;padding:0;overflow:hidden}
+.error-game{letter-spacing:var(--spacing--spacing);--error-gutter:var(--grid--padding,2.5rem);--error-column:calc((100vw - 2 * var(--error-gutter)) / 12);position:relative;display:block;width:100%;height:100svh;min-height:30rem;max-width:none;margin:0;padding:0;overflow:hidden}
 .error-game>.error-court{position:absolute;inset:0;width:100%;height:100%;min-height:0;border:0;border-radius:0}
 .error-game>.error-heading{position:absolute;z-index:2;left:var(--error-gutter);top:9rem;font-size:var(--font-size--2xl,2.5rem);line-height:1.1;letter-spacing:var(--spacing--spacing);font-weight:500;margin:0;pointer-events:none}
 .error-game>p:not(.error-game__status){display:none}
@@ -1227,13 +1227,13 @@ html[data-touch-input] :is(.mini-showreel__card,.mini-showreel):focus-within{out
 .error-game>.error-heading,.error-game__status,.error-game>.btn{mix-blend-mode:difference;color:#fff}
 .error-game>.btn .btn_main{color:inherit}
 
-.error-game>[data-game-start],.error-game>[data-game-start]:is(:hover,:focus-visible){right:var(--error-gutter);left:auto;background:transparent;border:0;padding:0;min-width:0;color:inherit}
+.error-game>[data-game-start],.error-game>[data-game-start]:is(:hover,:focus-visible){right:var(--error-gutter);left:auto;background:transparent;border:0;padding:0;min-width:0;mix-blend-mode:difference;color:#fff}
 .error-game>[data-game-start]:is(:hover,:focus-visible){text-decoration:underline}
 .error-game>[data-game-start],.error-game>.btn,.error-game__status{bottom:max(var(--error-gutter),env(safe-area-inset-bottom))}
 .error-game:is([data-game-state="playing"],[data-game-state="paused"]) .error-court::after{content:"";position:absolute;inset:50% 0 auto;border-top:2px dotted currentColor;opacity:.25;pointer-events:none}
 
 .error-game>[data-game-start]{overflow:hidden}
-.error-game>[data-game-start] span{display:block;transition:translate .5s cubic-bezier(.16,1,.3,1)}
+.error-game>[data-game-start] span{display:block}
 .error-game>[data-game-start] span+span{position:absolute;top:100%;left:0}
 .error-game>[data-game-start]:is(:hover,:focus-visible){text-decoration:none}
 .error-game>[data-game-start]:is(:hover,:focus-visible) span{translate:0 -100%}

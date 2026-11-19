@@ -38,7 +38,7 @@
       };
       timeline=gsap.timeline({scrollTrigger:{id:'jk-home-showreel',trigger:end,
         start:0,end:'bottom bottom',scrub:.18,onUpdate:()=>render?.()}});
-      timeline.to(playhead,{value:1,duration:1,ease:'none',onUpdate:()=>render?.()},0);
+      timeline.to(playhead,{value:1,duration:1,ease:'sine.inOut',onUpdate:()=>render?.()},0);
       if (fade.length) timeline.fromTo(fade, {
         autoAlpha: 1
       }, {
@@ -60,7 +60,8 @@
       swing+=(gsap.utils.clamp(-26,26,track.getVelocity()*.012)-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
       const progress=timeline.progress();
       face.style.transformOrigin='top left';
-      const tilt=swing*Math.min(1,progress/.14,(1-progress)/.14);
+      const entry=Math.min(1,progress/.09);
+      const tilt=swing*entry*entry*(3-2*entry)*(1-progress)**2;
       face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
     }
     gsap.ticker.add(tilt);

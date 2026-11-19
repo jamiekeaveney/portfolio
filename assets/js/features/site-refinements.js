@@ -89,13 +89,14 @@
       const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
       const target=gsap.utils.clamp(-26,26,velocity*.012);
       swing+=(target-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
-      const tilt=swing*Math.min(1,p/.14,(1-p)/.14);
+      const edge=Math.min(1,p/.16,(1-p)/.16);
+      const tilt=swing*edge*edge*(3-2*edge);
       face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
     };
     gsap.ticker.add(swingTick);
     tween = gsap.to(playhead, {
       value: 1,
-      ease: "none",
+      ease: "sine.inOut",
       onUpdate: () => paint(playhead.value),
       scrollTrigger: {
         trigger: source,
