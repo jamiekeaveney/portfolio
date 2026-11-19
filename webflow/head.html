@@ -1,4 +1,3 @@
-<!-- Critical first-paint cover: inline so there is no dependency on the runtime CDN. -->
 <style>
 html[data-loader-pending]:not(.wf-design-mode):not(.wf-editor)::before{content:"";position:fixed;inset:0;background:#000;z-index:2147483000;pointer-events:none}
 html[data-loader-active]:not(.wf-design-mode):not(.wf-editor) [data-load-wrap]{display:block;visibility:visible;opacity:1;position:fixed;inset:0;z-index:10000;background:#000}
@@ -13,6 +12,5 @@ html[data-loader-active]:not(.wf-design-mode):not(.wf-editor) [data-load-wrap]{d
  setTimeout(function(){if(root.hasAttribute('data-loader-pending')){root.removeAttribute('data-loader-pending');root.removeAttribute('data-loader-active');}},12000);
 })();
 </script>
-<!-- Shared styles. Use the same tested daee9312249bf786a24177644bb40e4f7cc36377 in both snippets. -->
 <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.17/dist/lenis.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@daee9312249bf786a24177644bb40e4f7cc36377/dist/css/site.css">

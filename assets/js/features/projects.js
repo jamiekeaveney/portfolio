@@ -487,7 +487,7 @@ const initWorkSlider = (() => {
       }));
       L.span = L.rowH * N;
       L.off0 = COPIES * L.span;
-      /* Centre one row vertically; computed once per setup, not per frame. */      L.align = listEl.clientHeight / 2 - L.rowH / 2;
+      /* Centre one row vertically; computed once per setup, not per frame. */      L.align = (parseFloat(listEl.style.getPropertyValue('--list-midpoint'))||listEl.clientHeight/2)-L.rowH/2;
       L.cur = L.tgt = L.off0 + activeIdx * L.rowH;
       L.prevIdx = -1;
       listEl.querySelectorAll(".work-list__label[data-work-active]").forEach((el => el.removeAttribute("data-work-active")));
@@ -682,7 +682,10 @@ const initWorkSlider = (() => {
       const card=track.querySelector('.work-card__thumb'),r=card?.getBoundingClientRect();
       if(r?.width&&r.height){
         listCenter.style.width=r.width+'px';listCenter.style.height=r.height+'px';
-        listCenter.style.top=(r.top-host.top+r.height/2)+'px';
+        const midpoint=r.top-host.top+r.height/2;
+        listCenter.style.top=midpoint+'px';
+        listEl.style.setProperty('--list-midpoint',midpoint+'px');
+        L.align=midpoint-L.rowH/2;
       }
       if(saved===null)gallery.removeAttribute('style');else gallery.setAttribute('style',saved);
       root.setAttribute('data-work-mode',savedMode);

@@ -51,16 +51,17 @@
       timeline.progress(timeline.scrollTrigger.progress);
       render();
     }
-    const face=target.querySelector('video');
+    const face=target.querySelector('.mini-showreel__card');
     let swing=0;
     function tilt(time,dt=16.667){
       if(!face)return;
       const track=timeline?.scrollTrigger;
-      if(!track||suspended||!track.enabled){face.style.removeProperty('rotate');face.style.removeProperty('transform-origin');return;}
+      if(!track||suspended||!track.enabled){face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
       swing+=(gsap.utils.clamp(-26,26,track.getVelocity()*.012)-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
       const progress=timeline.progress();
       face.style.transformOrigin='top left';
-      face.style.rotate='-.6 1 0 '+swing*Math.min(1,progress/.14,(1-progress)/.14)+'deg';
+      const tilt=swing*Math.min(1,progress/.14,(1-progress)/.14);
+      face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
     }
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
@@ -76,6 +77,7 @@
       build: build,
       suspend() {
         suspended = true;
+        face?.style.removeProperty('transform');
         timeline?.scrollTrigger?.disable(false);
       },
       resume() {
@@ -85,7 +87,7 @@
       cleanup() {
         dead = true;
         gsap.ticker.remove(tilt);
-        face?.style.removeProperty('rotate');
+        face?.style.removeProperty('transform');
         face?.style.removeProperty('transform-origin');
         clearTimeout(timer);
         timeline?.scrollTrigger?.kill();

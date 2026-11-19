@@ -11,9 +11,14 @@
     const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
+    const label=document.createElement('span'),replacement=document.createElement('span');
+    replacement.setAttribute('aria-hidden','true');
+    start.textContent='';
+    start.append(label,replacement);
+    function setLabel(value){label.textContent=replacement.textContent=value;}
     function showState(){
       root.dataset.gameState=playing?(paused?'paused':'playing'):'idle';
-      start.textContent=playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong');
+      setLabel(playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong'));
       status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns'):'';
     }
     const resize=()=>{
@@ -54,7 +59,7 @@
             }
           }
           if(y>height+r){
-            playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';start.textContent='Play again';
+            playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';setLabel('Play again');
             x=width*.12;y=height*.3;vx=170;vy=115;
           }
         }

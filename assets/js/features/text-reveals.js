@@ -64,7 +64,7 @@
     }));
     page.querySelectorAll('[data-reveal="load"],[data-reveal="scroll"]').forEach((el => {
       if (s.entries.some((e => e.el === el)) || responsive && !el.matches("[data-home-scroll],[data-home-intro-exit]")) return;
-      if (el.closest('[data-reveal="none"],.work-list,.case-index__card') || el.closest(".work-card") && !(innerWidth < 992 && el.matches(".work-card")) || !el.getClientRects().length) return;
+      if (el.closest('[data-reveal="none"],.work-list,.case-index__card,.cv-credits') || el.closest(".work-card") && !(innerWidth < 992 && el.matches(".work-card")) || !el.getClientRects().length) return;
       if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case-featured,.case-featured *")) return;
       const entry = {
         el: el,
@@ -249,7 +249,7 @@
     prepare(page);
     const s = pages.get(page);
     if (!s || s.started) return;
-    if (navIntro) {
+    if (navIntro && !document.documentElement.hasAttribute('data-loader-active')) {
       navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.55:0).play();
       navIntro = null;
     }
@@ -314,6 +314,10 @@
     prepare(page);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
       const nav = [ ...document.querySelectorAll(".sitenav") ].filter((el => el.getClientRects().length));
+      document.addEventListener('jk:loader-finished',()=>{
+        navIntro?.restart(true);
+        navIntro=null;
+      },{once:true});
       navIntro = gsap.from(nav, {
         autoAlpha: 0,
         duration: SETTINGS.navDuration,

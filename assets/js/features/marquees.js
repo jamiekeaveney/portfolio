@@ -94,14 +94,7 @@
           invalidateOnRefresh: true,
           onEnter: start,
           onEnterBack: start,
-          onUpdate(self) {
-            const y=window.scrollY, max=ScrollTrigger.maxScroll(window);
-            if (y <= 1 || y >= max-1) return;
-            if (Math.abs(self.getVelocity()) < 15) return;
-            direction = self.direction === 1 ? baseDirection : -baseDirection;
-            loop.timeScale(direction);
-            root.setAttribute("data-marquee-status", self.direction === 1 ? "normal" : "inverted");
-          }
+
         });
       }
       let lastWidth = innerWidth;
@@ -114,10 +107,21 @@
           if (!frozen) ScrollTrigger.refresh();
         }), SETTINGS.resizeDebounceMs);
       };
+      let lastY=window.scrollY;
+      const followScroll=()=>{
+        const y=Math.max(0,Math.min(window.scrollY,ScrollTrigger.maxScroll(window)));
+        if(Math.abs(y-lastY)<1)return;
+        direction=y>lastY?baseDirection:-baseDirection;
+        lastY=y;
+        loop?.timeScale(direction);
+        root.dataset.marqueeStatus=direction===baseDirection?'normal':'inverted';
+      };
+      window.addEventListener('scroll',followScroll,{passive:true});
       const state = {
         release(){if(!frozen&&started)loop?.paused(false);},
         freeze() {
           frozen = true;
+          window.removeEventListener('scroll',followScroll);
           clearTimeout(resizeTimer);
           window.removeEventListener("resize", resize);
           loop?.pause();

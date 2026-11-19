@@ -90,15 +90,15 @@
 .work-list__col {
 	-webkit-mask-image: linear-gradient(
 		to bottom,
-		transparent calc(50% - var(--work-mask-half)),
-		#000 50%,
-		transparent calc(50% + var(--work-mask-half))
+		transparent calc(var(--list-midpoint,50%) - var(--work-mask-half)),
+		#000 var(--list-midpoint,50%),
+		transparent calc(var(--list-midpoint,50%) + var(--work-mask-half))
 	);
 	mask-image: linear-gradient(
 		to bottom,
-		transparent calc(50% - var(--work-mask-half)),
-		#000 50%,
-		transparent calc(50% + var(--work-mask-half))
+		transparent calc(var(--list-midpoint,50%) - var(--work-mask-half)),
+		#000 var(--list-midpoint,50%),
+		transparent calc(var(--list-midpoint,50%) + var(--work-mask-half))
 	);
 }
 

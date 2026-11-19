@@ -27,6 +27,8 @@
       hls=new Hls({maxBufferLength:10});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));
     }else{video.src=url;video.play().catch(()=>{});}
     const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const shell=source.closest?.('.mini-showreel__card,.video-wrap')||source;
+    const sourceRadius=()=>parseFloat(getComputedStyle(shell).borderTopLeftRadius)||parseFloat(getComputedStyle(source).borderTopLeftRadius)||12;
     const finish=()=>{events.abort();video.pause();hls?.destroy();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
     close=(immediate=false)=>{
       if(closing&&!immediate)return;closing=true;gsap.killTweensOf([dialog,video,label]);
@@ -34,7 +36,7 @@
       const dest=source.getBoundingClientRect(),base=video.getBoundingClientRect();
       const visible=dest.width>0&&dest.height>0&&dest.bottom>0&&dest.top<innerHeight;
       gsap.timeline({onComplete:finish})
-        .to(video,visible?{x:dest.left+dest.width/2-(innerWidth/2),y:dest.top+dest.height/2-(innerHeight/2),scaleX:dest.width/video.offsetWidth,scaleY:dest.height/video.offsetHeight,duration:.4,ease:'power3.inOut'}:{autoAlpha:0,scale:.9,duration:.3},0)
+        .to(video,visible?{x:dest.left+dest.width/2-(innerWidth/2),y:dest.top+dest.height/2-(innerHeight/2),borderRadius:sourceRadius()*video.offsetWidth/dest.width,scaleX:dest.width/video.offsetWidth,scaleY:dest.height/video.offsetHeight,duration:.4,ease:'power3.inOut'}:{autoAlpha:0,scale:.9,duration:.3},0)
         .to(dialog,{'--media-backdrop':0,duration:.4},0);
 
     };
@@ -77,8 +79,8 @@
       const styles=getComputedStyle(document.documentElement);
       const duration=parseFloat(styles.getPropertyValue('--motion-lightbox-duration'))||1;
       const ease=styles.getPropertyValue('--motion-lightbox-ease').trim()||'expo.inOut';
-      const radius=styles.getPropertyValue('--radius--radius').trim()||'.75rem';
       const from=source.getBoundingClientRect(),to=video.getBoundingClientRect();
+      const radius=sourceRadius()*to.width/Math.max(1,from.width);
       gsap.timeline().fromTo(dialog,{'--media-backdrop':0},{'--media-backdrop':1,duration:.55},0)
         .fromTo(video,{borderRadius:radius,x:from.left+from.width/2-(to.left+to.width/2),y:from.top+from.height/2-(to.top+to.height/2),scaleX:from.width/to.width,scaleY:from.height/to.height},{x:0,y:0,scaleX:1,scaleY:1,borderRadius:0,duration,ease},0);
     }

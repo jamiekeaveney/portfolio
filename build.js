@@ -9,7 +9,7 @@ const {minify: minify} = require("terser");
     compress: true,
     mangle: true,
     format: {
-      comments: /@license|@preserve|@alpacka/
+      comments: /@license|@preserve/
     }
   });
   fs.mkdirSync("dist/js", {

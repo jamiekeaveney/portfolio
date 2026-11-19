@@ -20,6 +20,8 @@ html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
 .loader-bar{z-index:3}
 .loader-brand{z-index:2}
 
+@media(max-width:767px){.loader-logo{max-width:calc(100vw - 2 * var(--grid--padding,1.5rem))}.loader-logo .sitenav__wordmark{font-size:clamp(1.5rem,6vw,2rem)}}
+
 /* assets/css/base/site.css */
 /* MOTION CONTROLS — seconds, except the cursor offsets (px).
    Shared controls for all editorial pages; colours and gutters use the existing theme variables. */
@@ -892,15 +894,15 @@ html[data-theme-status="light"] :is(.work-display[data-current-year],.section-ye
 .work-list__col {
 	-webkit-mask-image: linear-gradient(
 		to bottom,
-		transparent calc(50% - var(--work-mask-half)),
-		#000 50%,
-		transparent calc(50% + var(--work-mask-half))
+		transparent calc(var(--list-midpoint,50%) - var(--work-mask-half)),
+		#000 var(--list-midpoint,50%),
+		transparent calc(var(--list-midpoint,50%) + var(--work-mask-half))
 	);
 	mask-image: linear-gradient(
 		to bottom,
-		transparent calc(50% - var(--work-mask-half)),
-		#000 50%,
-		transparent calc(50% + var(--work-mask-half))
+		transparent calc(var(--list-midpoint,50%) - var(--work-mask-half)),
+		#000 var(--list-midpoint,50%),
+		transparent calc(var(--list-midpoint,50%) + var(--work-mask-half))
 	);
 }
 
@@ -1229,3 +1231,10 @@ html[data-touch-input] :is(.mini-showreel__card,.mini-showreel):focus-within{out
 .error-game>[data-game-start]:is(:hover,:focus-visible){text-decoration:underline}
 .error-game>[data-game-start],.error-game>.btn,.error-game__status{bottom:max(var(--error-gutter),env(safe-area-inset-bottom))}
 .error-game:is([data-game-state="playing"],[data-game-state="paused"]) .error-court::after{content:"";position:absolute;inset:50% 0 auto;border-top:2px dotted currentColor;opacity:.25;pointer-events:none}
+
+.error-game>[data-game-start]{overflow:hidden}
+.error-game>[data-game-start] span{display:block;transition:translate .5s cubic-bezier(.16,1,.3,1)}
+.error-game>[data-game-start] span+span{position:absolute;top:100%;left:0}
+.error-game>[data-game-start]:is(:hover,:focus-visible){text-decoration:none}
+.error-game>[data-game-start]:is(:hover,:focus-visible) span{translate:0 -100%}
+.error-game__status{left:calc(var(--error-gutter) + (100% - 2 * var(--error-gutter) + var(--grid--gap,1.5rem)) / 3);text-align:left}
