@@ -55,7 +55,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 }
 .footer-editorial__contact{pointer-events:none;cursor:default}
 .footer-editorial__contact:hover{opacity:1}
-.footer-legal{mix-blend-mode:difference;color:#fff}
+.footer-legal{mix-blend-mode:normal;color:#fff}
 .footer-legal .btn{color:inherit}
 /* Reserve the media's block height while its inline width is revealed. */
 @media(max-width:991px){
@@ -77,7 +77,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 .footer .marquee-advanced__name{color:inherit;overflow:visible;padding-right:0;margin-right:0}
 .footer [data-marquee-collection-target]{overflow:visible}
 .footer-editorial-panel:before,.footer-editorial-panel:after{content:none!important}
-.footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;display:block;background:#808080;z-index:3;pointer-events:none;opacity:0}
+.footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;display:none;background:#808080;z-index:3;pointer-events:none;opacity:0}
 @media(min-width:992px) and (prefers-reduced-motion:no-preference){
  .footer-editorial-panel{min-height:calc(100svh + var(--footer-overlap,18rem));background:color-mix(in srgb,var(--_theme---color--background,#000) 12%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
  .footer-editorial{min-height:inherit;z-index:1;transform:translateY(var(--footer-entry-y,0%))!important;translate:none!important}
@@ -93,19 +93,21 @@ html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!impor
 html.is-lightbox-open .jk-close-cursor{display:none!important}
 
 /* Difference blending must live outside the backdrop-filter stacking context. */
-.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:difference;color:#fff;pointer-events:auto;margin:0}
+.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:normal;color:#fff;pointer-events:auto;margin:0}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:#fff!important}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn:hover{color:#8a8a8a!important}
 .footer .marquee-advanced__text{padding-right:.24em;margin-right:0;overflow:visible}
 [data-wf--super-button--variant="button-large"] .btn_main{border-radius:var(--radius--radius,.75rem)}
 @media(max-width:991px),(hover:none),(pointer:coarse){.cv-row,.cv-credit{padding-left:0!important;padding-right:0!important}}
 @media(min-width:992px){
- .edit-grid > .edit-label{grid-row:1 / span 2;align-self:start;position:sticky;top:8rem}
- .cv-sticky-label,.cv-clients-label{position:sticky;top:8rem;align-self:start}
- .section-header > .section-subheading{position:sticky;top:8rem;align-self:start}
+ .edit-grid > .edit-label{grid-row:1 / span 2;align-self:start;position:sticky;top:10rem}
+ .cv-sticky-label,.cv-clients-label{position:sticky;top:10rem;align-self:start}
+ .section-header > .section-subheading{position:sticky;top:10rem;align-self:start}
 }
 
 @media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}
 
 /* The glass owns the panel fill in both themes; its outer section stays transparent. */
 .footer-wrap .cta-section{background-color:transparent!important}
+
+@media(min-width:992px){.cv-clients-label,.cv-selected-caption{position:relative;top:auto;align-self:start}.projects-sticky .section-header{overflow:visible}}

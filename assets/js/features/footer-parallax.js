@@ -1,7 +1,16 @@
 /* Two sequential parallax reveals. Geometry, rather than an opaque mask, hides the name. */
 (() => {
   const states=new Map();
-  const OVERLAP=.7; // Half of the visible glyph, allowing for the font’s line box.
+  const OVERLAP=.6; // Fallback until the actual font metrics are available.
+  function glyphMidpoint(name){
+    const text=name.querySelector?.('.marquee-advanced__text');if(!text)return name.offsetHeight*OVERLAP;
+    const css=getComputedStyle(text),ctx=document.createElement('canvas').getContext('2d');ctx.font=css.font;
+    const m=ctx.measureText('e'),size=parseFloat(css.fontSize),line=parseFloat(css.lineHeight)||size*1.08;
+    const ascent=m.fontBoundingBoxAscent||size*.8,descent=m.fontBoundingBoxDescent||size*.2;
+    const baseline=(line-ascent-descent)/2+ascent;
+    const top=text.getBoundingClientRect().top-name.getBoundingClientRect().top;
+    return Math.max(0,Math.min(name.offsetHeight,top+baseline-(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2));
+  }
   function init(page) {
     page.querySelectorAll('.footer-editorial-panel').forEach(panel=>{
       if(states.has(panel))return;
@@ -13,7 +22,8 @@
       let tint=panel.querySelector(':scope > .footer-parallax__tint');
       if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
       let frozen=false;const mm=gsap.matchMedia();
-      const measure=()=>{if(!frozen)wrap.style.setProperty('--footer-overlap',name.offsetHeight*OVERLAP+'px');};
+      let overlap=0;
+      const measure=()=>{if(!frozen){overlap=glyphMidpoint(name);wrap.style.setProperty('--footer-overlap',overlap+'px');}};
       const ro=new ResizeObserver(measure);ro.observe(name);measure();
       mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
         // The half-height overlap follows normal flow until the panel bottom arrives.
@@ -31,12 +41,12 @@
           const entry=Math.max(0,Math.min(1,(innerHeight-panel.getBoundingClientRect().top)/innerHeight));
           if(entry!==lastEntry){
             inner.style.setProperty('--footer-entry-y',(-20*(1-entry))+'%');
-            tint.style.opacity=String(.55*(1-entry));lastEntry=entry;
+            tint.style.opacity='0';lastEntry=entry;
           }
           const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
           if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
-          const offset=-height*OVERLAP*(1-progress);
+          const offset=-overlap*(1-progress);
           if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
@@ -54,8 +64,10 @@
   window.JKFooter={freeze};
   function boot(){
     if(!window.gsap||!window.ScrollTrigger)return;
+    document.addEventListener('jk:loader-prepare',e=>init(e.detail.page));
     if(window.barba){barba.hooks.afterEnter(d=>init(d.next.container));barba.hooks.afterOnce(d=>init(d.next.container));barba.hooks.beforeLeave(d=>freeze(d.current.container));barba.hooks.after(d=>dispose(d.current.container));}
     else init(document);
+    if(!document.querySelector('[data-barba="wrapper"]'))init(document);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

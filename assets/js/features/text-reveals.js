@@ -22,7 +22,7 @@
     navDuration: .3,
     navStagger: .06,
     parallaxIntroDelay: .85,
-    firstLoadLead: 0,
+    firstLoadLead: 1.05,
     radiusFallback: "var(--radius--radius, .75rem)"
   };
   const pages = new WeakMap;
@@ -293,7 +293,16 @@
       }
     }));
   }
+  function restore(page,y){
+    prepare(page);
+    const s=pages.get(page);if(!s)return;
+    s.entries.forEach(e=>{
+      const top=e.el.getBoundingClientRect().top+window.scrollY;
+      if(e.el.dataset.reveal==='load'||top<y+innerHeight){e.played=e.started=e.completed=true;e.tween?.delay(0).progress(1);}
+    });
+  }
   window.JKReveals = {
+    restore:restore,
     prepare: prepare,
     play: play,
     showLoad: showLoad
@@ -333,7 +342,7 @@
     const once = window.runPageOnceAnimation;
     if (once) window.runPageOnceAnimation = function(page) {
       const tl = once(page);
-      if (tl?.call) tl.call((() => play(page, true)), null, Math.max(0, tl.duration() - SETTINGS.firstLoadLead));
+      if (tl?.call) tl.call((() => play(page, true)), null, tl.labels?.revealPage!==undefined?tl.labels.revealPage+.12:Math.max(0,tl.duration()-SETTINGS.firstLoadLead));
       return tl;
     };
     barba.hooks.afterOnce((d => play(d.next.container)));

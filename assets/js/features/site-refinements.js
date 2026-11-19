@@ -123,12 +123,16 @@
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section-header .grey-label')].filter(el=>!el.closest('.projects-sticky')).map(el=>({el,section:el.closest('.section'),offset:0,translate:el.style.translate})).filter(s=>s.section);
+    const labels=[...page.querySelectorAll('.section-header .grey-label,.cv-clients-label,.cv-selected-caption')].map(el=>{
+      const section=el.closest('.section')||el.closest('.edit-grid');
+      const end=el.matches('.cv-clients-label')?section?.querySelector('.cv-selected-caption'):el.closest('#about')?section?.querySelector('.home-intro-button'):null;
+      return {el,section,end,offset:0,translate:el.style.translate};
+    }).filter(s=>s.section);
     let frozen=false;
     const tick=()=>{
       if(frozen)return;
-      const top=8*parseFloat(getComputedStyle(document.documentElement).fontSize);
-      const positions=labels.map(s=>{const r=s.el.getBoundingClientRect(),natural=r.top-s.offset,end=s.section.getBoundingClientRect().bottom;return Math.max(0,Math.min(top-natural,end-natural-r.height-40));});
+      const top=10*parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const positions=labels.map(s=>{const r=s.el.getBoundingClientRect(),natural=r.top-s.offset,end=s.end?s.end.getBoundingClientRect().top:s.section.getBoundingClientRect().bottom;return Math.max(0,Math.min(top-natural,end-natural-r.height-40));});
       labels.forEach((s,i)=>{s.offset=positions[i];s.el.style.translate='0 '+s.offset+'px';});
     };
     gsap.ticker.add(tick);tick();
@@ -205,7 +209,8 @@
         disposePortrait();sectionLabels?.destroy();sectionLabels=null;
       }));
       barba.hooks.afterEnter((d => mount(d.next.container)));
-      barba.hooks.afterOnce((d => mount(d.next.container)));
+      document.addEventListener('jk:loader-prepare',e=>{mount(e.detail.page);e.detail.page.dataset.refinementsPrepared='true';});
+      barba.hooks.afterOnce((d => {if(!d.next.container.dataset.refinementsPrepared)mount(d.next.container);}));
     } else mount(document);
     let lastWidth = innerWidth;
     window.addEventListener("resize", (() => {

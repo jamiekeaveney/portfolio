@@ -26,6 +26,7 @@
     "assets/js/features/client-previews.js",
     "assets/js/features/services.js",
     "assets/js/features/projects.js",
+    "assets/js/features/utility-pages.js",
     "assets/js/core/page-transitions.js",
     "assets/js/core/clock.js"
   ],
@@ -37,6 +38,7 @@
     "assets/css/components/projects.css",
     "assets/css/components/interactions.css",
     "assets/css/components/cursor.css",
-    "assets/css/base/scaling.css"
+    "assets/css/base/scaling.css",
+    "assets/css/components/utility-pages.css"
   ]
 }

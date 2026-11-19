@@ -71,7 +71,7 @@
     if (!window.gsap || !window.ScrollTrigger || !window.barba) return;
     gsap.registerPlugin(ScrollTrigger, Flip);
     init(document.querySelector("[data-case-page]"));
-    barba.hooks.afterOnce((d => init(d.next.container)));
+    barba.hooks.afterOnce((d => {if(!states.has(d.next.container))init(d.next.container);}));
     barba.hooks.afterEnter((d => init(d.next.container)));
     barba.hooks.after((d => dispose(d.current.container)));
     let width = innerWidth, timer;

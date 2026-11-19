@@ -17,8 +17,8 @@
     gsap.set(dot,{xPercent:-50,yPercent:-50});
     const xTo=gsap.quickTo(dot,'x',{duration,ease:'expo.out'}),yTo=gsap.quickTo(dot,'y',{duration,ease:'expo.out'});
     let placed=false,lastKind='',labels=[];
-    const refresh=()=>{labels=[...document.querySelectorAll('.jk-close-cursor,.case-cursor,[data-cursor-marquee]')];};
-    refresh();if(window.barba)barba.hooks.after(refresh);
+    const refresh=()=>{const diameter=[...document.querySelectorAll('.btn-toggle__toggle-dot')].find(el=>el.offsetWidth)?.offsetWidth||16;dot.style.setProperty('--cursor-hover-scale',diameter/(dot.offsetWidth||10.4));labels=[...document.querySelectorAll('.jk-close-cursor,.case-cursor,[data-cursor-marquee]')];};
+    refresh();window.addEventListener('resize',refresh,{passive:true});if(window.barba)barba.hooks.after(refresh);
     gsap.ticker.add((time,dt=16.667)=>{
       const step=Math.min(dt,50)/1000;
       target*=Math.exp(-9*step);motion.angle+=(target-motion.angle)*(1-Math.exp(-12*step));

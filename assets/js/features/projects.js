@@ -171,7 +171,8 @@ const initWorkSlider = (() => {
           mode: mode,
           phase: S.pitch ? S.cur / S.pitch : 0,
           listPhase: L.rowH ? L.cur / L.rowH : 0,
-          left: thumb.getBoundingClientRect().left / innerWidth
+          left: thumb.getBoundingClientRect().left / innerWidth,
+          previewX: (Number(gsap.getProperty(listCenter,'x'))||0)/innerWidth
         };
         try {
           sessionStorage.setItem("work-return-project", href);
@@ -193,7 +194,8 @@ const initWorkSlider = (() => {
         if (mode === "list") {
           setupList();
           if (saved?.href === href && saved.mode === "list" && Number.isFinite(saved.listPhase)) L.cur = L.tgt = saved.listPhase * L.rowH;
-          applyList(L.cur);
+          previewX=saved?.href===href&&Number.isFinite(saved.previewX)?saved.previewX*innerWidth:0;
+          alignListFrame();applyList(L.cur);previewMedia(L.cur);
           return $('[data-work-state="active"]', listCenter);
         }
         setupSlide();
@@ -237,18 +239,19 @@ const initWorkSlider = (() => {
     var sLastX = 0;
     var sPid = null;
     var markedSlideIdx = -1;
-    let kineticCards=[],previousSlide=0;
+    let kineticCards=[],previousSlide=0,spacingExpansion=0;
     const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
-    function resetInertia(){kineticCards.forEach(el=>el.style.removeProperty('translate'));previousSlide=S.cur;}
+    function resetInertia(){spacingExpansion=0;kineticCards.forEach(el=>el.style.removeProperty('translate'));previousSlide=S.cur;}
     function paintInertia(dt){
       const step=Math.min(dt,50)/1000,velocity=(S.cur-previousSlide)/Math.max(.001,step);previousSlide=S.cur;
-      const edge=parseFloat(getComputedStyle(track).paddingLeft)||0;
+      const target=reducedMotion.matches?0:Math.min(.55,Math.abs(velocity)/7000);
+      spacingExpansion+=(target-spacingExpansion)*(1-Math.exp(-(target>spacingExpansion?16:7)*step));
+      if(spacingExpansion<.0001)spacingExpansion=0;
+      const trackX=S.wrap(S.cur),centre=innerWidth/2;
       kineticCards.forEach(el=>{
-        const rect=el.getBoundingClientRect(),rank=Math.max(0,Math.min(3,(rect.left-edge)/Math.max(1,S.pitch)));
-        const target=reducedMotion.matches?0:clamp(-64,64,-velocity*.018*rank);
-        el._workLag=(el._workLag||0)+(target-(el._workLag||0))*(1-Math.exp(-14*step));
-        if(Math.abs(el._workLag)<.02)el._workLag=0;
-        el.style.translate=el._workLag.toFixed(3)+'px 0';
+        // Affine expansion is continuous across cloned sets and positive in either direction.
+        const naturalCentre=el.offsetLeft+el.offsetWidth/2+trackX;
+        el.style.translate=((naturalCentre-centre)*spacingExpansion).toFixed(3)+'px 0';
       });
     }
     function markCurrentSlide(index) {
@@ -416,9 +419,8 @@ const initWorkSlider = (() => {
       lastPreviewValue=value;
       const settled=!moving&&now-settledSince>140;
       listVideos.forEach(({el,video,image},index)=>{
-        const offset=((index-phase+N*100+N/2)%N)-N/2;
-        el.style.transform='translate3d(0,'+(offset*100).toFixed(4)+'%,0)';
-        el.style.visibility=Math.abs(offset)<1.01?'visible':'hidden';
+        el.style.transform='none';
+        el.style.visibility=index===activeIdx?'visible':'hidden';
         const playing=settled&&index===activeIdx&&!document.hidden&&!reducedMotion.matches;
         if(playing===!!el._previewPlaying)return;
         el._previewPlaying=playing;
@@ -430,14 +432,16 @@ const initWorkSlider = (() => {
           if(video.requestVideoFrameCallback)video.requestVideoFrameCallback(reveal);else reveal();
         }).catch(()=>{el._previewPlaying=false;});
       });
-      const pointer=window.JKPointerMotion;
-      if(pointer?.known&&!frozen&&!fading){
-        const half=listCenter.offsetWidth/2,gutter=parseFloat(getComputedStyle(track).paddingLeft)||40;
-        const target=clamp(half+gutter,innerWidth-half-gutter,pointer.x)-innerWidth/2;
-        if(!previewPlaced){gsap.set(listCenter,{x:target});previewPlaced=true;}else previewXTo(target);
-        listCenter.style.rotate=(reducedMotion.matches?0:pointer.angle).toFixed(3)+'deg';
-      }
+      if(!frozen&&!fading)listCenter.style.rotate=(reducedMotion.matches||lDrag?0:(window.JKPointerMotion?.angle||0)*.35).toFixed(3)+'deg';
     }
+    listEl.addEventListener('pointermove',event=>{
+      if(mode!=='list'||locked()||lDrag||event.pointerType==='touch')return;
+      const box=listEl.getBoundingClientRect();
+      // Only a deliberate move across the preview's central band changes its position.
+      if(Math.abs(event.clientY-(box.top+box.height/2))>listCenter.offsetHeight*.65)return;
+      previewX=clamp(-innerWidth*.2,innerWidth*.2,(event.clientX-innerWidth/2)*.38);
+      previewXTo(previewX);
+    },sig);
     var lDrag = false;
     var lLastY = 0, lStartY = 0, lStartX = 0, lMoved = false;
     var leftRows = null;
@@ -674,8 +678,8 @@ const initWorkSlider = (() => {
         buildList();
         setupList();
         applyList(L.cur);
-        previewMedia(L.cur);
         alignListFrame();
+        previewMedia(L.cur);
       }
     }
     function applyMode(next) {
@@ -704,7 +708,7 @@ const initWorkSlider = (() => {
       // Both views share the same native frame dimensions and vertical centre.
       listCenter.style.removeProperty("height");
       listCenter.style.removeProperty("top");
-      gsap.set(listCenter,{x:0,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";previewPlaced=false;
+      previewXTo.tween.pause();gsap.set(listCenter,{x:previewX,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";previewPlaced=true;
     }
     function currentMedia(index = activeIdx) {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
@@ -775,7 +779,7 @@ const initWorkSlider = (() => {
       modeContentTween?.kill();
       modeGhost?.remove();
       if (modeTarget) gsap.set(visualLayers(modeTarget), {
-        clearProps: "visibility"
+        clearProps: "visibility,opacity"
       });
       modeTween = modeContentTween = modeGhost = modeTarget = null;
       root.removeAttribute("data-work-switching");
@@ -787,6 +791,7 @@ const initWorkSlider = (() => {
         modeContentTween?.progress(1);
       }
       frozen = true;
+      previewXTo.tween.pause();previewX=Number(gsap.getProperty(listCenter,'x'))||0;
       killSlide();
       killList();
       clearTimeout(L.snapTimer);
@@ -808,7 +813,7 @@ const initWorkSlider = (() => {
         applyMode(next);
         return;
       }
-      resetInertia();
+      previewXTo.tween.pause();previewX=Number(gsap.getProperty(listCenter,'x'))||0;
       const selected = activeIdx, source = currentMedia(selected);
       if (!source) {
         applyMode(next);
@@ -846,7 +851,7 @@ const initWorkSlider = (() => {
         gsap.set([ ...visualLayers(source), ...outgoing ], {
           clearProps: "opacity,visibility"
         });
-        applyMode(next);
+        resetInertia();applyMode(next);
         killSlide();
         killList();
         const target = currentMedia(selected);
@@ -892,7 +897,9 @@ const initWorkSlider = (() => {
           autoAlpha: 1,
           duration: .65,
           ease: "expo.out"
-        }, .3);
+        }, .3).set(visualLayers(target),{visibility:'visible',opacity:0},.82)
+          .to(visualLayers(target),{opacity:1,duration:.25,ease:'none'},.82)
+          .to(ghost,{opacity:0,duration:.25,ease:'none'},.82);
       }));
     }
     viewBtns.forEach((function(button) {

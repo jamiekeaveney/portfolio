@@ -75,3 +75,5 @@ assert.equal(historic.textContent, "2024");
 console.log("Sticky entry stability and year rollover checks passed.");
 
 require("./check-footer.js");
+
+require("./check-gallery.js");
