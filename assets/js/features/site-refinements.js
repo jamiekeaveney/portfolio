@@ -132,7 +132,12 @@
     const tick=()=>{
       if(frozen)return;
       const top=10*parseFloat(getComputedStyle(document.documentElement).fontSize);
-      const positions=labels.map(s=>{const r=s.el.getBoundingClientRect(),natural=r.top-s.offset,end=s.end?s.end.getBoundingClientRect().top:s.section.getBoundingClientRect().bottom;return Math.max(0,Math.min(top-natural,end-natural-r.height-40));});
+      const positions=labels.map(s=>{
+        const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
+        const boundary=labels.find(label=>label.el===s.end);
+        const end=s.end?s.end.getBoundingClientRect().top-(boundary?.offset||0):s.section.getBoundingClientRect().bottom;
+        return Math.max(0,Math.min(top-natural,end-natural-r.height-40));
+      });
       labels.forEach((s,i)=>{s.offset=positions[i];s.el.style.translate='0 '+s.offset+'px';});
     };
     gsap.ticker.add(tick);tick();
