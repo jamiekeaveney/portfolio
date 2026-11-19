@@ -1,3 +1,13 @@
+# v1.2.5 — 19 November 2026
+
+- Border-line loader reveal with optional neutral-700 wash; removed Welcome panel.
+- Removed cursor dot, gallery velocity spacing, and first-stage footer parallax.
+- Shared gallery/list card styling, fixed centred preview and footer-sized list rows.
+- Native responsive footer grid repair, smaller button corners, and minimal full-viewport 404.
+- Services sticky synchronisation, larger label inset, delayed Approach media, mobile marquee direction.
+- Velocity-based portrait perspective, animated nav layout across routes, top-based ordinary history transitions.
+- Light-theme contrast and hover repairs; independent touch video swipe dismissal.
+
 # v1.2.4 — 19 November 2026
 
 - White clipped Welcome loader; shared message typography/stagger and earlier page preparation, including restored scroll positions.

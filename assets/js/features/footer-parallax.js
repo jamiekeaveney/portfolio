@@ -1,4 +1,4 @@
-/* Two sequential parallax reveals. Geometry, rather than an opaque mask, hides the name. */
+/* The editorial footer stays in flow; only the name has a parallax reveal. */
 (() => {
   const states=new Map();
   const OVERLAP=.6; // Fallback until the actual font metrics are available.
@@ -28,7 +28,7 @@
       mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
         // The half-height overlap follows normal flow until the panel bottom arrives.
         // Read the actual flow box, so a resize or a preceding pin cannot leave a stale end.
-        let lastOffset,lastEntry;
+        let lastOffset;
         const legal=inner.querySelector('.footer-legal');
         let placeholder,legalStyle;
         if(legal){
@@ -38,11 +38,6 @@
         }
         const paint=()=>{
           if(frozen)return;
-          const entry=Math.max(0,Math.min(1,(innerHeight-panel.getBoundingClientRect().top)/innerHeight));
-          if(entry!==lastEntry){
-            inner.style.setProperty('--footer-entry-y',(-20*(1-entry))+'%');
-            tint.style.opacity='0';lastEntry=entry;
-          }
           const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
           if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));

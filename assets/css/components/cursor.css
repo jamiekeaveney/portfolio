@@ -1,6 +1,1 @@
-.site-cursor-dot{position:fixed;left:0;top:0;z-index:15000;width:.65rem;height:.65rem;mix-blend-mode:difference;pointer-events:none;will-change:transform}
-.site-cursor-dot:before{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;transform:scale(0);transition:transform .35s cubic-bezier(.19,1,.22,1)}
-.site-cursor-dot[data-cursor-state="idle"]:before{transform:scale(1)}
-.site-cursor-dot[data-cursor-state="interactive"]:before{transform:scale(var(--cursor-hover-scale,1.5385))}
-@media(max-width:991px),(hover:none),(pointer:coarse){.site-cursor-dot{display:none!important}}
-@media(prefers-reduced-motion:reduce){.site-cursor-dot:before{transition:none}}
+/* Cursor-following text remains in the lightbox and project modules. */

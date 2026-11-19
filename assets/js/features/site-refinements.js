@@ -14,9 +14,10 @@
     if (!source || !target || !desktop.matches || reduced.matches) return;
     const sourceImage = source.querySelector("img"), targetImage = target.querySelector("img");
     if (!sourceImage || !targetImage) return;
-    const clone = sourceImage.cloneNode(true);
+    const clone = document.createElement("div"), face = sourceImage.cloneNode(true);
+    face.removeAttribute("id");face.alt="";face.className="about-portrait-flight__image";clone.append(face);
     clone.removeAttribute("id");
-    clone.alt = "";
+    
     clone.className = "about-portrait-flight";
     clone.setAttribute("aria-hidden", "true");
     page.append(clone);
@@ -71,21 +72,23 @@
           (tween.scrollTrigger.start + (tween.scrollTrigger.end-tween.scrollTrigger.start)*p) : 0),
         scaleX: 1 + (to.w / from.w - 1) * p,
         scaleY: 1 + (to.h / from.h - 1) * p,
-        rotation: Math.sin(Math.PI*p)*-7,
-        rotationY: Math.sin(Math.PI*p)*14,
-        transformPerspective: 900
+        rotation: 0
       });
     }
     const playhead = {
       value: 0
     };
     measure();
-    let tween, swing=0;
+    let tween, swing=0, direction=1;
     const swingTick=(time,dt=16.667)=>{
       const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
-      const target=gsap.utils.clamp(-4,4,velocity*.0015)*Math.sin(Math.PI*p);
-      swing+=(target-swing)*(1-Math.exp(-12*Math.min(dt,50)/1000));
-      clone.style.rotate=swing.toFixed(3)+'deg';
+      const nextDirection=velocity<0?-1:1;
+      // Return to neutral before changing hinges; changing origin under tilt would jump.
+      let target=gsap.utils.clamp(0,9,Math.abs(velocity)*.002)*Math.sin(Math.PI*p);
+      if(nextDirection!==direction){target=0;if(swing<.15)direction=nextDirection;}
+      swing+=(target-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
+      face.style.transformOrigin=direction>0?'0% 0%':'100% 100%';
+      face.style.transform='perspective(900px) rotateX('+(-direction*swing*.45).toFixed(3)+'deg) rotateY('+(direction*swing).toFixed(3)+'deg)';
     };
     gsap.ticker.add(swingTick);
     tween = gsap.to(playhead, {
@@ -127,11 +130,16 @@
       const section=el.closest('.section')||el.closest('.edit-grid');
       const end=el.matches('.cv-clients-label')?section?.querySelector('.cv-selected-caption'):el.closest('#about')?section?.querySelector('.home-intro-button'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section);
+    }).filter(s=>s.section&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
+    const serviceLabel=page.querySelector('#services .section-header .grey-label');
+    const serviceMedia=page.querySelector('#services .services-video-sticky');
+    let serviceNatural=0,serviceLabelStyle=serviceLabel?.style.translate||'';
+    const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services-sticky-video');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
+    measureService();ScrollTrigger.addEventListener('refresh',measureService);
     let frozen=false;
     const tick=()=>{
       if(frozen)return;
-      const top=10*parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const top=12*parseFloat(getComputedStyle(document.documentElement).fontSize);
       const positions=labels.map(s=>{
         const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
         const boundary=labels.find(label=>label.el===s.end);
@@ -139,9 +147,11 @@
         return Math.max(0,Math.min(top-natural,end-natural-r.height-40));
       });
       labels.forEach((s,i)=>{s.offset=positions[i];s.el.style.translate='0 '+s.offset+'px';});
+      if(serviceLabel&&serviceMedia){const displacement=serviceMedia.getBoundingClientRect().top+scrollY-serviceNatural;serviceLabel.style.translate='0 '+Math.max(0,displacement)+'px';}
+
     };
     gsap.ticker.add(tick);tick();
-    sectionLabels={freeze(){frozen=true;},destroy(){gsap.ticker.remove(tick);labels.forEach(s=>{s.el.style.translate=s.translate;});}};
+    sectionLabels={freeze(){frozen=true;},destroy(){gsap.ticker.remove(tick);ScrollTrigger.removeEventListener('refresh',measureService);if(serviceLabel)serviceLabel.style.translate=serviceLabelStyle;labels.forEach(s=>{s.el.style.translate=s.translate;});}};
   }
   function mount(page) {
     mountSectionLabels(page);
@@ -150,7 +160,7 @@
     if (library) {
       const found = library.findSticky();
       found.forEach((el => {
-        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer") || el.hasAttribute("data-home-scroll")) return;
+        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer,#services") || el.hasAttribute("data-home-scroll")) return;
         if (getComputedStyle(el).position === "sticky") el.setAttribute("data-site-eased-sticky", "");
       }));
       stickies = library.sticky.all("[data-site-eased-sticky]", {

@@ -299,8 +299,8 @@
         try {
           saved = JSON.parse(sessionStorage.getItem("jk-project-origin"));
         } catch {}
-        routeY = d.current.container?.matches("[data-case-page]") && d.next.url.path === saved?.path ? saved.path === "/about" ? 0 : saved.y : [ "popstate", "back", "forward" ].includes(d.trigger) && typeof getSavedScroll === "function" ? getSavedScroll(d.next.url.href) : 0;
-        update(true);
+        routeY = d.current.container?.matches("[data-case-page]") && d.next.url.path === saved?.path ? saved.path === "/about" ? 0 : saved.y : 0;
+        update(false);
         moveHero(compact, true);
       }));
       barba.hooks.afterEnter((() => {

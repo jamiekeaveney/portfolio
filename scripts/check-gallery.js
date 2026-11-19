@@ -1,18 +1,11 @@
+// Exercise the real infinite track renderer in both directions and across set boundaries.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync('assets/js/features/projects.js','utf8');
-const paint=source.slice(source.indexOf('    function paintInertia(dt)'),source.indexOf('    function markCurrentSlide'));
-const cards=Array.from({length:12},(_,i)=>({offsetLeft:i*360,offsetWidth:320,style:{}}));
-const state={S:{cur:-1080,wrap:x=>x},previousSlide:-1080,spacingExpansion:0,reducedMotion:{matches:false},kineticCards:cards,innerWidth:1440};vm.createContext(state);vm.runInContext(paint,state);
-for(const direction of [-1,1]){
- for(let i=0;i<90;i++){
-  state.S.cur+=direction*(i<40?75:0);vm.runInContext('paintInertia(16.667)',state);
-  for(let n=1;n<cards.length;n++){
-   const gap=cards[n].offsetLeft+parseFloat(cards[n].style.translate)-cards[n-1].offsetLeft-parseFloat(cards[n-1].style.translate)-320;
-   assert.ok(gap>=39.99,'Inertia may expand gaps, never collapse them');
-  }
- }
-}
-state.spacingExpansion=.4;state.S.cur=state.previousSlide=-1080;vm.runInContext('paintInertia(0)',state);const before=parseFloat(cards[4].style.translate);
-state.S.cur=state.previousSlide=-2160;vm.runInContext('paintInertia(0)',state);assert.equal(parseFloat(cards[7].style.translate),before,'Equivalent cloned cards have the same viewport offset');
-state.reducedMotion.matches=true;for(let i=0;i<180;i++)vm.runInContext('paintInertia(16.667)',state);assert.equal(state.spacingExpansion,0);
-console.log('Gallery forward/reverse spacing, loop continuity and reduced-motion settling passed.');
+const code=source.slice(source.indexOf('    function renderSlide()'),source.indexOf('    function snapSlideStep'));
+let selected;
+const state={S:{pitch:360,cur:0,wrap:x=>((x+4320)%1080+1080)%1080-4320},N:3,track:{style:{}},activeIdx:0,markCurrentSlide:n=>selected=n};
+vm.createContext(state);vm.runInContext(code,state);
+for(const x of [0,-360,-720,-1080,-1440,360,720,1080,1440]){state.S.cur=x;vm.runInContext('renderSlide()',state);assert.ok(selected>=0&&selected<3);assert.match(state.track.style.transform,/translate3d\(/);}
+for(const x of [-1400,-500,100,1700]){state.S.cur=x;vm.runInContext('renderSlide()',state);const a=state.track.style.transform;state.S.cur=x+1080;vm.runInContext('renderSlide()',state);assert.equal(state.track.style.transform,a,'Equivalent repeated sets land at identical positions');}
+assert.ok(!source.includes('paintInertia'),'Per-card velocity spacing is removed');
+console.log('Gallery loop continuity and uniform track motion passed.');

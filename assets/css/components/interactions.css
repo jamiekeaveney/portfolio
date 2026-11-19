@@ -55,7 +55,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 }
 .footer-editorial__contact{pointer-events:none;cursor:default}
 .footer-editorial__contact:hover{opacity:1}
-.footer-legal{mix-blend-mode:normal;color:#fff}
+.footer-legal{mix-blend-mode:normal;color:var(--_theme---color--foreground,#fff)}
 .footer-legal .btn{color:inherit}
 /* Reserve the media's block height while its inline width is revealed. */
 @media(max-width:991px){
@@ -80,7 +80,7 @@ html:not(.wf-design-mode) .guide-wrap{display:none!important}
 .footer-editorial-panel > .footer-parallax__tint{position:absolute;inset:0;display:none;background:#808080;z-index:3;pointer-events:none;opacity:0}
 @media(min-width:992px) and (prefers-reduced-motion:no-preference){
  .footer-editorial-panel{min-height:calc(100svh + var(--footer-overlap,18rem));background:color-mix(in srgb,var(--_theme---color--background,#000) 12%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
- .footer-editorial{min-height:inherit;z-index:1;transform:translateY(var(--footer-entry-y,0%))!important;translate:none!important}
+ .footer-editorial{min-height:inherit;z-index:1;transform:none!important;translate:none!important}
  .footer-legal{margin-top:auto}
 }
 /* The reveal grows in both dimensions inside a slot that reserves block space. */
@@ -93,16 +93,16 @@ html.is-lightbox-open .sitenav__menu{opacity:0!important;visibility:hidden!impor
 html.is-lightbox-open .jk-close-cursor{display:none!important}
 
 /* Difference blending must live outside the backdrop-filter stacking context. */
-.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:normal;color:#fff;pointer-events:auto;margin:0}
-.footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:#fff!important}
+.footer-wrap > .footer-legal[data-footer-legal-floating]{position:absolute;z-index:20;mix-blend-mode:normal;color:var(--_theme---color--foreground,#fff);pointer-events:auto;margin:0}
+.footer-wrap > .footer-legal[data-footer-legal-floating] .btn{color:inherit!important}
 .footer-wrap > .footer-legal[data-footer-legal-floating] .btn:hover{color:#8a8a8a!important}
 .footer .marquee-advanced__text{padding-right:.24em;margin-right:0;overflow:visible}
-[data-wf--super-button--variant="button-large"] .btn_main{border-radius:var(--radius--radius,.75rem)}
+[data-wf--super-button--variant="button-large"] .btn_main{border-radius:var(--_buttons---corner-radius,.375rem)}
 @media(max-width:991px),(hover:none),(pointer:coarse){.cv-row,.cv-credit{padding-left:0!important;padding-right:0!important}}
 @media(min-width:992px){
- .edit-grid > .edit-label{grid-row:1 / span 2;align-self:start;position:sticky;top:10rem}
- .cv-sticky-label,.cv-clients-label{position:sticky;top:10rem;align-self:start}
- .section-header > .section-subheading{position:sticky;top:10rem;align-self:start}
+ .edit-grid > .edit-label{grid-row:1 / span 2;align-self:start;position:sticky;top:12rem}
+ .cv-sticky-label,.cv-clients-label{position:sticky;top:12rem;align-self:start}
+ .section-header > .section-subheading{position:sticky;top:12rem;align-self:start}
 }
 
 @media(min-width:992px){.edit-grid:has(.edit-faq) > .edit-label{grid-row:1 / span 3}}
@@ -111,3 +111,29 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
 .footer-wrap .cta-section{background-color:transparent!important}
 
 @media(min-width:992px){.cv-clients-label,.cv-selected-caption{position:relative;top:auto;align-self:start}.projects-sticky .section-header{overflow:visible}}
+
+/* Flow layout is also authored natively in the shared Footer component. */
+.footer-editorial{padding-top:clamp(7rem,12vh,12rem)}
+.footer-editorial__directory{grid-template-columns:repeat(3,minmax(0,1fr))}
+.footer-editorial__column,.footer-editorial__details{grid-column:auto;min-width:0}
+.footer-editorial__intro{grid-template-columns:repeat(3,minmax(0,1fr))}
+.footer-editorial__lead{grid-column:1/3}.footer-editorial__intro>.footer-editorial__note{grid-column:3/4}
+.about-portrait-flight__image{width:100%;height:100%;object-fit:cover;border-radius:inherit;backface-visibility:hidden;will-change:transform}
+@media(max-width:991px){.footer-editorial{padding-top:6rem}.footer-editorial__directory{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:3rem}.footer-editorial__details{grid-column:1/-1}.footer-editorial__intro{grid-template-columns:1fr;row-gap:2.5rem}.footer-editorial__lead,.footer-editorial__intro>.footer-editorial__note{grid-column:auto}}
+@media(max-width:479px){.footer-editorial__directory{grid-template-columns:1fr}.footer-editorial__details{grid-column:auto}}
+html[data-theme-status="light"]{--project-peer-opacity:1}
+html[data-theme-status="light"] :is(.work-card,.home-slide){opacity:1!important}
+html[data-theme-status="light"] [data-highlight-text]{color:var(--_theme---color--foreground)!important;mix-blend-mode:normal}
+html[data-theme-status="light"] .work-nav{color:var(--_theme---color--foreground)}
+html[data-theme-status="light"] .work-nav_button{background:rgba(0,0,0,.05);color:inherit}
+html[data-theme-status="light"] .work-nav_button:hover{background:rgba(0,0,0,.1)}
+html[data-theme-status="light"] [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#111;color:#fff!important}
+html[data-theme-status="light"] .work-card:hover .work-card__meta{mix-blend-mode:normal;color:#111;background:rgba(247,247,245,.92);border-radius:var(--_buttons---corner-radius,.375rem);padding:.5rem .65rem}
+html[data-theme-status="light"] .work-card:hover .work-card__client{color:#747471}
+
+/* Touch player: full-bleed phone video, quiet tablet gutters and drag dismissal. */
+.mobile-media-dialog{--media-backdrop:1;padding:0 max(2rem,env(safe-area-inset-left));background:rgba(0,0,0,var(--media-backdrop));touch-action:none;overscroll-behavior:contain}
+.mobile-media-dialog::backdrop{background:transparent}
+.mobile-media-dialog video{border-radius:0;max-height:100dvh;touch-action:none;will-change:transform}
+.mobile-media-dialog .lightbox-close{display:none}
+@media(max-width:767px){.mobile-media-dialog{padding:0}.mobile-media-dialog video{width:100vw;max-width:100vw}}

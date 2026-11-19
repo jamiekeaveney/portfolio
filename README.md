@@ -49,40 +49,27 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 `assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. The only routing addition is a separate conventional player for mobile/tablet; do not apply its dimensions or Close UI to desktop.
 
-## Footer geometry
+## R16 interaction ownership
 
-Desktop has two reveals. The editorial panel enters with parallax and no grey tint. Its entire surface is translucent glass. Canvas font metrics measure the midpoint of the actual lowercase e and use that as the name overlap, avoiding a percentage guess. That overlap follows the page until the panel bottom enters the viewport; the second reveal then resolves to zero offset at the document end. Both stages read current DOM geometry, so earlier pins and resizing cannot leave an outdated endpoint. Before a page is fixed for navigation, the footer freezes its current offset.
+- Footer: the editorial stage stays in normal document flow; only the marquee reveal uses parallax. Its overlap is measured from the lowercase e. Legal text follows the theme foreground.
+- Loader: the progress bar collapses to a one-pixel theme border and rises with the clipped black curtain. The page enters beneath it. Add **loader-no-overlay** to **loader-wrap** in the Global component to disable the neutral-700 wash; remove that combo class to enable it.
+- Projects: gallery uses its original uniform infinite track; no per-card velocity offsets or return staggering. List uses the same 9:10 gallery card and hover inset, centred with no pointer following. Text uses the footer navigation 2xl size and 1.3em row height. Client and project tracks still move in opposite directions.
+- Touch lightbox: independent from the preserved desktop timeline. Phone video is edge-to-edge and square-cornered. Swipe down/diagonally to dismiss, tap outside, or Escape. Short drags return to rest; native playback controls are excluded from the drag start zone.
+- Portrait: A-to-B placement stays independent of a bounded, velocity-based perspective hinge on the inner image. No planar rotation.
+- Section labels: 12rem desktop inset. Services shares the media's measured sticky displacement. The home Clients label stays in normal flow.
+- History: ordinary back/forward parallax navigation returns to the top. Project media returns retain their gallery/list origin.
+- Cursor dot removed. Shared pointer sampling remains for the established text/client preview effects.
 
-Mobile/tablet keeps ordinary stacked sections and a constant marquee direction. The legal row is positioned over the glass outside its isolated backdrop-filter context, with plain white text and normal blending, as requested. A placeholder preserves its original layout.
+## Native Webflow structure
 
-## Loader
+Navigation, Footer Wrapper, CTA Section, Footer, Clients Section, Project Lightbox, Projects Browser and Super Button remain shared components. Footer layout uses explicit three/two/one-column breakpoint styles. The obsolete Close button instance and variant are removed. Other button variants have live usages and are retained.
 
-Uses the supplied Osmo Logo Reveal Loader's three-second CustomEase curve, progress fill, logo wipe and character-message timings. Both messages are retained. The white progress line grows into a flat Welcome panel with black text. The Welcome stays in place while a bottom-to-top clip reveals the page, with only a 0.07-second hold after expansion. Page preparation and saved scroll restoration happen underneath the panel; intro animations start during its exit. The logo and Welcome use `sitenav__wordmark`; the staggered messages use the site’s base size and letter-spacing tokens, with the wordmark’s 0.008-second character stagger.
+Services uses live CMS collections. Webflow rejects converting that bound section to a component; its CMS context and shared responsive classes are retained. Breakpoints are styles, not duplicate component variants.
 
-## Regression checks
+## Utility pages and scaling
 
-- At desktop width: Home → project → Home; Projects gallery ↔ list; project → Projects; About client → project → About at the top of About.
-- Refresh and resize desktop → tablet → desktop; verify nav visibility, hero width reveal, showreel scroll animation and one active project/client pair.
-- Lightbox: open, play/pause, close from the black letterbox or Escape; on mobile use Close. Confirm black fills the viewport and no lower collection item overlaps.
-- At 390, 768 and 991 CSS pixels: check full-width 9:10 cards, captions below media without hover transforms, service-heading masks, content-height menu and outside-tap dismissal.
-- Footer: copy email, Super Button hover, back to top, copyright placement, frosted first panel over the marquee and project scroll-to-next completion.
+The 404 is a full-viewport bouncing typographic screen and paddle rally with minimal perimeter controls. The supplied Osmo scaling tokens remain opt-in to avoid changing the established design. At the R16 audit, Style Guide, Licenses and Changelog were no longer present in Webflow's page list.
 
-Browser emulation does not replace a final physical iPhone/iPad touch-scroll check.
+## Verification
 
-## Pointer and Projects motion
-
-`pointer-motion.js` provides a shared pointer sample and a maximum four-degree velocity angle. The white difference-blended dot uses the same 0.35-second Expo following response as text cursors. Its visual scale is on a pseudo-element, separate from GSAP translation. It shrinks while a text follower is visible and is disabled on tablet/touch.
-
-The desktop list has opposing text tracks and a horizontally following 16:9 preview. Selected posters toggle without vertical travel; after 140ms at rest, the selected preview fades into video. Pointer movement affects the preview only inside its central viewing band. Its actual x position is frozen and restored for layout and project transitions. A drag threshold separates dragging from clicking the preview. Gallery spacing expands with absolute velocity, up to 55% of card pitch. Offsets are derived from viewport position, not card index, so equivalent loop copies agree and reverse movement cannot collapse gaps. A restrained return stagger complements the existing project Flip transition. Reduced motion disables the velocity swing.
-
-## Scaling
-
-The supplied Osmo breakpoint tokens are in `assets/css/base/scaling.css` and documented on `/info/styleguide`. They are available for opt-in components; the established page dimensions remain in rem/vw. `.osmo-scale` and `.osmo-container` are opt-in utilities. The existing root/body size and rem-based page design remain unchanged; applying a global body scale would alter the established layouts. Keep full-viewport media outside a capped container.
-
-## Section labels
-
-Editorial and CV labels use bounded native sticky positioning. Home section labels with a short header parent follow the section bounds without changing their grid layout. The desktop top inset is 10rem. Welcome releases at its button; Selected clients releases before the Selected work caption, which then takes over. Services keeps its label above the media. Labels freeze with the outgoing page during navigation; mobile uses normal document flow.
-
-## Utility pages
-
-`/404` combines a quiet bouncing 404 idle screen with a pointer, touch and keyboard paddle rally. Play/pause, Escape, reduced motion and page visibility are handled locally. The native Style Guide uses current typography, neutral swatches, real Super Button variants, the CMS Projects Browser and shared Navigation/Footer components. Its CMS cards are displayed in normal flow rather than mounting a second full-screen slider. Licenses and Changelog are set to draft; their final deletion requires the Designer browser.
+Run `npm run check` and `npm run build`. Check desktop and compact widths, dark/light themes, navigation history, gallery/list/project returns, the two footer stages, and touch-player dismissal. Physical iPhone/iPad gestures still require device verification.

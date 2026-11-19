@@ -1,6 +1,6 @@
 {
   "name": "jamie-keaveney-portfolio",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": true,
   "description": "Webflow portfolio interactions and custom state styles",
   "scripts": {

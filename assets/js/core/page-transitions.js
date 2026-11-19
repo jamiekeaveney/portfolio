@@ -171,7 +171,7 @@ function initAfterEnterFunctions(t) {
 }
 
 function runPageOnceAnimation(page) {
-  const y=navType!=='navigate'?getSavedScroll(location.href):0;
+  const y=navType==='reload'?getSavedScroll(location.href):0;
   page.dataset.restoreScroll=String(y>0);
   const wrap=document.querySelector('[data-load-wrap]');
   if(!wrap || reducedMotion || navType==='back_forward') {
@@ -189,8 +189,10 @@ function runPageOnceAnimation(page) {
   const texts=document.createElement('div');texts.className='loader-messages';
   ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
   content.append(logoWrap,texts);
-  const welcome=document.createElement('div');welcome.className='loader-welcome';
-  const welcomeText=document.createElement('span');welcomeText.className='sitenav__wordmark';welcomeText.textContent='Welcome';welcome.append(welcomeText);bar.append(welcome);
+  // A separate, removable wash sits behind the moving black curtain.
+  const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
+  overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);
+  wrap.append(bar); // The border must not be clipped by the curtain itself.
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
   const preparePage=()=>{
     gsap.set(page,{clearProps:'position,top,left,right'});
@@ -200,9 +202,9 @@ function runPageOnceAnimation(page) {
     window.scrollTo(0,y);lenis?.resize();lenis?.scrollTo(y,{immediate:true,force:true});
     ScrollTrigger.refresh();ScrollTrigger.update();
   };
-  const finish=()=>{gsap.set(wrap,{display:'none'});gsap.set(page,{clearProps:'transform'});document.documentElement.style.overflow='';document.body.style.overflow='';resetPage(page,y);};
+  const finish=()=>{overlay.remove();splits.forEach(s=>s.revert());gsap.set(wrap,{display:'none'});gsap.set(page,{clearProps:'transform'});document.documentElement.style.overflow='';document.body.style.overflow='';resetPage(page,y);};
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
-  gsap.set(bg,{yPercent:0,autoAlpha:1,backgroundColor:'#000'});gsap.set(bar,{scaleX:0,height:8,yPercent:0,clipPath:'inset(0% 0% 0% 0%)',transformOrigin:'left center'});gsap.set(welcomeText,{autoAlpha:0,y:18});
+  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',transformOrigin:'left center'});
   gsap.set(content,{autoAlpha:1});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
   gsap.set(splits.flatMap(s=>s.chars),{autoAlpha:0,yPercent:125});gsap.set(texts.children,{autoAlpha:1});
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
@@ -210,14 +212,14 @@ function runPageOnceAnimation(page) {
     .to(bar,{scaleX:1})
     .to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('hideContent')
-    .to(content,{y:'-20vh',autoAlpha:0,duration:1.05},'hideContent')
-    .to(bar,{height:'100dvh',duration:1.05},'hideContent')
-    .to(welcomeText,{autoAlpha:1,y:0,duration:.65},'hideContent+=.45')
-    .set(bg,bg.contains(bar)?{backgroundColor:'transparent'}:{autoAlpha:0},'hideContent+=1.05')
-    .call(preparePage,null,'hideContent+=.75')
-    .add('revealPage','hideContent+=1.12')
-    .to(bar,{clipPath:'inset(0% 0% 100% 0%)',duration:1.2},'revealPage')
-    .fromTo(page,{y:'12vh'},{y:0,duration:1.2,clearProps:'transform'},'revealPage');
+    .to(content,{y:'-15vh',autoAlpha:0,duration:.65},'hideContent')
+    .to(bar,{height:'var(--loader-border-width,1px)',backgroundColor:'var(--_theme---color--border,#1f1f1f)',duration:.25},'hideContent')
+    .call(preparePage,null,'hideContent')
+    .add('revealPage','hideContent+=.25')
+    .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:1.2,ease:'parallax'},'revealPage')
+    .to(bar,{y:()=>-innerHeight+1,duration:1.2,ease:'parallax'},'revealPage')
+    .fromTo(page,{y:'12vh'},{y:0,duration:1.2,ease:'parallax',clearProps:'transform'},'revealPage')
+    .fromTo(overlay,{opacity:.55},{opacity:0,duration:1.2,ease:'parallax'},'revealPage');
   tl.to(splits[0].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.008}},0)
     .to(splits[0].chars,{autoAlpha:0,yPercent:-125,duration:.4,stagger:{each:.008}},'>+=0.4')
     .to(splits[1].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.008}},'<')
@@ -251,7 +253,7 @@ function runPageLeaveAnimation(t) {
 }
 
 function runPageEnterAnimation(t, restoreY) {
-  const e = gsap.timeline(), n = restoreY ?? (isPopstate ? getSavedScroll(window.location.href) : 0);
+  const e = gsap.timeline(), n = restoreY ?? 0;
   if (restoreY != null || isPopstate) gsap.set(t, {
     top: -n
   });

@@ -256,6 +256,7 @@
   }
   async function continuation(current, next) {
     if (active) return active;
+    await document.fonts.ready;
     window.JKLightbox?.mount(next);
     const saved = frozen.get(current), source = saved?.footer;
     saved?.nodes.forEach((({e: e, r: r}) => {
@@ -447,7 +448,7 @@
         });
         window.scrollTo(0, 0);
         if (typeof resetPage === "function") resetPage(next, 0);
-        if (deferredSections.length) gsap.to(deferredSections, {autoAlpha:1,duration:.25,clearProps:'opacity,visibility'});
+        if (deferredSections.length) requestAnimationFrame(()=>requestAnimationFrame(()=>gsap.to(deferredSections, {autoAlpha:1,duration:.3,clearProps:'opacity,visibility'})));
         window.JKHeader?.endMediaTransition();
         JKProject.transitioning = false;
         active = null;
@@ -675,7 +676,7 @@
       } : {},
       autoAlpha: 1,
       duration: .94,
-      stagger: work ? {each:.055,from:'center'} : 0
+      stagger: 0
     }, .36);
     if (card) tl.to(card, {
       autoAlpha: 1,

@@ -199,8 +199,8 @@
         },
         scrollTrigger: {
           trigger: section,
-          start: "top 75%",
-          end: () => "+=" + (2 * sticky.offsetHeight + innerHeight * .75),
+          start: "top top",
+          end: () => "+=" + Math.max(1,section.offsetHeight-sticky.offsetHeight),
           scrub: true,
           invalidateOnRefresh: true
         }
