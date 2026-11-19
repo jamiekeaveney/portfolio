@@ -210,7 +210,7 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 [data-odometer-part="roller"]{display:block;width:max-content;text-align:center;will-change:transform}
 [data-odometer-part="cell"]{display:block;height:1.15em;line-height:1.15;padding:0 .06em;box-sizing:border-box}
 [data-odometer-part="static"]{display:inline-block;line-height:1.15;flex:none}
-.nav-root[data-nav-compact="true"] [data-count-display]{display:none}
+.nav-root[data-nav-compact="true"] [data-count-display]{display:inline-block}
 [data-count-display]:before{content:"("}[data-count-display]:after{content:")"}
 
 /* Attribute-driven states; geometry is defined in Designer. */
@@ -569,3 +569,5 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 
 /* Oversized secondary type has its own neutral tone in the light palette. */
 html[data-theme-status="light"] :is(.work-display[data-current-year],.section-year){color:#999}
+
+@media(min-width:992px){[data-case-nav]{mix-blend-mode:difference}.case-nav__current{color:white}}

@@ -7,6 +7,7 @@
     canvas.setAttribute('aria-label','Pong. Move or drag your paddle, or use the left and right arrow keys. Escape pauses.');
     canvas.tabIndex=0;court.append(canvas);status.className='error-game__status';status.setAttribute('role','status');court.after(status);
     const ctx=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion:reduce)');
+    let countdown=0;
     let width=0,height=0,x=0,y=0,vx=170,vy=115,paddle=0,score=0,playing=false,paused=false,last=0,raf,keys={};
     const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
@@ -28,7 +29,7 @@
       paddle=clamp(paddle||width/2,paddleWidth()/2,width-paddleWidth()/2);x=clamp(x,0,width);y=clamp(y,0,height);
     };
     const observer=new ResizeObserver(resize);observer.observe(court);resize();showState();
-    function begin(){playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
+    function begin(){countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
     function toggle(e){e?.preventDefault();if(!playing){begin();return;}paused=!paused;showState();if(!paused)canvas.focus({preventScroll:true});}
     start.addEventListener('click',toggle);
     start.addEventListener('keydown',e=>{if(e.key===' '&&start.tagName!=='BUTTON')toggle(e);});
@@ -44,6 +45,16 @@
       const style=getComputedStyle(root);ctx.clearRect(0,0,width,height);ctx.fillStyle=style.color;
       if(playing){
         const r=radius(),pw=paddleWidth(),floor=height-18;
+        if(countdown>0){
+          if(!paused&&!document.hidden)countdown=Math.max(0,countdown-dt);
+          if(countdown>0){
+            ctx.font='600 '+Math.min(width*.16,height*.22)+'px '+style.fontFamily;
+            const digit=String(Math.ceil(countdown));
+            ctx.fillText(digit,(width-ctx.measureText(digit).width)/2,height/2);
+            ctx.fillRect(paddle-pw/2,floor,pw,10);
+            raf=requestAnimationFrame(paint);return;
+          }
+        }
         if(!paused&&!document.hidden){
           paddle=clamp(paddle+((keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0))*width*1.1*dt,pw/2,width-pw/2);
           const oldX=x,oldY=y;x+=vx*dt;y+=vy*dt;

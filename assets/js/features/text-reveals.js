@@ -314,13 +314,13 @@
     prepare(page);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
       const nav = [ ...document.querySelectorAll(".sitenav") ].filter((el => el.getClientRects().length));
-      document.addEventListener('jk:loader-finished',()=>{
+      document.addEventListener('jk:nav-reveal',()=>{
         navIntro?.restart(true);
         navIntro=null;
       },{once:true});
       navIntro = gsap.from(nav, {
         autoAlpha: 0,
-        duration: .9,
+        duration: .6,
         stagger: 0,
         ease: "sine.inOut",
         paused: true,

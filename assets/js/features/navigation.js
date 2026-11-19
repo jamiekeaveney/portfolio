@@ -128,6 +128,7 @@
       finish();
       const animate = !immediate && window.gsap && window.Flip && !matchMedia("(prefers-reduced-motion: reduce)").matches;
       const state = animate ? Flip.getState(moving) : null;
+      document.dispatchEvent(new CustomEvent('jk:nav-layout',{detail:{compact:next,duration:animate?(options.duration??SETTINGS.layoutDuration):0,ease:options.ease??SETTINGS.layoutEase}}));
       compact = next;
       moveHero(next, immediate);
       applyLayout(animate && next);
