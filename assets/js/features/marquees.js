@@ -95,7 +95,7 @@
           onEnterBack: start,
           onUpdate(self) {
             const y=window.scrollY, max=ScrollTrigger.maxScroll(window);
-            if (innerWidth <= SETTINGS.tabletBreakpoint || y <= 1 || y >= max-1) return;
+            if (y <= 1 || y >= max-1) return;
             if (Math.abs(self.getVelocity()) < 15) return;
             direction = self.direction === 1 ? baseDirection : -baseDirection;
             loop.timeScale(direction);

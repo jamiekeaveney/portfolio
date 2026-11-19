@@ -26,7 +26,8 @@
 .error-game>.error-heading{position:absolute;z-index:2;left:var(--grid--padding,2.5rem);top:9rem;font-size:var(--font-size--base,1rem);line-height:1.3;letter-spacing:var(--spacing--spacing);font-weight:400;margin:0;pointer-events:none}
 .error-game>p:not(.error-game__status){display:none}
 .error-game>[data-game-start],.error-game>.btn,.error-game__status{position:absolute;z-index:2;bottom:var(--grid--padding,2.5rem);margin:0;font-size:var(--font-size--base,1rem);line-height:1.3}
-.error-game>[data-game-start]{right:var(--grid--padding,2.5rem);text-decoration:none;color:inherit}
+.error-game>[data-game-start]{right:var(--grid--padding,2.5rem);text-decoration:none;color:inherit;background:transparent;border:0;border-radius:0;padding:0}
+.error-game>[data-game-start]:hover{color:var(--_theme---color--text-muted)}
 .error-game>.btn{left:var(--grid--padding,2.5rem)}
 .error-game__status{left:50%;transform:translateX(-50%);pointer-events:none;text-align:center}
 .error-court canvas{touch-action:none}

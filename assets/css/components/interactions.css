@@ -125,6 +125,7 @@ html[data-theme-status="light"]{--project-peer-opacity:1}
 html[data-theme-status="light"] :is(.work-card,.home-slide){opacity:1!important}
 html[data-theme-status="light"] [data-highlight-text]{color:var(--_theme---color--foreground)!important;mix-blend-mode:normal}
 html[data-theme-status="light"] .work-nav{color:var(--_theme---color--foreground)}
+html[data-theme-status="light"] :is(.work-nav_counter,.work-nav_number,.work-nav_divider,.work-list__num-item){color:var(--_theme---color--foreground)}
 html[data-theme-status="light"] .work-nav_button{background:rgba(0,0,0,.05);color:inherit}
 html[data-theme-status="light"] .work-nav_button:hover{background:rgba(0,0,0,.1)}
 html[data-theme-status="light"] [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#111;color:#fff!important}

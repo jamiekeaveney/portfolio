@@ -1141,6 +1141,7 @@ html[data-theme-status="light"]{--project-peer-opacity:1}
 html[data-theme-status="light"] :is(.work-card,.home-slide){opacity:1!important}
 html[data-theme-status="light"] [data-highlight-text]{color:var(--_theme---color--foreground)!important;mix-blend-mode:normal}
 html[data-theme-status="light"] .work-nav{color:var(--_theme---color--foreground)}
+html[data-theme-status="light"] :is(.work-nav_counter,.work-nav_number,.work-nav_divider,.work-list__num-item){color:var(--_theme---color--foreground)}
 html[data-theme-status="light"] .work-nav_button{background:rgba(0,0,0,.05);color:inherit}
 html[data-theme-status="light"] .work-nav_button:hover{background:rgba(0,0,0,.1)}
 html[data-theme-status="light"] [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#111;color:#fff!important}
@@ -1196,7 +1197,8 @@ html[data-theme-status="light"] .work-card:hover .work-card__client{color:#74747
 .error-game>.error-heading{position:absolute;z-index:2;left:var(--grid--padding,2.5rem);top:9rem;font-size:var(--font-size--base,1rem);line-height:1.3;letter-spacing:var(--spacing--spacing);font-weight:400;margin:0;pointer-events:none}
 .error-game>p:not(.error-game__status){display:none}
 .error-game>[data-game-start],.error-game>.btn,.error-game__status{position:absolute;z-index:2;bottom:var(--grid--padding,2.5rem);margin:0;font-size:var(--font-size--base,1rem);line-height:1.3}
-.error-game>[data-game-start]{right:var(--grid--padding,2.5rem);text-decoration:none;color:inherit}
+.error-game>[data-game-start]{right:var(--grid--padding,2.5rem);text-decoration:none;color:inherit;background:transparent;border:0;border-radius:0;padding:0}
+.error-game>[data-game-start]:hover{color:var(--_theme---color--text-muted)}
 .error-game>.btn{left:var(--grid--padding,2.5rem)}
 .error-game__status{left:50%;transform:translateX(-50%);pointer-events:none;text-align:center}
 .error-court canvas{touch-action:none}
