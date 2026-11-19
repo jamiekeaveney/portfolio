@@ -1,3 +1,12 @@
+# v1.2.6 — 19 November 2026
+
+- Smooth sticky landings for About clients/work labels and Home Services.
+- CSS-first loader cover; visible expo border contraction; shared page-parallax timing; stable restored footer geometry.
+- Hover-only list playback, exact gallery frame alignment and shared media-transition easing.
+- Neutral light-theme muted colours and inverted base-theme hover surfaces.
+- Stronger velocity-based portrait perspective and more native spacing before client lists.
+- Full-viewport weight-600 DVD bounce, faster progressive Pong, larger game pieces and editorial controls.
+
 # v1.2.5 — 19 November 2026
 
 - Border-line loader reveal with optional neutral-700 wash; removed Welcome panel.
