@@ -8,6 +8,7 @@ const doc={readyState:'complete',hidden:false,querySelector:()=>root,createEleme
 vm.runInNewContext(fs.readFileSync('assets/js/features/utility-pages.js','utf8'),{document:doc,matchMedia:()=>({matches:false}),devicePixelRatio:1,ResizeObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({color:'#fff',fontFamily:'Delight'}),requestAnimationFrame:f=>frame=f,cancelAnimationFrame(){}});
 frame(0);assert.equal(lastText.y,300,'Idle glyph begins at the viewport top without an 80px inset');assert.match(fonts[0],/^600 /);
 button.events.click({preventDefault(){}});for(let t=16;t<=2992;t+=16)frame(t);
+assert.equal(lastText.y-150,450,'Countdown ink straddles the court divider');
 assert.equal(lastBall,undefined);
 assert.deepEqual([...new Set(texts.filter(t=>t!=='404'))],['3','2','1']);
 frame(3008);frame(3024);const initial=lastBall;

@@ -210,7 +210,8 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 [data-odometer-part="roller"]{display:block;width:max-content;text-align:center;will-change:transform}
 [data-odometer-part="cell"]{display:block;height:1.15em;line-height:1.15;padding:0 .06em;box-sizing:border-box}
 [data-odometer-part="static"]{display:inline-block;line-height:1.15;flex:none}
-.nav-root[data-nav-compact="true"] [data-count-display]{display:inline-block}
+.nav-root .btn:has(>.nav-project-count){position:relative;overflow:visible;padding-inline-end:1em}
+.nav-root .btn>.nav-project-count{position:absolute;inset-inline-end:0;top:0;display:block;line-height:1;margin:0;pointer-events:none}
 [data-count-display]:before{content:"("}[data-count-display]:after{content:")"}
 
 /* Attribute-driven states; geometry is defined in Designer. */

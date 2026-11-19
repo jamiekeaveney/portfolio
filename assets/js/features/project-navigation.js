@@ -8,51 +8,92 @@
     })).catch((() => [])));
   }
   const flights=new WeakMap();
-  function bindTitle(page,title,slash){
-    const hero=page.querySelector('.project-hero__title');
-    if(!hero)return;
-    const desktop=matchMedia('(min-width:992px)');
-    let compact=document.querySelector('.nav-root')?.dataset.navCompact==='true',flight;
-    function settle(){
-      hero.style.opacity=desktop.matches&&compact?'0':'';
-      title.style.opacity=slash.style.opacity=desktop.matches&&!compact?'0':'';
+  function bindTitle(page, title, slash) {
+    const hero = page.querySelector('.project-hero__title');
+    if (!hero) return;
+    const desktop = matchMedia('(min-width:992px)');
+    let compact = document.querySelector('.nav-root')?.dataset.navCompact === 'true';
+    let motion, pieces = [];
+
+    function settle() {
+      hero.style.opacity = desktop.matches && compact ? '0' : '';
+      title.style.opacity = desktop.matches && !compact ? '0' : '';
     }
-    function change({detail}){
-      const previous=flight?.nodes.map(n=>n.getBoundingClientRect());
-      flight?.stop();
-      compact=detail.compact;
-      if(!desktop.matches||!detail.duration){settle();return;}
-      const lines=[...hero.querySelectorAll('.reveal-line')];
-      if(!lines.length)lines.push(hero);
-      const words=lines.map(l=>l.textContent.trim());
-      const full=title.textContent,small=document.createRange(),large=document.createRange();
-      let offset=0;
-      const nodes=[],starts=[],ends=[];
-      for(const [i,line] of lines.entries()){
-        const start=full.indexOf(words[i],offset);
-        if(!words[i]||start<0||!title.firstChild){settle();nodes.forEach(n=>n.remove());return;}
-        offset=start+words[i].length;
-        small.setStart(title.firstChild,start);small.setEnd(title.firstChild,offset);
-        large.selectNodeContents(line);
-        const a=large.getBoundingClientRect(),b=small.getBoundingClientRect();
-        const n=document.createElement('span'),style=getComputedStyle(hero);
-        n.textContent=words[i];n.setAttribute('aria-hidden','true');
-        Object.assign(n.style,{position:'fixed',left:'0',top:'0',zIndex:'99',pointerEvents:'none',color:'white',mixBlendMode:'difference',whiteSpace:'pre',fontFamily:style.fontFamily,fontWeight:style.fontWeight,fontSize:style.fontSize,letterSpacing:style.letterSpacing,lineHeight:'1',transformOrigin:'0 0'});
-        document.body.append(n);nodes.push(n);
-        starts.push(previous?.[i]||(compact?a:b));ends.push(compact?b:a);
+    function stop() {
+      motion?.kill();
+      pieces.forEach(piece => piece.node.remove());
+      pieces = [];
+    }
+    function ranges(element) {
+      const words = [];
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        for (const match of walker.currentNode.data.matchAll(/\S+/g)) {
+          const range = document.createRange();
+          range.setStart(walker.currentNode, match.index);
+          range.setEnd(walker.currentNode, match.index + match[0].length);
+          words.push(range);
+        }
       }
-      hero.style.opacity=title.style.opacity='0';slash.style.opacity=compact?'1':'0';
-      const tl=gsap.timeline({onComplete(){nodes.forEach(n=>n.remove());flight=null;settle();}});
-      nodes.forEach((n,i)=>{
-        const r=n.getBoundingClientRect(),a=starts[i],b=ends[i];
-        const box=q=>({x:q.left,y:q.top,scaleX:q.width/r.width,scaleY:q.height/r.height});
-        tl.fromTo(n,box(a),{...box(b),duration:detail.duration,ease:detail.ease},0);
-      });
-      flight={nodes,stop(){tl.kill();nodes.forEach(n=>n.remove());flight=null;}};
+      return words;
     }
-    function resize(){flight?.stop();settle();}
-    settle();window.addEventListener('resize',resize);document.addEventListener('jk:nav-layout',change);
-    flights.set(page,()=>{flight?.stop();window.removeEventListener('resize',resize);document.removeEventListener('jk:nav-layout',change);});
+    function change({detail}) {
+      const previous = pieces.map(piece => ({rect:piece.ink.getBoundingClientRect(), size:piece.size, spacing:piece.spacing}));
+      stop();
+      compact = detail.compact;
+      const animate = desktop.matches && detail.duration && !document.documentElement.hasAttribute('data-transitioning') && !title.closest('[inert]');
+      gsap.to(slash, {opacity:compact || !desktop.matches ? .4 : 0, duration:animate ? detail.fadeDuration : 0, overwrite:true});
+      if (!animate) { settle(); return; }
+
+      const large = ranges(hero), small = ranges(title);
+      if (!large.length || large.length !== small.length || large.some((r,i) => r.toString() !== small[i].toString())) { settle(); return; }
+      const source = compact ? large : small, target = compact ? small : large;
+      const from = getComputedStyle(compact ? hero : title), to = getComputedStyle(compact ? title : hero);
+      const destinationSize = parseFloat(to.fontSize), destinationSpacing = parseFloat(to.letterSpacing) || 0;
+      pieces = source.map((range,i) => {
+        const node = document.createElement('span');
+        node.textContent = range.toString();
+        node.setAttribute('aria-hidden','true');
+        Object.assign(node.style,{position:'fixed',left:'0',top:'0',zIndex:'99',pointerEvents:'none',whiteSpace:'pre',color:'white',mixBlendMode:'difference',fontFamily:from.fontFamily,fontWeight:from.fontWeight,lineHeight:'1',transformOrigin:'0 0'});
+        document.body.append(node);
+        const ink = document.createRange();
+        ink.selectNodeContents(node);
+        return {node, ink, start:previous[i]?.rect || range.getBoundingClientRect(), target:target[i],
+          startSize:previous[i]?.size ?? parseFloat(from.fontSize), startSpacing:previous[i]?.spacing ?? (parseFloat(from.letterSpacing)||0)};
+      });
+      hero.style.opacity = title.style.opacity = '0';
+      const playhead = {p:0};
+      function render() {
+        const p = playhead.p;
+        const frames = pieces.map(piece => {
+          const end = piece.target.getBoundingClientRect();
+          return {x:piece.start.left+(end.left-piece.start.left)*p,y:piece.start.top+(end.top-piece.start.top)*p};
+        });
+        pieces.forEach(piece => {
+          piece.size = piece.startSize+(destinationSize-piece.startSize)*p;
+          piece.spacing = piece.startSpacing+(destinationSpacing-piece.startSpacing)*p;
+          Object.assign(piece.node.style,{transform:'none',fontSize:piece.size+'px',letterSpacing:piece.spacing+'px'});
+        });
+        const offsets = pieces.map(piece => piece.ink.getBoundingClientRect());
+        pieces.forEach((piece,i) => {
+          piece.node.style.transform = 'translate('+ (frames[i].x-offsets[i].left)+'px,'+(frames[i].y-offsets[i].top)+'px)';
+        });
+      }
+      render();
+      motion = gsap.to(playhead,{p:1,duration:detail.duration,ease:detail.ease,onUpdate:render,onComplete(){stop();settle();}});
+    }
+    function resize() {
+      stop(); settle();
+      gsap.set(slash,{opacity:compact || !desktop.matches ? .4 : 0});
+    }
+    resize();
+    window.addEventListener('resize',resize);
+    document.addEventListener('jk:nav-layout',change);
+    flights.set(page,() => {
+      stop(); settle(); gsap.killTweensOf(slash);
+      window.removeEventListener('resize',resize);
+      document.removeEventListener('jk:nav-layout',change);
+    });
   }
   function mount(page = document.querySelector('[data-barba="container"]')) {
     if (!page) return;

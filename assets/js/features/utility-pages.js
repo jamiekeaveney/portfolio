@@ -50,7 +50,9 @@
           if(countdown>0){
             ctx.font='600 '+Math.min(width*.16,height*.22)+'px '+style.fontFamily;
             const digit=String(Math.ceil(countdown));
-            ctx.fillText(digit,(width-ctx.measureText(digit).width)/2,height/2);
+            const ink=ctx.measureText(digit);
+            ctx.fillText(digit,(width+ink.actualBoundingBoxLeft-ink.actualBoundingBoxRight)/2,
+              (height+ink.actualBoundingBoxAscent-ink.actualBoundingBoxDescent)/2);
             ctx.fillRect(paddle-pw/2,floor,pw,10);
             raf=requestAnimationFrame(paint);return;
           }
