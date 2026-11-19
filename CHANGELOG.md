@@ -1,3 +1,12 @@
+# v1.2.4 — 19 November 2026
+
+- White clipped Welcome loader; shared message typography/stagger and earlier page preparation, including restored scroll positions.
+- Smaller cursor hover, refined button padding and bounded 10rem sticky section labels.
+- Measured half-glyph footer overlap, no entry tint, plain white legal text.
+- Continuous direction-safe gallery spacing and calmer, smaller list previews with position-aware dissolving transitions.
+- Native 404 paddle game and rebuilt Style Guide with live components. Licenses/Changelog moved to draft pending Designer deletion.
+- Runtime pinned to tested commit; named release tag pending browser reconnection.
+
 # Changelog
 
 ## 1.2.3 — 18 November 2026
