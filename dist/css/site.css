@@ -1163,3 +1163,5 @@ html.is-lightbox-open .jk-close-cursor{display:none!important}
 [data-style-guide] .work-card__thumb{width:100%;height:auto;aspect-ratio:9/10}
 [data-style-guide] :is(.work-list,.work__controls,.work-slide__nav,.projects-mobile-intro){display:none!important}
 @media(max-width:767px){[data-style-guide] .work-slide__track{grid-template-columns:1fr}.error-game{padding-top:7rem}}
+
+.error-game>.wide-section-heading{margin:0;grid-column:1;grid-row:auto}.error-game>.error-court{height:min(38svh,24rem)}.error-game>p{margin:0}.error-game{row-gap:1.25rem}

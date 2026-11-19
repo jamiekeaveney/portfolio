@@ -308,7 +308,7 @@
     showLoad: showLoad
   };
   function boot() {
-    if (!window.barba || !window.gsap) return;
+    if (!window.barba || !window.gsap || !document.querySelector('[data-barba="wrapper"]')) return;
     gsap.registerPlugin(SplitText, ScrollTrigger);
     const page = document.querySelector('[data-barba="container"]');
     prepare(page);

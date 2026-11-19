@@ -17,7 +17,7 @@
     canvas.addEventListener('pointermove',e=>{const b=canvas.getBoundingClientRect();paddle=clamp(e.clientX-b.left,48,width-48);});
     canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);const b=canvas.getBoundingClientRect();paddle=clamp(e.clientX-b.left,48,width-48);if(!playing)begin();});
     canvas.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Escape',' '].includes(e.key)){e.preventDefault();keys[e.key]=true;if(e.key==='Escape'||e.key===' ')toggle();}});
-    canvas.addEventListener('keyup',e=>delete keys[e.key]);canvas.addEventListener('blur',()=>{keys={};if(playing&&!paused){paused=true;start.textContent='Resume rally';}});
+    canvas.addEventListener('keyup',e=>delete keys[e.key]);canvas.addEventListener('blur',()=>{keys={};});
     document.addEventListener('visibilitychange',()=>{last=0;if(document.hidden&&playing&&!paused){paused=true;start.textContent='Resume rally';}});
     function paint(now){
       if(!root.isConnected){observer.disconnect();cancelAnimationFrame(raf);return;}
