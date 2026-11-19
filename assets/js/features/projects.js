@@ -874,9 +874,8 @@ const initWorkSlider = (() => {
           autoAlpha: 1,
           duration: .65,
           ease: "expo.out"
-        }, .3).set(visualLayers(target),{visibility:'visible',opacity:0},.82)
-          .to(visualLayers(target),{opacity:1,duration:.25,ease:'none'},.82)
-          .to(ghost,{opacity:0,duration:.25,ease:'none'},.82);
+        }, .3).set(visualLayers(target),{clearProps:'visibility'},1)
+          .to(ghost,{opacity:0,duration:.14,ease:'none'},1);
       }));
     }
     viewBtns.forEach((function(button) {

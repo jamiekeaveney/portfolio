@@ -64,6 +64,10 @@
       source.style.width = from.w * (1 - collapse) + "px";
       source.style.height = from.h + "px";
       source.style.marginRight = (1 - collapse) * .12 + "em";
+      // The inline source changes line wrapping as it collapses. Measure the
+      // destination after that reflow so the final clone and image coincide.
+      const host=page.getBoundingClientRect(),dest=target.getBoundingClientRect();
+      to={x:dest.left-host.left,y:dest.top-host.top,w:dest.width,h:dest.height};
       gsap.set(clone, {
         visibility: p > 0 && p < 1 ? "visible" : "hidden",
         x: (to.x - from.x + (to.w-from.w)/2) * p,
@@ -79,16 +83,14 @@
       value: 0
     };
     measure();
-    let tween, swing=0, direction=1;
+    let tween, swing=0;
+    face.style.transformOrigin='0% 0%';
     const swingTick=(time,dt=16.667)=>{
       const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
-      const nextDirection=velocity<0?-1:1;
-      // Return to neutral before changing hinges; changing origin under tilt would jump.
-      let target=gsap.utils.clamp(0,26,Math.abs(velocity)*.012)*Math.min(1,p/.12,(1-p)/.12);
-      if(nextDirection!==direction){target=0;if(swing<.15)direction=nextDirection;}
+      const target=gsap.utils.clamp(-26,26,velocity*.012);
       swing+=(target-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
-      face.style.transformOrigin=direction>0?'0% 0%':'100% 100%';
-      face.style.transform='perspective(700px) rotateX('+(-direction*swing*.6).toFixed(3)+'deg) rotateY('+(direction*swing).toFixed(3)+'deg)';
+      const tilt=swing*Math.min(1,p/.14,(1-p)/.14);
+      face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
     };
     gsap.ticker.add(swingTick);
     tween = gsap.to(playhead, {

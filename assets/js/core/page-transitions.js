@@ -217,6 +217,7 @@ function runPageOnceAnimation(page) {
     window.JKFooter?.refresh(page);lenis?.resize();
     window.scrollTo(0,y);lenis?.scrollTo(y,{immediate:true,force:true});ScrollTrigger.update();
     window.JKFooter?.refresh(page);
+    window.JKHeader?.syncPosition();
   };
   const finish=()=>{
     if(finished)return;finished=true;
@@ -239,7 +240,7 @@ function runPageOnceAnimation(page) {
   const tl=gsap.timeline({defaults:{ease:'loader',duration:3},onComplete:finish,onInterrupt:finish})
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
-    .to(bar,{height:border,duration:.45,ease:'expo.out'},'collapse')
+    .to(bar,{height:border,backgroundColor:getComputedStyle(page).getPropertyValue('--_theme---color--border').trim()||'#333',duration:.45,ease:'expo.out'},'collapse')
     .add('revealPage','collapse+=.45')
     .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
@@ -247,9 +248,9 @@ function runPageOnceAnimation(page) {
     .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
     .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
   tl.to(splits[0].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},0)
-    .to(splits[0].chars,{yPercent:-125,duration:.7,ease:'expo.inOut',stagger:charStagger(splits[0])},1.45)
+    .to(splits[0].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},1.45)
     .to(splits[1].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},1.6)
-    .to(splits[1].chars,{yPercent:-125,duration:.7,ease:'expo.inOut',stagger:charStagger(splits[1])},'revealPage-=.2');
+    .to(splits[1].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},'revealPage-=.2');
   return tl;
 }
 

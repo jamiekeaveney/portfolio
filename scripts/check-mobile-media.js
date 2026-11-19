@@ -22,7 +22,8 @@ class Element {
 const document={readyState:'complete',body:new Element('body'),documentElement:new Element('html'),createElement:t=>new Element(t),querySelector:()=>null,querySelectorAll:()=>[]};
 const gsap={killTweensOf(){},set(el,p){Object.assign(el.style,p);},timeline(options={}){const record={options,steps:[]};animations.push(record);return {to(el,p){record.steps.push({el,p});return this;},fromTo(el,from,to){record.steps.push({el,p:to});return this;}};}};
 const window={};
-vm.runInNewContext(fs.readFileSync('assets/js/features/mobile-media.js','utf8'),{document,window,gsap,AbortController,performance:{now:()=>now},matchMedia:q=>({matches:!q.includes('reduced-motion')}),innerWidth:390,innerHeight:844,setTimeout(){}});
+document.addEventListener=()=>{};
+vm.runInNewContext(fs.readFileSync('assets/js/features/mobile-media.js','utf8'),{getComputedStyle:()=>({getPropertyValue:()=>""}),document,window,gsap,AbortController,performance:{now:()=>now},matchMedia:q=>({matches:!q.includes('reduced-motion')}),innerWidth:390,innerHeight:844,setTimeout(){}});
 const source=new Element('video');source.currentSrc='https://example.test/video.mp4';source.videoWidth=1920;source.videoHeight=1080;source.getBoundingClientRect=()=>({left:24,top:200,bottom:392,width:342,height:192});
 function open(){window.JKMobileMedia.open(source,new Element('button'));const dialog=dialogs.at(-1);return {dialog,video:dialog.children[0]};}
 let {dialog,video}=open();

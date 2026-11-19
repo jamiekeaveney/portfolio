@@ -10,11 +10,11 @@
     let width=0,height=0,x=0,y=0,vx=170,vy=115,paddle=0,score=0,playing=false,paused=false,last=0,raf,keys={};
     const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
-    const baseSpeed=()=>clamp(height*.85,520,900);
+    const baseSpeed=()=>clamp(height*.73,455,780);
     function showState(){
       root.dataset.gameState=playing?(paused?'paused':'playing'):'idle';
       start.textContent=playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong');
-      status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns · Move / drag / ← →'):'Move / drag / ← →';
+      status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns'):'';
     }
     const resize=()=>{
       width=court.clientWidth;height=court.clientHeight;const dpr=Math.min(devicePixelRatio||1,2);

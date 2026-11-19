@@ -5,6 +5,7 @@ html[data-transitioning],html[data-transitioning] *{cursor:progress!important}
 .loader-bar{min-height:0;transition:none;will-change:transform,height;overflow:hidden}
 .loader-brand{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:inherit;color:#fff}
 .loader-logo{position:relative;width:max-content;height:max-content}
+.loader-logo .sitenav__wordmark{font-size:var(--font-size--2xl,2.5rem)}
 .loader-logo__base{opacity:.2}
 .loader-logo__fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
 .loader-messages{position:absolute;bottom:3.5em;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:#fff}
@@ -164,7 +165,7 @@ html[data-theme-status="light"] :is(.project-hero__deliverables,.case-details__g
 
 /* Theme dissolve applies to every Barba page; the toggle retains its own transform timing. */
 html[data-theme-changing] :not(.btn-toggle__toggle-dot):not(.nav-logo__glyph){
-transition-property:color,background-color,border-color!important;
+transition-delay:0s!important;transition-property:color,background-color,border-color,fill,stroke,box-shadow!important;
 transition-duration:.3s!important;transition-timing-function:ease!important;
 }
 @media(prefers-reduced-motion:reduce){html[data-theme-changing] *{transition-duration:0s!important}}
@@ -1148,8 +1149,6 @@ html[data-theme-status="light"] :is(.work-nav_counter,.work-nav_number,.work-nav
 html[data-theme-status="light"] .work-nav_button{background:rgba(0,0,0,.05);color:inherit}
 html[data-theme-status="light"] .work-nav_button:hover{background:rgba(0,0,0,.1)}
 html[data-theme-status="light"] [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#111;color:#fff!important}
-html[data-theme-status="light"] .work-card:hover .work-card__meta{mix-blend-mode:normal;color:#111;background:rgba(247,247,245,.92);border-radius:var(--_buttons---corner-radius,.375rem);padding:.5rem .65rem}
-html[data-theme-status="light"] .work-card:hover .work-card__client{color:#808080}
 
 /* Touch player: full-bleed phone video, quiet tablet gutters and drag dismissal. */
 .mobile-media-dialog{--media-backdrop:1;padding:0 max(2rem,env(safe-area-inset-left));background:rgba(0,0,0,var(--media-backdrop));touch-action:none;overscroll-behavior:contain}
@@ -1158,12 +1157,21 @@ html[data-theme-status="light"] .work-card:hover .work-card__client{color:#80808
 .mobile-media-dialog .lightbox-close{display:none}
 @media(max-width:767px){.mobile-media-dialog{padding:0}.mobile-media-dialog video{width:100vw;max-width:100vw}}
 
-/* The same legible hover surface, inverted for the base theme. */
-@media(hover:hover) and (pointer:fine){
- html:not([data-theme-status="light"]) [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#fff;color:#111!important}
- html:not([data-theme-status="light"]) .work-card:hover .work-card__meta{mix-blend-mode:normal;color:#fff;background:rgba(0,0,0,.92);border-radius:var(--_buttons---corner-radius,.375rem);padding:.5rem .65rem}
- html:not([data-theme-status="light"]) .work-card:hover .work-card__client{color:#aaa}
+.work-card:hover .work-card__meta{background:transparent;border-radius:0;padding:0;mix-blend-mode:difference;color:white}
+.work-card:hover .work-card__client{color:#ccc}
+[data-wf--super-button--variant="button-large"]{--_buttons---arrow-travel:1.75em}
+@media(min-width:992px){[data-case-page]>.footer-wrap{display:none!important}}
+@media(max-width:991px){
+ html[data-theme-status="light"] #services .scroll-1_trigger_item{color:var(--_theme---color--foreground,#111)!important;opacity:1}
+ .sitenav__menu-track{min-width:calc(5ch + .15em);padding-inline-end:.12em}
+ .sitenav__menu-close{text-align:end}
+ .progressive-blur{top:calc(-1 * max(env(safe-area-inset-top),2svh));padding-top:max(env(safe-area-inset-top),2svh);box-sizing:content-box}
+ .mobile-media-dialog,.mobile-media-dialog video,[data-mini-showreel-open],[data-mobile-play]{-webkit-tap-highlight-color:transparent}
+ :is(.mobile-media-dialog, .mobile-media-dialog video,[data-mini-showreel-open],[data-mobile-play]):focus:not(:focus-visible){outline:none}
 }
+
+html[data-touch-input] :is(.mobile-media-dialog,.mobile-media-dialog video,[data-mini-showreel-open],[data-mobile-play]):focus{outline:none}
+html[data-touch-input] :is(.mini-showreel__card,.mini-showreel):focus-within{outline:none}
 
 /* assets/css/components/cursor.css */
 /* Cursor-following text remains in the lightbox and project modules. */
@@ -1216,3 +1224,8 @@ html[data-theme-status="light"] .work-card:hover .work-card__client{color:#80808
 
 .error-game>.error-heading,.error-game__status,.error-game>.btn{mix-blend-mode:difference;color:#fff}
 .error-game>.btn .btn_main{color:inherit}
+
+.error-game>[data-game-start],.error-game>[data-game-start]:is(:hover,:focus-visible){right:var(--error-gutter);left:auto;background:transparent;border:0;padding:0;min-width:0;color:inherit}
+.error-game>[data-game-start]:is(:hover,:focus-visible){text-decoration:underline}
+.error-game>[data-game-start],.error-game>.btn,.error-game__status{bottom:max(var(--error-gutter),env(safe-area-inset-bottom))}
+.error-game:is([data-game-state="playing"],[data-game-state="paused"]) .error-court::after{content:"";position:absolute;inset:50% 0 auto;border-top:2px dotted currentColor;opacity:.25;pointer-events:none}

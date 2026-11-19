@@ -250,7 +250,7 @@
     const s = pages.get(page);
     if (!s || s.started) return;
     if (navIntro) {
-      navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.38:0).play();
+      navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.55:0).play();
       navIntro = null;
     }
     page.dataset.pageIntroStarted = "true";
@@ -317,7 +317,7 @@
       navIntro = gsap.from(nav, {
         autoAlpha: 0,
         duration: SETTINGS.navDuration,
-        stagger: SETTINGS.navStagger,
+        stagger: 0,
         ease: SETTINGS.ease,
         paused: true,
         clearProps: "opacity,visibility"

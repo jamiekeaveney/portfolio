@@ -2,6 +2,12 @@
 (() => {
   const mobile=matchMedia('(max-width:991px), (pointer:coarse)');
   let dispose=()=>{},close=()=>{};
+  const root=document.documentElement;
+  document.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch')root.setAttribute('data-touch-input','');
+    else root.removeAttribute('data-touch-input');
+  },true);
+  document.addEventListener('keydown',()=>root.removeAttribute('data-touch-input'),true);
   function open(source,trigger,overrideURL) {
     if(!mobile.matches||!source)return;
     close(true);
@@ -68,9 +74,13 @@
 
     document.documentElement.classList.add('is-lightbox-open');dialog.showModal();video.tabIndex=0;video.focus({preventScroll:true});
     if(!reduced){
+      const styles=getComputedStyle(document.documentElement);
+      const duration=parseFloat(styles.getPropertyValue('--motion-lightbox-duration'))||1;
+      const ease=styles.getPropertyValue('--motion-lightbox-ease').trim()||'expo.inOut';
+      const radius=styles.getPropertyValue('--radius--radius').trim()||'.75rem';
       const from=source.getBoundingClientRect(),to=video.getBoundingClientRect();
       gsap.timeline().fromTo(dialog,{'--media-backdrop':0},{'--media-backdrop':1,duration:.55},0)
-        .fromTo(video,{x:from.left+from.width/2-(to.left+to.width/2),y:from.top+from.height/2-(to.top+to.height/2),scaleX:from.width/to.width,scaleY:from.height/to.height},{x:0,y:0,scaleX:1,scaleY:1,duration:.65,ease:'power3.out'},0);
+        .fromTo(video,{borderRadius:radius,x:from.left+from.width/2-(to.left+to.width/2),y:from.top+from.height/2-(to.top+to.height/2),scaleX:from.width/to.width,scaleY:from.height/to.height},{x:0,y:0,scaleX:1,scaleY:1,borderRadius:0,duration,ease},0);
     }
 
   }

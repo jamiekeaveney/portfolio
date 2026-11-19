@@ -51,6 +51,18 @@
       timeline.progress(timeline.scrollTrigger.progress);
       render();
     }
+    const face=target.querySelector('video');
+    let swing=0;
+    function tilt(time,dt=16.667){
+      if(!face)return;
+      const track=timeline?.scrollTrigger;
+      if(!track||suspended||!track.enabled){face.style.removeProperty('rotate');face.style.removeProperty('transform-origin');return;}
+      swing+=(gsap.utils.clamp(-26,26,track.getVelocity()*.012)-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
+      const progress=timeline.progress();
+      face.style.transformOrigin='top left';
+      face.style.rotate='-.6 1 0 '+swing*Math.min(1,progress/.14,(1-progress)/.14)+'deg';
+    }
+    gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
     const resize = () => {
       if (innerWidth === viewportWidth && innerWidth < 992) return;
@@ -72,6 +84,9 @@
       },
       cleanup() {
         dead = true;
+        gsap.ticker.remove(tilt);
+        face?.style.removeProperty('rotate');
+        face?.style.removeProperty('transform-origin');
         clearTimeout(timer);
         timeline?.scrollTrigger?.kill();
         timeline?.kill();

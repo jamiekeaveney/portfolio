@@ -142,7 +142,7 @@ html[data-theme-status="light"] :is(.project-hero__deliverables,.case-details__g
 
 /* Theme dissolve applies to every Barba page; the toggle retains its own transform timing. */
 html[data-theme-changing] :not(.btn-toggle__toggle-dot):not(.nav-logo__glyph){
-transition-property:color,background-color,border-color!important;
+transition-delay:0s!important;transition-property:color,background-color,border-color,fill,stroke,box-shadow!important;
 transition-duration:.3s!important;transition-timing-function:ease!important;
 }
 @media(prefers-reduced-motion:reduce){html[data-theme-changing] *{transition-duration:0s!important}}
