@@ -21,7 +21,7 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same immutable tested runtime revision. R15 is currently pinned to `a280cabb9f32a691a159f5b6af81616c87412bcd`; a named GitHub release tag is pending browser reconnection.
+- `webflow/`: the only site-wide head/footer snippets. Both snippets use the same immutable tested runtime revision. R16 is pinned to `236fd01db403bfc0829ded1274f723206619d6e7`.
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -47,7 +47,7 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 ## Desktop lightbox restoration
 
-`assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. The only routing addition is a separate conventional player for mobile/tablet; do not apply its dimensions or Close UI to desktop.
+`assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. The only routing addition is a separate conventional player for mobile/tablet; do not apply its dimensions or gesture handling to desktop.
 
 ## R16 interaction ownership
 
