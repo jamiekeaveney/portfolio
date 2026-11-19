@@ -22,7 +22,7 @@
       let tint=panel.querySelector(':scope > .footer-parallax__tint');
       if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
       let frozen=false;const mm=gsap.matchMedia();
-      let overlap=0;
+      let overlap=0,paintNow=()=>{};
       const measure=()=>{if(!frozen){overlap=glyphMidpoint(name);wrap.style.setProperty('--footer-overlap',overlap+'px');}};
       const ro=new ResizeObserver(measure);ro.observe(name);measure();
       mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
@@ -38,17 +38,18 @@
         }
         const paint=()=>{
           if(frozen)return;
-          const height=name.offsetHeight,top=stage.getBoundingClientRect().top;
+          const height=name.offsetHeight,top=stage.getBoundingClientRect().top-(page.hasAttribute?.("data-loader-revealing")?(Number(gsap.getProperty(page,"y"))||0):0);
           if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
           const offset=-overlap*(1-progress);
           if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
-        paint();gsap.ticker.add(paint);
+        paintNow=paint;paint();gsap.ticker.add(paint);
         return ()=>{if(legal){placeholder.replaceWith(legal);delete legal.dataset.footerLegalFloating;if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
       });
       states.set(panel,{
+        refresh(){measure();paintNow();},
         freeze(){if(frozen)return;frozen=true;ro.disconnect();},
         dispose(){this.freeze();mm.revert();}
       });
@@ -56,7 +57,7 @@
   }
   function freeze(page){states.forEach((s,el)=>{if(page?.contains(el))s.freeze();});}
   function dispose(page){states.forEach((s,el)=>{if(page?.contains(el)){s.dispose();states.delete(el);}});}
-  window.JKFooter={freeze};
+  window.JKFooter={freeze,refresh(page){states.forEach((s,el)=>{if(page?.contains(el))s.refresh();});}};
   function boot(){
     if(!window.gsap||!window.ScrollTrigger)return;
     document.addEventListener('jk:loader-prepare',e=>init(e.detail.page));

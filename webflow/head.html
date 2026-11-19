@@ -1,3 +1,18 @@
+<!-- Critical first-paint cover: inline so there is no dependency on the runtime CDN. -->
+<style>
+html[data-loader-pending]:not(.wf-design-mode):not(.wf-editor)::before{content:"";position:fixed;inset:0;background:#000;z-index:2147483000;pointer-events:none}
+html[data-loader-active]:not(.wf-design-mode):not(.wf-editor) [data-load-wrap]{display:block;visibility:visible;opacity:1;position:fixed;inset:0;z-index:10000;background:#000}
+:is(.wf-design-mode,.wf-editor) [data-load-wrap]{display:none!important}
+</style>
+<script>
+(function(){
+ var root=document.documentElement;
+ if(root.classList.contains('wf-design-mode')||root.classList.contains('wf-editor'))return;
+ history.scrollRestoration='manual';root.setAttribute('data-loader-pending','');root.setAttribute('data-loader-active','');
+ // Recover if a blocked CDN prevents the main runtime from starting.
+ setTimeout(function(){if(root.hasAttribute('data-loader-pending')){root.removeAttribute('data-loader-pending');root.removeAttribute('data-loader-active');}},12000);
+})();
+</script>
 <!-- Shared styles. Use the same tested 236fd01db403bfc0829ded1274f723206619d6e7 in both snippets. -->
 <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.17/dist/lenis.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@236fd01db403bfc0829ded1274f723206619d6e7/dist/css/site.css">

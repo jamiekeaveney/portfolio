@@ -78,3 +78,7 @@ require("./check-footer.js");
 
 require("./check-gallery.js");
 require("./check-mobile-media.js");
+
+require("./check-list-preview.js");
+
+require("./check-error-game.js");

@@ -26,7 +26,7 @@
       function start() {
         if (!frozen) {
           started = true;
-          loop?.paused(false);
+          loop?.paused(document.documentElement.hasAttribute('data-loader-active'));
         }
       }
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -76,7 +76,8 @@
             this.totalTime(this.totalTime() + this.duration() * 100);
           }
         });
-        loop.totalTime(duration * (100 + phase)).timeScale(direction).paused(!started);
+        loop.totalTime(duration * (100 + phase)).timeScale(direction).paused(!started||document.documentElement.hasAttribute('data-loader-active'));
+
         shift = gsap.fromTo(scroll, {
           x: () => baseDirection * amount * innerWidth / 100
         }, {
@@ -114,6 +115,7 @@
         }), SETTINGS.resizeDebounceMs);
       };
       const state = {
+        release(){if(!frozen&&started)loop?.paused(false);},
         freeze() {
           frozen = true;
           clearTimeout(resizeTimer);
@@ -161,6 +163,7 @@
       barba.hooks.afterOnce((d => init(d.next.container)));
       barba.hooks.after((d => dispose(d.current.container)));
     }
+    document.addEventListener('jk:loader-finished',()=>states.forEach(s=>s.release()));
     init(document);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, {

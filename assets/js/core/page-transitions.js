@@ -170,16 +170,23 @@ function initAfterEnterFunctions(t) {
   hasScrollTrigger && ScrollTrigger.refresh();
 }
 
+// Shared with the page stack: one parallax curve, duration and grey wash.
+const PARALLAX_MOTION={duration:1.2,ease:'parallax',overlay:.8};
+function finishLoaderCover(){
+  document.documentElement.removeAttribute('data-loader-pending');
+  document.documentElement.removeAttribute('data-loader-active');
+  document.dispatchEvent(new CustomEvent('jk:loader-finished'));
+}
 function runPageOnceAnimation(page) {
   const y=navType==='reload'?getSavedScroll(location.href):0;
   page.dataset.restoreScroll=String(y>0);
   const wrap=document.querySelector('[data-load-wrap]');
   if(!wrap || reducedMotion || navType==='back_forward') {
     if(wrap)gsap.set(wrap,{display:'none'});
-    return gsap.timeline().call(()=>resetPage(page,y));
+    finishLoaderCover();return gsap.timeline().call(()=>resetPage(page,y));
   }
   const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader-panel');
-  if(!bar||!content||!bg)return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));
+  if(!bar||!content||!bg){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
   CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
   content.replaceChildren();bar.replaceChildren();
   const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
@@ -189,41 +196,60 @@ function runPageOnceAnimation(page) {
   const texts=document.createElement('div');texts.className='loader-messages';
   ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
   content.append(logoWrap,texts);
-  // A separate, removable wash sits behind the moving black curtain.
   const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
-  overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);
-  wrap.append(bar); // The border must not be clipped by the curtain itself.
+  overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
-  const preparePage=()=>{
+  // Match the large hero's masked character cadence, without an opacity wash.
+  const charStagger=s=>Math.min(.025,.16/Math.max(1,s.chars.length-1));
+  let finished=false;
+  const preparePage=async()=>{
+    await (document.fonts?.ready||Promise.resolve());
+    if(finished)return;
     gsap.set(page,{clearProps:'position,top,left,right'});
     document.dispatchEvent(new CustomEvent('jk:loader-prepare',{detail:{page}}));
     initAfterEnterFunctions(page);
     if(y>0)window.JKReveals?.restore(page,y);
     window.scrollTo(0,y);lenis?.resize();lenis?.scrollTo(y,{immediate:true,force:true});
     ScrollTrigger.refresh();ScrollTrigger.update();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(finished)return;
+    // Footer font metrics and pin spacers settle while the opaque curtain is up.
+    window.JKFooter?.refresh(page);lenis?.resize();
+    window.scrollTo(0,y);lenis?.scrollTo(y,{immediate:true,force:true});ScrollTrigger.update();
+    window.JKFooter?.refresh(page);
   };
-  const finish=()=>{overlay.remove();splits.forEach(s=>s.revert());gsap.set(wrap,{display:'none'});gsap.set(page,{clearProps:'transform'});document.documentElement.style.overflow='';document.body.style.overflow='';resetPage(page,y);};
+  const finish=()=>{
+    if(finished)return;finished=true;
+    gsap.set(page,{clearProps:'transform'});page.removeAttribute('data-loader-revealing');
+    window.JKFooter?.refresh(page);overlay.remove();splits.forEach(s=>s.revert());
+    gsap.set(wrap,{display:'none'});document.documentElement.style.overflow='';document.body.style.overflow='';
+    lenis?.resize();lenis?.start();finishLoaderCover();
+  };
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
-  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',transformOrigin:'left center'});
-  gsap.set(content,{autoAlpha:1});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
-  gsap.set(splits.flatMap(s=>s.chars),{autoAlpha:0,yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});
+  gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'#fff',transformOrigin:'left bottom'});
+  gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
+  gsap.set(splits.flatMap(s=>s.chars),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  document.documentElement.setAttribute('data-loader-active','');
+  document.documentElement.removeAttribute('data-loader-pending');
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
+  page.setAttribute('data-loader-revealing','');
+  const prepared=preparePage();
+  const border=Math.max(1,parseFloat(getComputedStyle(wrap).getPropertyValue('--loader-border-width'))||1);
   const tl=gsap.timeline({defaults:{ease:'loader',duration:3},onComplete:finish,onInterrupt:finish})
-    .to(bar,{scaleX:1})
-    .to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
-    .add('hideContent')
-    .to(content,{y:'-15vh',autoAlpha:0,duration:.65},'hideContent')
-    .to(bar,{height:'var(--loader-border-width,1px)',backgroundColor:'var(--_theme---color--border,#1f1f1f)',duration:.25},'hideContent')
-    .call(preparePage,null,'hideContent')
-    .add('revealPage','hideContent+=.25')
-    .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:1.2,ease:'parallax'},'revealPage')
-    .to(bar,{y:()=>-innerHeight+1,duration:1.2,ease:'parallax'},'revealPage')
-    .fromTo(page,{y:'12vh'},{y:0,duration:1.2,ease:'parallax',clearProps:'transform'},'revealPage')
-    .fromTo(overlay,{opacity:.55},{opacity:0,duration:1.2,ease:'parallax'},'revealPage');
-  tl.to(splits[0].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.008}},0)
-    .to(splits[0].chars,{autoAlpha:0,yPercent:-125,duration:.4,stagger:{each:.008}},'>+=0.4')
-    .to(splits[1].chars,{autoAlpha:1,yPercent:0,duration:.6,stagger:{each:.008}},'<')
-    .to(splits[1].chars,{autoAlpha:0,yPercent:-125,duration:.4,stagger:{each:.008}},'hideContent-=0.5');
+    .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
+    .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
+    .to(bar,{height:border,duration:.45,ease:'expo.out'},'collapse')
+    .add('revealPage','collapse+=.45')
+    .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(bar,{y:()=>-innerHeight+border,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
+    .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
+  tl.to(splits[0].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},0)
+    .to(splits[0].chars,{yPercent:-125,duration:.7,ease:'expo.inOut',stagger:charStagger(splits[0])},1.45)
+    .to(splits[1].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},1.6)
+    .to(splits[1].chars,{yPercent:-125,duration:.7,ease:'expo.inOut',stagger:charStagger(splits[1])},'revealPage-=.2');
   return tl;
 }
 
@@ -238,9 +264,9 @@ function runPageLeaveAnimation(t) {
   }), r.fromTo(n, {
     autoAlpha: 0
   }, {
-    autoAlpha: .8,
-    duration: 1.2,
-    ease: "parallax"
+    autoAlpha: PARALLAX_MOTION.overlay,
+    duration: PARALLAX_MOTION.duration,
+    ease: PARALLAX_MOTION.ease
   }, 0), r.fromTo(t, {
     y: "0vh"
   }, {
@@ -335,7 +361,7 @@ barba.hooks.before((t => {
 
 function startPortfolio() {
   // Utility pages such as the Style Guide are outside the transition shell.
-  if (!document.querySelector('[data-barba="wrapper"]')) return;
+  if (!document.querySelector('[data-barba="wrapper"]')) {finishLoaderCover();return;}
   barba.init({
     debug: !1,
     timeout: 7e3,

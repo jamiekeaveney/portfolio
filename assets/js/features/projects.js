@@ -401,7 +401,7 @@ const initWorkSlider = (() => {
       listVideos.forEach(({el,video,image},index)=>{
         el.style.transform='none';
         el.style.visibility=index===activeIdx?'visible':'hidden';
-        const playing=settled&&index===activeIdx&&!document.hidden&&!reducedMotion.matches;
+        const playing=settled&&index===activeIdx&&(listCenter.matches(':hover')||listCenter.matches(':focus-visible'))&&!fading&&!document.hidden&&!reducedMotion.matches;
         if(playing===!!el._previewPlaying)return;
         el._previewPlaying=playing;
         if(!playing){video?.pause();el.removeAttribute('data-preview-playing');return;}
@@ -673,9 +673,20 @@ const initWorkSlider = (() => {
       rebuild();
     }
     function alignListFrame() {
-      // Both views share the same native frame dimensions and vertical centre.
-      listCenter.style.removeProperty("height");
-      listCenter.style.removeProperty("top");
+      // Measure the real gallery layout even when landing directly in list mode.
+      // Visibility keeps this synchronous measurement out of the painted frame.
+      const gallery=track.closest('.work-slide'),saved=gallery.getAttribute('style');
+      const host=listEl.getBoundingClientRect(),savedMode=root.getAttribute('data-work-mode');
+      root.setAttribute('data-work-mode','slide');
+      gallery.style.setProperty('display','block','important');
+      gallery.style.visibility='hidden';gallery.style.pointerEvents='none';
+      const card=track.querySelector('.work-card__thumb'),r=card?.getBoundingClientRect();
+      if(r?.width&&r.height){
+        listCenter.style.width=r.width+'px';listCenter.style.height=r.height+'px';
+        listCenter.style.top=(r.top-host.top+r.height/2)+'px';
+      }
+      if(saved===null)gallery.removeAttribute('style');else gallery.setAttribute('style',saved);
+      root.setAttribute('data-work-mode',savedMode);
       gsap.set(listCenter,{x:0,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";previewPlaced=true;
     }
     function currentMedia(index = activeIdx) {
@@ -852,14 +863,14 @@ const initWorkSlider = (() => {
           width: to.width,
           height: to.height,
           duration: 1,
-          ease: "expo.inOut"
+          ease: "case-two-step"
         }, 0).to(visual.front, {
           left: 100 * (pr.left - to.left) / to.width + "%",
           top: 100 * (pr.top - to.top) / to.height + "%",
           width: 100 * pr.width / to.width + "%",
           height: 100 * pr.height / to.height + "%",
           duration: 1,
-          ease: "expo.inOut"
+          ease: "case-two-step"
         }, 0).to(content, {
           autoAlpha: 1,
           duration: .65,

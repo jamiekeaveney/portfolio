@@ -84,11 +84,11 @@
       const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
       const nextDirection=velocity<0?-1:1;
       // Return to neutral before changing hinges; changing origin under tilt would jump.
-      let target=gsap.utils.clamp(0,9,Math.abs(velocity)*.002)*Math.sin(Math.PI*p);
+      let target=gsap.utils.clamp(0,26,Math.abs(velocity)*.012)*Math.min(1,p/.12,(1-p)/.12);
       if(nextDirection!==direction){target=0;if(swing<.15)direction=nextDirection;}
       swing+=(target-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
       face.style.transformOrigin=direction>0?'0% 0%':'100% 100%';
-      face.style.transform='perspective(900px) rotateX('+(-direction*swing*.45).toFixed(3)+'deg) rotateY('+(direction*swing).toFixed(3)+'deg)';
+      face.style.transform='perspective(700px) rotateX('+(-direction*swing*.6).toFixed(3)+'deg) rotateY('+(direction*swing).toFixed(3)+'deg)';
     };
     gsap.ticker.add(swingTick);
     tween = gsap.to(playhead, {
@@ -144,7 +144,13 @@
         const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
         const boundary=labels.find(label=>label.el===s.end);
         const end=s.end?s.end.getBoundingClientRect().top-(boundary?.offset||0):s.section.getBoundingClientRect().bottom;
-        return Math.max(0,Math.min(top-natural,end-natural-r.height-40));
+        const travel=Math.max(0,end-natural-r.height-40);
+        if(reduced.matches||!window.JKStickyLibrary)return Math.max(0,Math.min(top-natural,travel));
+        if(!s.curve||Math.abs(s.travel-travel)>.5||s.viewport!==innerHeight){
+          s.travel=travel;s.viewport=innerHeight;
+          s.curve=window.JKStickyLibrary.curve({travel,span:innerHeight*.45,ease:'expo'});
+        }
+        return s.curve.clamp(top-natural);
       });
       labels.forEach((s,i)=>{s.offset=positions[i];s.el.style.translate='0 '+s.offset+'px';});
       if(serviceLabel&&serviceMedia){const displacement=serviceMedia.getBoundingClientRect().top+scrollY-serviceNatural;serviceLabel.style.translate='0 '+Math.max(0,displacement)+'px';}
@@ -154,18 +160,19 @@
     sectionLabels={freeze(){frozen=true;},destroy(){gsap.ticker.remove(tick);ScrollTrigger.removeEventListener('refresh',measureService);if(serviceLabel)serviceLabel.style.translate=serviceLabelStyle;labels.forEach(s=>{s.el.style.translate=s.translate;});}};
   }
   function mount(page) {
-    mountSectionLabels(page);
+    sectionLabels?.destroy();sectionLabels=null;
     stickies?.destroy();
     const library = window.JKStickyLibrary;
     if (library) {
       const found = library.findSticky();
       found.forEach((el => {
-        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer,#services") || el.hasAttribute("data-home-scroll")) return;
+        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer") || el.hasAttribute("data-home-scroll")) return;
         if (getComputedStyle(el).position === "sticky") el.setAttribute("data-site-eased-sticky", "");
       }));
       stickies = library.sticky.all("[data-site-eased-sticky]", {
         ease: "expo",
         distance: .45,
+        engine: "main",
         media: "(min-width:992px) and (hover:hover) and (pointer:fine)",
         ticker: fn => {
           gsap.ticker.add(fn);
@@ -173,6 +180,7 @@
         }
       });
     }
+    mountSectionLabels(page);
     const source = page.querySelector("[data-portrait-source]");
     if (source && parseFloat(source.style.width) === 0) page.addEventListener("jk:inline-ready", (() => mountPortrait(page)), {
       once: true

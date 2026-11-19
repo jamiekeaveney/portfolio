@@ -130,7 +130,7 @@ html[data-theme-status="light"] .work-nav_button{background:rgba(0,0,0,.05);colo
 html[data-theme-status="light"] .work-nav_button:hover{background:rgba(0,0,0,.1)}
 html[data-theme-status="light"] [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#111;color:#fff!important}
 html[data-theme-status="light"] .work-card:hover .work-card__meta{mix-blend-mode:normal;color:#111;background:rgba(247,247,245,.92);border-radius:var(--_buttons---corner-radius,.375rem);padding:.5rem .65rem}
-html[data-theme-status="light"] .work-card:hover .work-card__client{color:#747471}
+html[data-theme-status="light"] .work-card:hover .work-card__client{color:#808080}
 
 /* Touch player: full-bleed phone video, quiet tablet gutters and drag dismissal. */
 .mobile-media-dialog{--media-backdrop:1;padding:0 max(2rem,env(safe-area-inset-left));background:rgba(0,0,0,var(--media-backdrop));touch-action:none;overscroll-behavior:contain}
@@ -138,3 +138,10 @@ html[data-theme-status="light"] .work-card:hover .work-card__client{color:#74747
 .mobile-media-dialog video{border-radius:0;max-height:100dvh;touch-action:none;will-change:transform}
 .mobile-media-dialog .lightbox-close{display:none}
 @media(max-width:767px){.mobile-media-dialog{padding:0}.mobile-media-dialog video{width:100vw;max-width:100vw}}
+
+/* The same legible hover surface, inverted for the base theme. */
+@media(hover:hover) and (pointer:fine){
+ html:not([data-theme-status="light"]) [data-wf--super-button--variant="button-large"]:is(:hover,:focus-visible) .btn_main{background:#fff;color:#111!important}
+ html:not([data-theme-status="light"]) .work-card:hover .work-card__meta{mix-blend-mode:normal;color:#fff;background:rgba(0,0,0,.92);border-radius:var(--_buttons---corner-radius,.375rem);padding:.5rem .65rem}
+ html:not([data-theme-status="light"]) .work-card:hover .work-card__client{color:#aaa}
+}

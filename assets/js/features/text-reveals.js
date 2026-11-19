@@ -342,7 +342,7 @@
     const once = window.runPageOnceAnimation;
     if (once) window.runPageOnceAnimation = function(page) {
       const tl = once(page);
-      if (tl?.call) tl.call((() => play(page, true)), null, tl.labels?.revealPage!==undefined?tl.labels.revealPage+.12:Math.max(0,tl.duration()-SETTINGS.firstLoadLead));
+      if (tl?.call) tl.call((() => play(page, true)), null, tl.labels?.revealPage!==undefined?tl.labels.revealPage+.42:Math.max(0,tl.duration()-SETTINGS.firstLoadLead));
       return tl;
     };
     barba.hooks.afterOnce((d => play(d.next.container)));
