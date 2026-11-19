@@ -32,3 +32,6 @@
 .error-court canvas{touch-action:none}
 .error-game>.btn .btn_main{padding:0;border:0;background:transparent}.error-game>.btn .btn_aside{display:none}
 @media(max-width:767px){.error-game{padding:0}.error-game>.error-heading{top:7rem;font-size:2rem}.error-game>[data-game-start]{left:auto;right:var(--error-gutter);bottom:3rem}.error-game>.btn{bottom:3.9rem}.error-game__status{left:var(--error-gutter);max-width:none;bottom:7.7rem;font-size:.875rem}}
+
+.error-game>.error-heading,.error-game__status,.error-game>.btn{mix-blend-mode:difference;color:#fff}
+.error-game>.btn .btn_main{color:inherit}

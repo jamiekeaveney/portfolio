@@ -678,7 +678,6 @@ const initWorkSlider = (() => {
       const gallery=track.closest('.work-slide'),saved=gallery.getAttribute('style');
       const host=listEl.getBoundingClientRect(),savedMode=root.getAttribute('data-work-mode');
       root.setAttribute('data-work-mode','slide');
-      gallery.style.setProperty('display','block','important');
       gallery.style.visibility='hidden';gallery.style.pointerEvents='none';
       const card=track.querySelector('.work-card__thumb'),r=card?.getBoundingClientRect();
       if(r?.width&&r.height){
