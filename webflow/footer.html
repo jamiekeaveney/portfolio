@@ -5,20 +5,20 @@
   const media = matchMedia('(min-width:992px) and (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
   const controllers = new WeakMap();
 
-  function prepare(page) {
+  function prepare(page, active=true) {
     const origin = page?.querySelector('[data-portrait-source]');
     const target = page?.querySelector('[data-portrait-destination]');
     if (!origin || !target || controllers.has(page)) return;
 
-    origin.removeAttribute('data-portrait-source');
     const image = origin.querySelector('img'), destination = target.querySelector('img');
     if (!image || !destination) return;
+    origin.removeAttribute('data-portrait-source');
     image.loading = 'eager';
     let release, frozen = false;
 
     function mount() {
       release?.(); release = null;
-      if (!media.matches || frozen || !page.isConnected || !window.ScrollTrigger) return;
+      if (!active || !media.matches || frozen || !page.isConnected || !window.ScrollTrigger) return;
       const slot = origin.closest('.editorial-media-slot');
       if (!slot) return;
       const flight = document.createElement('div'), face = image.cloneNode(true);
@@ -39,6 +39,7 @@
         slot.style.width = p>0 ? (from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * (1-Math.min(1,p/.65))+'px' : '';
         image.style.visibility = p>0 ? 'hidden' : '';
         destination.style.visibility = p<1 ? 'hidden' : '';
+        flight.hidden = !inFlight;
         flight.style.visibility = inFlight ? 'visible' : 'hidden';
         if (!inFlight) return;
         const to = target.getBoundingClientRect(), root = coordinateRoot.getBoundingClientRect();
@@ -77,7 +78,7 @@
     });
     observer.observe(origin.parentElement,{childList:true,subtree:true});
     media.addEventListener('change',mount);
-    controllers.set(page,{attach,freeze(){frozen=true;},destroy(){
+    controllers.set(page,{attach,activate(){active=true;attach();},freeze(){frozen=true;},destroy(){
       observer.disconnect();media.removeEventListener('change',mount);release?.();
       origin.setAttribute('data-portrait-source','');controllers.delete(page);
     }});
@@ -87,7 +88,8 @@
   prepare(document.querySelector('[data-barba="container"]'));
   window.barba?.hooks.before(d=>controllers.get(d.current.container)?.freeze());
   window.barba?.hooks.afterLeave(d=>controllers.get(d.current.container)?.destroy());
-  window.barba?.hooks.beforeEnter(d=>prepare(d.next.container));
+  window.barba?.hooks.beforeEnter(d=>prepare(d.next.container,false));
+  window.barba?.hooks.afterEnter(d=>controllers.get(d.next.container)?.activate());
   document.addEventListener('jk:loader-prepare',e=>controllers.get(e.detail.page)?.attach());
 })();
 </script>
@@ -96,139 +98,82 @@
   if (!window.barba) return;
   const mobile = matchMedia('(max-width:991px)');
   const reduced = matchMedia('(prefers-reduced-motion:reduce)');
-  const root = document.documentElement;
-  let route = null;
+  const listing = path => path === '/' || path === '/projects';
+  let active;
   function card(page, path) {
     const link = [...page.querySelectorAll('.home-slide a[href],.work-card__link[href]')]
       .find(el => new URL(el.href, location.href).pathname === path);
     return link?.closest('.home-slide,.work-card')?.querySelector('.home-slide-image,.work-card__thumb');
   }
-  function visibleMedia(page) {
-    const nodes = [...page.querySelectorAll('.case-media,.case-index__media')];
-    const area = el => {
-      const r = el.getBoundingClientRect();
-      return Math.max(0, Math.min(innerHeight,r.bottom) - Math.max(0,r.top)) *
-        Math.max(0, Math.min(innerWidth,r.right) - Math.max(0,r.left));
-    };
-    const distance = el => {
-      const r = el.getBoundingClientRect();
-      return Math.max(0, -r.bottom, r.top - innerHeight);
-    };
-    return nodes.filter(el => {
-      const r = el.getBoundingClientRect();
-      return r.width > 0 && r.height > 0;
-    }).sort((a,b) => area(b) - area(a) || distance(a) - distance(b))[0];
+  function release() {
+    if (!active) return;
+    active.observer?.disconnect();
+    active.source?.removeAttribute('data-case-origin');
+    active.target?.removeAttribute('data-case-landing');
+    active = null;
   }
-  function boxVars(key, el) {
-    const r = el.getBoundingClientRect();
-    for (const name of ['left','top','width','height']) root.style.setProperty('--jk-'+key+'-'+name, r[name]+'px');
-    root.style.setProperty('--jk-'+key+'-radius',getComputedStyle(el).borderTopLeftRadius);
-  }
-  function latch() {
-    let open;
-    const promise = new Promise(resolve => {open = resolve;});
-    return {promise, open};
-  }
-  function clean(job) {
-    clearTimeout(job.deadline);
-    for (const node of [job.from,job.to]) node?.removeAttribute('data-route-picture');
-    if(route!==job)return;
-    root.removeAttribute('data-media-route');
-    for (const key of ['from','to']) for (const name of ['left','top','width','height','radius']) root.style.removeProperty('--jk-'+key+'-'+name);
-    route = null;
-  }
-  barba.hooks.before(d => {
-    if(!mobile.matches || reduced.matches || !document.startViewTransition || !d.next.container)return;
-    const current=d.current.container, next=d.next.container;
-    const forward=next.matches('[data-case-page]') && ['/','/projects'].includes(d.current.url.path);
-    const reverse=current.matches('[data-case-page]') && ['/','/projects'].includes(d.next.url.path);
-    if(!forward && !reverse)return;
-    const from=forward ? card(current,d.next.url.path) : visibleMedia(current);
-    const to=forward ? next.querySelector('.case-featured .case-media') : card(next,d.current.url.path);
-    if(!from || !to || from.getBoundingClientRect().width<1)return;
-    if(route){route.transition.skipTransition();route.update.open();clean(route);}
-    const captured=latch(),update=latch();
-    const job=route={from,to,current,next,forward,update};
-    const img=to.querySelector('.project-preview__backdrop,.work-card__image');
-    if(img)img.loading='eager';
-    boxVars('from',from);
-    root.dataset.mediaRoute=forward?'open':'return';
-    from.setAttribute('data-route-picture','');
-    try {
-      job.transition=document.startViewTransition(async ()=>{
-        captured.open();
-        await update.promise;
-      });
-    } catch {
-      clean(job);return;
+  function keepBlur() {
+    const blur = document.querySelector('.progressive-blur');
+    if (!blur) return;
+    const anchor = document.createComment('');
+    blur.before(anchor);
+    function position() {
+      if (mobile.matches) document.body.append(blur);
+      else anchor.after(blur);
     }
-    job.deadline=setTimeout(()=>{update.open();job.transition.skipTransition();},4500);
-    job.transition.ready.catch(()=>{});
-    job.transition.finished.then(()=>clean(job),()=>clean(job));
-    return captured.promise;
+    position();
+    mobile.addEventListener('change',position);
+  }
+
+  barba.hooks.before(data => {
+    release();
+    if (!mobile.matches || reduced.matches || !data.next.container) return;
+    const page = data.next.container;
+    const open = page.matches('[data-case-page]') && listing(data.current.url.path);
+    const returning = data.current.container.matches('[data-case-page]') && listing(data.next.url.path);
+    if (!open && !returning) return;
+    const source = open ? card(data.current.container,data.next.url.path) : null;
+    const target = open ? page.querySelector('.case-featured .case-media') : card(page,data.current.url.path);
+    if (!target) return;
+    const job = active = {open,source,target,page};
+    source?.setAttribute('data-case-origin','');
+    if (open) target.setAttribute('data-case-landing','');
+    const poster = target.querySelector('.project-preview__poster,.work-card__image');
+    if (poster) poster.loading = 'eager';
+    if (!returning) return;
+    try {
+      const origin = JSON.parse(sessionStorage.getItem('jk-project-origin'));
+      job.scroll = origin?.path === data.next.url.path ? Number(origin.y) || 0 : 0;
+    } catch { job.scroll = 0; }
+    job.observer = new MutationObserver(() => {
+      if (!document.querySelector('body > .case-return-media')) return;
+      job.observer.disconnect();
+      const y = Math.max(0,-(parseFloat(page.style.top) || 0));
+      // The desktop stage is fixed. Its destination can use the final page layout from the first frame.
+      gsap.set(page,{clearProps:'position,top,left,right,width'});
+      window.scrollTo({top:y,behavior:'instant'});
+      window.JKProject?.lenis?.()?.scrollTo(y,{immediate:true,force:true});
+    });
+    job.observer.observe(document.body,{childList:true});
   });
 
-  function mount() {
-    const blur=document.querySelector('.progressive-blur');
-    if(blur){
-      const anchor=document.createComment('');blur.before(anchor);
-      const place=()=>mobile.matches?document.body.append(blur):anchor.after(blur);
-      place();mobile.addEventListener('change',place);
-    }
-    if(!document.startViewTransition)return;
-    function installPage(job){
-      if(job.installed)return;
-      job.installed=true;
-      job.from.removeAttribute('data-route-picture');
-      job.current.style.display='none';
-      gsap.set(job.next,{clearProps:'position,top,left,right,width,transform,opacity,visibility'});
-      let y=0;
-      if(!job.forward){
-        try {
-          const origin=JSON.parse(sessionStorage.getItem('jk-project-origin'));
-          if(origin?.path===location.pathname)y=Number(origin.y)||0;
-        } catch {}
-      }
-      const jump=top=>{
-        window.scrollTo({top,behavior:'instant'});
-        window.JKProject?.lenis?.()?.scrollTo(top,{immediate:true,force:true});
-      };
-      jump(y);
-      if(!job.forward){
-        const rect=job.to.getBoundingClientRect();
-        if(rect.bottom<1 || rect.top>=innerHeight)y=Math.max(0,scrollY+rect.top-Math.max(0,(innerHeight-rect.height)/2));
-        jump(y);
-        job.next.dataset.restoreScroll='true';
-        window.JKReveals?.restore(job.next,scrollY);
-      }
-      job.to.setAttribute('data-route-picture','');
-      if(typeof resetPage==='function')resetPage(job.next,y);
-      job.y=scrollY;
-    }
-    for(const name of ['runPageLeaveAnimation','runPageEnterAnimation','runWorkLeaveAnimation','runCaseEnterAnimation']){
-      const normal=window[name];
-      if(typeof normal!=='function')continue;
-      window[name]=function(...args){
-        if(!route)return normal.apply(this,args);
-        installPage(route);return Promise.resolve();
-      };
-    }
-    barba.hooks.after(async d=>{
-      const job=route;
-      if(!job || job.next!==d.next.container)return;
-      if(!job.forward)window.JKReveals?.restore(job.next,scrollY);
-      const image=job.to.querySelector('.project-preview__backdrop,.work-card__image');
-      if(image && !(image.complete && image.naturalWidth)){
-        await Promise.race([image.decode().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,400))]);
-      }
-      boxVars('to',job.to);
-      clearTimeout(job.deadline);
-      job.update.open();
-      await job.transition.finished.catch(()=>{});
+  function init() {
+    keepBlur();
+    if (!window.gsap) return;
+    barba.hooks.beforeEnter(data => {
+      if (!active || active.open || active.page !== data.next.container) return;
+      active.page.dataset.restoreScroll = 'true';
+      window.JKReveals?.restore(active.page,active.scroll);
     });
+    barba.hooks.afterEnter(data => {
+      if (active?.page === data.next.container && !active.open) {
+        window.JKReveals?.restore(active.page,window.scrollY);
+      }
+    });
+    barba.hooks.after(release);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,0),{once:true});
-  else setTimeout(mount,0);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0),{once:true});
+  else setTimeout(init,0);
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@release-1.2.9/dist/js/app.min.js"></script>
@@ -366,6 +311,13 @@
     function reset(){settleThumbnail();kick?.kill();center.style.removeProperty('--kick-x');center.style.removeProperty('--kick-y');center.style.removeProperty('--kick-angle');}
     function sync(){
       center.querySelectorAll('video').forEach(video=>{video.pause();video.removeAttribute('data-src');video.removeAttribute('src');video.load();video.remove();});
+      for(const thumb of center.querySelectorAll('[data-work-list-media]')){
+        const picture=thumb.querySelector('[data-next-media]');
+        const image=thumb.querySelector('.work-card__image');
+        if(!picture || !image || picture.contains(image))continue;
+        picture.classList.add('work-list__picture');
+        picture.replaceChildren(image);
+      }
       if(root.dataset.workMode!=='list' || innerWidth<992)return;
       const box=center.getBoundingClientRect();
       if(!box.height)return;
