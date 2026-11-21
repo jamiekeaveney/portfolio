@@ -61,6 +61,9 @@ html[data-loader-active]:not(.wf-design-mode):not(.wf-editor) [data-load-wrap]{d
   .error-game>[data-game-start]{grid-column:2;justify-self:end}
   .error-game>.error-game__status{grid-column:1/-1;grid-row:2;min-height:0;max-width:100%}
 }
+@media (orientation:landscape) and (max-height:30rem){
+  .error-game:is([data-game-state="playing"],[data-game-state="paused"])>.error-heading{opacity:0}
+}
 </style>
 <style>
 .services-video[data-splitter]{position:relative;overflow:hidden;aspect-ratio:16/9;width:100%}
