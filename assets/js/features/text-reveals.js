@@ -48,6 +48,7 @@
     if (!page || pages.has(page) && !responsive || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     window.JKLightbox?.mount(page);
     const restoring = page.dataset.restoreScroll === "true";
+    const mobileCards = !matchMedia("(min-width:62rem)").matches;
     const s = pages.get(page) || {
       entries: [],
       splits: [],
@@ -57,14 +58,14 @@
       started: false
     };
     pages.set(page, s);
-    if (innerWidth < 992) page.querySelectorAll(".work-slide__track > .work-card:not([data-work-clone])").forEach(((el, i) => {
+    if (mobileCards) page.querySelectorAll(".work-slide__track > .work-card:not([data-work-clone])").forEach(((el, i) => {
       el.dataset.reveal = i < 2 ? "load" : "scroll";
       el.dataset.revealEffect = "rise";
       el.dataset.revealDelay = String(i % 2 * .1);
     }));
     page.querySelectorAll('[data-reveal="load"],[data-reveal="scroll"]').forEach((el => {
       if (s.entries.some((e => e.el === el)) || responsive && !el.matches("[data-home-scroll],[data-home-intro-exit]")) return;
-      if (el.closest('[data-reveal="none"],.work-list,.case-index__card,.cv-credits') || el.closest(".work-card") && !(innerWidth < 992 && el.matches(".work-card")) || !el.getClientRects().length) return;
+      if (el.closest('[data-reveal="none"],.work-list,.case-index__card,.clients__credits') || el.closest(".work-card") && !(mobileCards && el.matches(".work-card")) || !el.getClientRects().length) return;
       if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case-featured,.case-featured *")) return;
       const entry = {
         el: el,

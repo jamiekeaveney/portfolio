@@ -1,6 +1,17 @@
 const fs = require("node:fs");
 
-const {minify: minify} = require("terser");
+const {minify} = require("terser");
+const {isTokenComment, tokenize} = require("@csstools/css-tokenizer");
+
+function productionStylesheet(file) {
+  const css = fs.readFileSync(file, "utf8");
+  const tokens = tokenize({css});
+  return tokens
+    .filter(token => !isTokenComment(token) || /^\/\*!|@license|@preserve|copyright|SPDX-License-Identifier|\blicen[sc]e\b/i.test(token[1]))
+    .map(token => token[1])
+    .join("")
+    .trim();
+}
 
 (async () => {
   const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
@@ -19,7 +30,7 @@ const {minify: minify} = require("terser");
     recursive: true
   });
   fs.writeFileSync("dist/js/app.min.js", result.code + "\n");
-  fs.writeFileSync("dist/css/site.css", manifest.css.map((p => `/* ${p} */\n${fs.readFileSync(p, "utf8")}`)).join("\n"));
+  fs.writeFileSync("dist/css/site.css", manifest.css.map(productionStylesheet).join("\n") + "\n");
   console.log("Built " + manifest.js.length + " scripts and " + manifest.css.length + " stylesheets.");
 })().catch((e => {
   console.error(e);

@@ -1,5 +1,4 @@
 (() => {
-  /* TUNE HERE — pixels and seconds. Match the project media expansion settings. */
   const SETTINGS = {
     compactAfter: 64,
     expandBefore: 24,
@@ -30,24 +29,47 @@
     if (window.JKHeader) return;
     const nav = document.querySelector(".nav-root");
     if (!nav) return;
-    document.addEventListener("click", (event => {
-      const toggle = nav.querySelector("#nav-toggle");
-      if (!toggle?.checked) return;
-      if (event.target.closest('.sitenav__mobile-wrap,label[for="nav-toggle"],#nav-toggle')) return;
+    const toggle = nav.querySelector("#nav-toggle");
+    function syncMenu() {
+      nav.classList.toggle("sitenav--menu-open", Boolean(toggle?.checked));
+    }
+    toggle?.addEventListener("change", syncMenu);
+    syncMenu();
+    document.addEventListener("click", event => {
+      if (!toggle?.checked || event.target.closest('.sitenav__mobile-wrap,label[for="nav-toggle"],#nav-toggle')) return;
       toggle.checked = false;
-      toggle.dispatchEvent(new Event("change", {
-        bubbles: true
-      }));
-    }), true);
-    const variants = [ "77974df0-b189-fee1-a56a-288237d327e5", "e72fbfa9-7432-caad-d8b8-f691e4b91418", "0f7d95bf-3fe7-c346-459f-79ff0521e166" ];
-    // Apply only Nav variant classes; existing Super Button variant classes remain intact.
-    // Include every descendant so new Designer elements and overrides inherit the chosen layout.
-        nav.querySelectorAll(".nav-project-count").forEach((count => {
-      const button = count.closest(".sitenav__item")?.querySelector("a.btn");
-      if (button) button.append(count);
-    }));
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }, true);
+    nav.querySelector(".transition.mobile")?.classList.add("sitenav__overlay");
+    nav.querySelector(".transition__dark.mobile")?.classList.add("sitenav__overlay-shade");
+    nav.querySelectorAll(".sitenav__project-count").forEach(count => {
+      const button = count.closest(".sitenav__item")?.querySelector(".btn");
+      if (button) {
+        button.classList.add("sitenav__link--counted");
+        button.append(count);
+      }
+    });
+
+    const contact = nav.querySelector(".sitenav__contact .btn");
+    contact?.classList.add("sitenav__contact-link", "sitenav__link-surface");
+    contact?.querySelectorAll(".btn__main, .btn__text-mask, .btn__text").forEach(part => {
+      part.classList.add("sitenav__contact-content");
+    });
+    nav.querySelectorAll(".sitenav .btn__main").forEach(part => part.classList.add("sitenav__button-body"));
+    nav.querySelectorAll(".sitenav .btn__text-mask").forEach(part => part.classList.add("sitenav__button-mask"));
+
+    const groups = Array.from(nav.querySelectorAll(".sitenav__links, .sitenav__socials"), group => {
+      const links = Array.from(group.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]'));
+      for (const link of links) {
+        link.classList.add("sitenav__link", "sitenav__link-surface");
+        link.addEventListener("pointerenter", () => group.classList.add("sitenav__group--pointed"));
+        link.addEventListener("pointerleave", () => group.classList.remove("sitenav__group--pointed"));
+      }
+      return { group, links, primary: group.classList.contains("sitenav__links") };
+    });
+    const variants = ["77974df0-b189-fee1-a56a-288237d327e5", "e72fbfa9-7432-caad-d8b8-f691e4b91418", "0f7d95bf-3fe7-c346-459f-79ff0521e166"];
     const layoutNodes = [ nav, ...nav.querySelectorAll("*") ];
-    nav.querySelectorAll(".nav-project-count").forEach(el => el.removeAttribute("data-nav-fade"));
+    nav.querySelectorAll(".sitenav__project-count").forEach(el => el.removeAttribute("data-nav-fade"));
     const fading = [ ...nav.querySelectorAll("[data-nav-fade]") ];
     const moving = [ ...nav.querySelectorAll("[data-nav-flip]") ];
     const wordmark = nav.querySelector(".sitenav__wordmark");
@@ -62,7 +84,7 @@
         mask.style.setProperty("--char-i", i);
         for (let n = 0; n < 2; n++) {
           const glyph = document.createElement("span");
-          glyph.className = "nav-logo__glyph";
+          glyph.className = n === 0 ? "nav-logo__glyph" : "nav-logo__glyph nav-logo__glyph--repeat";
           glyph.textContent = letter === " " ? " " : letter;
           mask.append(glyph);
         }
@@ -210,21 +232,23 @@
     };
     function nameButtons(scope) {
       scope.querySelectorAll("a.btn:not([aria-label])").forEach((button => {
-        const text = button.querySelector(".btn_text")?.textContent.trim();
+        const text = button.querySelector(".btn__text")?.textContent.trim();
         if (text) button.setAttribute("aria-label", text);
       }));
     }
     function syncGroups(path = location.pathname) {
-      nav.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]').forEach(a => {
-        const href = a.getAttribute('href') || '';
-        const group = a.closest('ul') || a.parentElement.parentElement;
-        const primary = href.startsWith('/');
-        group.dataset.navGroup = primary ? 'primary' : 'social';
-        const current = primary && new URL(a.href, location.href).pathname === path;
-        a.classList.toggle('w--current', current);
-        if (current) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
-      });
-      nav.querySelectorAll('[data-nav-group="primary"]').forEach(g => g.dataset.hasCurrent = String(!!g.querySelector('[aria-current="page"]')));
+      for (const { group, links, primary } of groups) {
+        let hasCurrent = false;
+        for (const link of links) {
+          const current = primary && new URL(link.href, location.href).pathname === path;
+          link.classList.toggle("w--current", current);
+          link.classList.toggle("sitenav__link--current", current);
+          if (current) link.setAttribute("aria-current", "page");
+          else link.removeAttribute("aria-current");
+          hasCurrent ||= current;
+        }
+        group.classList.toggle("sitenav__group--current", hasCurrent);
+      }
     }
     syncGroups();
     nameButtons(document);
@@ -274,6 +298,7 @@
     });
     window.addEventListener("pageshow", (() => {
       applyTheme(root.dataset.themeStatus);
+      syncMenu();
       update(true);
     }));
     document.addEventListener("jk:page-intro", (() => {

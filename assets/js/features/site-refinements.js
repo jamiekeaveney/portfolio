@@ -1,143 +1,20 @@
-/* R9: native sticky easing, section navigation and one portrait handoff. */
 (() => {
   "use strict";
-  let stickies = null, portrait = null, sectionLabels = null, resizeTimer;
-  const desktop = matchMedia("(min-width:992px) and (hover:hover) and (pointer:fine)");
+  let stickies = null, sectionLabels = null, resizeTimer;
+  const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
   const reduced = matchMedia("(prefers-reduced-motion:reduce)");
-  function disposePortrait() {
-    portrait?.destroy();
-    portrait = null;
-  }
-  function mountPortrait(page) {
-    disposePortrait();
-    const source = page.querySelector("[data-portrait-source]"), target = page.querySelector("[data-portrait-destination]");
-    if (!source || !target || !desktop.matches || reduced.matches) return;
-    const sourceImage = source.querySelector("img"), targetImage = target.querySelector("img");
-    if (!sourceImage || !targetImage) return;
-    const clone = document.createElement("div"), face = sourceImage.cloneNode(true);
-    face.removeAttribute("id");face.alt="";face.className="about-portrait-flight__image";clone.append(face);
-    clone.removeAttribute("id");
-    
-    clone.className = "about-portrait-flight";
-    clone.setAttribute("aria-hidden", "true");
-    page.append(clone);
-    const originalStyle = source.getAttribute("style");
-    let from, to, disposed = false;
-    const reset = () => {
-      source.style.width = "";
-      source.style.marginRight = "";
-      source.style.height = "";
-    };
-    function measure() {
-      reset();
-      const a = source.getBoundingClientRect(), b = target.getBoundingClientRect(), p = page.getBoundingClientRect();
-      from = {
-        x: a.left - p.left,
-        y: a.top - p.top,
-        w: a.width,
-        h: a.height
-      };
-      to = {
-        x: b.left - p.left,
-        y: b.top - p.top,
-        w: b.width,
-        h: b.height
-      };
-      gsap.set(clone, {
-        position: "absolute",
-        left: from.x,
-        top: from.y,
-        width: from.w,
-        height: from.h,
-        transformOrigin: "50% 50%",
-        zIndex: 8,
-        pointerEvents: "none",
-        borderRadius: getComputedStyle(target).borderRadius,
-        objectFit: "cover"
-      });
-    }
-    function paint(p) {
-      if (disposed || !from?.w) return;
-      sourceImage.style.visibility = p > 0 ? "hidden" : "";
-      targetImage.style.visibility = p < 1 ? "hidden" : "";
-      const collapse = Math.min(1, p / .65);
-      source.style.width = from.w * (1 - collapse) + "px";
-      source.style.height = from.h + "px";
-      source.style.marginRight = (1 - collapse) * .12 + "em";
-      // The inline source changes line wrapping as it collapses. Measure the
-      // destination after that reflow so the final clone and image coincide.
-      const host=page.getBoundingClientRect(),dest=target.getBoundingClientRect();
-      to={x:dest.left-host.left,y:dest.top-host.top,w:dest.width,h:dest.height};
-      gsap.set(clone, {
-        visibility: p > 0 && p < 1 ? "visible" : "hidden",
-        x: (to.x - from.x + (to.w-from.w)/2) * p,
-        y: (to.y - from.y + (to.h-from.h)/2) * p + (tween?.scrollTrigger ?
-          Math.max(tween.scrollTrigger.start, Math.min(tween.scrollTrigger.end, scrollY)) -
-          (tween.scrollTrigger.start + (tween.scrollTrigger.end-tween.scrollTrigger.start)*p) : 0),
-        scaleX: 1 + (to.w / from.w - 1) * p,
-        scaleY: 1 + (to.h / from.h - 1) * p,
-        rotation: 0
-      });
-    }
-    const playhead = {
-      value: 0
-    };
-    measure();
-    let tween, swing=0;
-    face.style.transformOrigin='0% 0%';
-    const swingTick=(time,dt=16.667)=>{
-      const p=playhead.value,velocity=tween?.scrollTrigger?.getVelocity()||0;
-      const target=gsap.utils.clamp(-26,26,velocity*.012);
-      swing+=(target-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
-      const edge=Math.min(1,p/.16,(1-p)/.16);
-      const tilt=swing*edge*edge*(3-2*edge);
-      face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
-    };
-    gsap.ticker.add(swingTick);
-    tween = gsap.to(playhead, {
-      value: 1,
-      ease: "sine.inOut",
-      onUpdate: () => paint(playhead.value),
-      scrollTrigger: {
-        trigger: source,
-        start: "center center",
-        endTrigger: target,
-        end: "center center",
-        scrub: .18,
-        onUpdate: () => paint(playhead.value),
-        invalidateOnRefresh: true,
-        onRefresh() {
-          measure();
-          paint(playhead.value);
-        }
-      }
-    });
-    paint(tween.scrollTrigger.progress);
-    portrait = {
-      destroy() {
-        disposed = true;
-        gsap.ticker.remove(swingTick);
-        tween.scrollTrigger?.kill();
-        tween.kill();
-        clone.remove();
-        reset();
-        sourceImage.style.visibility = "";
-        targetImage.style.visibility = "";
-      }
-    };
-  }
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section-header .grey-label,.cv-clients-label,.cv-selected-caption')].map(el=>{
+    const labels=[...page.querySelectorAll('.section__header .grey-label,.clients__eyebrow,.cv__selected-caption')].map(el=>{
       const section=el.closest('.section')||el.closest('.edit-grid');
-      const end=el.matches('.cv-clients-label')?section?.querySelector('.cv-selected-caption'):el.closest('#about')?section?.querySelector('.home-intro-button'):null;
+      const end=el.matches('.clients__eyebrow')?section?.querySelector('.cv__selected-caption'):el.closest('#about')?section?.querySelector('.section__action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
     }).filter(s=>s.section&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
-    const serviceLabel=page.querySelector('#services .section-header .grey-label');
-    const serviceMedia=page.querySelector('#services .services-video-sticky');
+    const serviceLabel=page.querySelector('#services .section__header .grey-label');
+    const serviceMedia=page.querySelector('#services .services__sticky-media');
     let serviceNatural=0,serviceLabelStyle=serviceLabel?.style.translate||'';
-    const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services-sticky-video');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
+    const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services__media-container');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
     measureService();ScrollTrigger.addEventListener('refresh',measureService);
     let frozen=false;
     const tick=()=>{
@@ -176,7 +53,7 @@
         ease: "expo",
         distance: .45,
         engine: "main",
-        media: "(min-width:992px) and (hover:hover) and (pointer:fine)",
+        media: "(min-width:62rem) and (hover:hover) and (pointer:fine)",
         ticker: fn => {
           gsap.ticker.add(fn);
           return () => gsap.ticker.remove(fn);
@@ -184,12 +61,6 @@
       });
     }
     mountSectionLabels(page);
-    const source = page.querySelector("[data-portrait-source]");
-    if (source && parseFloat(source.style.width) === 0) page.addEventListener("jk:inline-ready", (() => mountPortrait(page)), {
-      once: true
-    }); else if (source && source.style.width) page.addEventListener("jk:inline-ready", (() => mountPortrait(page)), {
-      once: true
-    }); else mountPortrait(page);
   }
   document.addEventListener("click", (event => {
     const arrow = event.target.closest(".scroll-arrow__mask");
@@ -197,7 +68,7 @@
     const page = arrow.closest('[data-barba="container"]');
     if (!page) return;
     let selector = arrow.getAttribute("data-anchor-target") || arrow.getAttribute("href"), target;
-    if (innerWidth < 992 && selector === "#showreel") selector = "#about";
+    if (!matchMedia("(min-width:62rem)").matches && selector === "#showreel") selector = "#about";
     try {
       target = selector?.startsWith("#") ? page.querySelector(selector) : null;
     } catch {}
@@ -208,7 +79,7 @@
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    const nav = document.querySelector(".sitenav__bar"), offset = innerWidth < 992 ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
+    const nav = document.querySelector(".sitenav__bar"), offset = !matchMedia("(min-width:62rem)").matches ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
     const smooth = window.JKProject?.lenis();
     if (smooth) smooth.scrollTo(target, {
       offset: offset,
@@ -232,7 +103,7 @@
       barba.hooks.afterLeave((() => {
         stickies?.destroy();
         stickies = null;
-        disposePortrait();sectionLabels?.destroy();sectionLabels=null;
+        sectionLabels?.destroy();sectionLabels=null;
       }));
       barba.hooks.afterEnter((d => mount(d.next.container)));
       document.addEventListener('jk:loader-prepare',e=>{mount(e.detail.page);e.detail.page.dataset.refinementsPrepared='true';});

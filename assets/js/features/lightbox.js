@@ -1,4 +1,3 @@
-/* Desktop restoration: verified R8 player, before the viewport-portal rewrite. */
 (function(nativeWindow){
 if(nativeWindow.JKLightbox)return;
 const mounted=new Map();
@@ -562,7 +561,7 @@ function initMiniShowreelPlayer() {
 
   function openBy(name) {
     if (!name || isOpen) return;
-    if (matchMedia('(max-width:991px), (pointer:coarse)').matches && nativeWindow.JKMobileMedia) {
+    if (matchMedia('(max-width:61.9375rem), (pointer:coarse)').matches && nativeWindow.JKMobileMedia) {
       const player=root.querySelector('[data-bunny-player-init]');
       nativeWindow.JKMobileMedia.open(root.querySelector('.mini-showreel__cover-image') || player?.querySelector('video'), openBtns[0], player?.getAttribute('data-player-src'));
       return;

@@ -18,6 +18,8 @@
       const stage=wrap?.querySelector('.sticky-footer'),name=stage?.querySelector('.footer');
       if(!wrap||!inner||!stage||!name)return;
       const title=panel.querySelector('.footer-editorial__contact');
+      const legal=inner.querySelector('.footer-legal');
+      legal?.querySelectorAll('.btn').forEach(button=>button.classList.add('footer-legal__action'));
       if(title){title.removeAttribute('href');title.removeAttribute('tabindex');title.removeAttribute('data-trigger');title.setAttribute('role','heading');title.setAttribute('aria-level','2');}
       let tint=panel.querySelector(':scope > .footer-parallax__tint');
       if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
@@ -25,16 +27,15 @@
       let overlap=0,paintNow=()=>{};
       const measure=()=>{if(!frozen){overlap=glyphMidpoint(name);wrap.style.setProperty('--footer-overlap',overlap+'px');}};
       const ro=new ResizeObserver(measure);ro.observe(name);measure();
-      mm.add('(min-width:992px) and (prefers-reduced-motion:no-preference)',()=>{
+      mm.add('(min-width:62rem) and (prefers-reduced-motion:no-preference)',()=>{
         // The half-height overlap follows normal flow until the panel bottom arrives.
         // Read the actual flow box, so a resize or a preceding pin cannot leave a stale end.
         let lastOffset;
-        const legal=inner.querySelector('.footer-legal');
         let placeholder,legalStyle;
         if(legal){
           legalStyle=legal.getAttribute('style');placeholder=document.createElement('div');
           placeholder.className='footer-legal-placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
-          legal.before(placeholder);wrap.append(legal);legal.dataset.footerLegalFloating='';
+          legal.before(placeholder);wrap.append(legal);legal.classList.add('footer-legal--floating');
         }
         const paint=()=>{
           if(frozen)return;
@@ -46,7 +47,7 @@
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
         paintNow=paint;paint();gsap.ticker.add(paint);
-        return ()=>{if(legal){placeholder.replaceWith(legal);delete legal.dataset.footerLegalFloating;if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
+        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer-legal--floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
       });
       states.set(panel,{
         refresh(){measure();paintNow();},

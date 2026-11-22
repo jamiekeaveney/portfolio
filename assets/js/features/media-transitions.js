@@ -309,7 +309,11 @@
       xPercent: 0,
       yPercent: 0
     });
+    const touchOrigin = matchMedia("(max-width:61.9375rem)").matches ? current.querySelector("[data-case-origin]") : null;
+    const originLayers = touchOrigin ? [...touchOrigin.children].filter(layer => !layer.matches(".work-card__meta")) : [];
+    for (const layer of originLayers) layer.classList.add("case-transition__concealed");
     const image = oldMedia.querySelector(".project-preview__poster") || oldMedia.querySelector("img");
+    if (image) image.classList.add("case-transition__poster");
     if (image) gsap.set(image, {
       scale: 1,
       opacity: 1
@@ -341,6 +345,7 @@
     });
     const media = next.querySelector(".case-featured .case-media"), hero = next.querySelector(".project-hero");
     if (!media) {
+      for (const layer of originLayers) layer.classList.remove("case-transition__concealed");
       stage.remove();
       gsap.set(next, {
         clearProps: "all"
@@ -348,12 +353,14 @@
       JKProject.transitioning = false;
       return swap(current, next, null);
     }
+    const landing = next.querySelector("[data-case-landing]");
+    landing?.classList.add("case-transition__concealed");
     gsap.set(next.querySelector(".case-featured"), {
       clearProps: "transform,clipPath,opacity,visibility"
     });
     // Lower media is revealed only after the destination returns to document flow.
     // This avoids exposing its fixed-container layout during the mobile handoff.
-    const deferredSections = innerWidth < 992 ? [...next.querySelectorAll('.case-section')] : [];
+    const deferredSections = !matchMedia("(min-width:62rem)").matches ? [...next.querySelectorAll('.case-section')] : [];
     if (deferredSections.length) gsap.set(deferredSections, {autoAlpha:0});
     const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".mini-showreel__cover-image") || media.querySelector("video");
     let video, videoParent, videoSibling, videoStyle, videoClass, ready = false;
@@ -435,6 +442,7 @@
         }
         parent.append(next);
         current.remove();
+        landing?.classList.remove("case-transition__concealed");
         stage.remove();
         gsap.set([ media, hero ], {
           clearProps: "opacity,visibility"
@@ -527,7 +535,7 @@
       if (window.JKWork?.root !== work && typeof initWorkSlider === "function") initWorkSlider(next);
       target = window.JKWork?.restore(href);
       if (!target) target = work.querySelector("[data-work-item]:not([data-work-clone]) a[href]");
-    } else if (next.querySelector(".cv-credits")) {
+    } else if (next.querySelector(".clients__credits")) {
       contextPreview = window.JKHoverAdditions?.prepareReturn(next, savedOrigin?.href || href, savedOrigin?.previewPose);
       target = contextPreview?.media;
     } else if (!work && !contextPreview) {
@@ -535,7 +543,7 @@
       target = [ ...next.querySelectorAll(".home-slide a[href]") ].find((a => new URL(a.href).pathname === path))?.closest(".home-slide");
     }
     const card = target?.closest(".work-card,.home-slide") || target?.closest("[data-work-list-center]") || target;
-    const touch = matchMedia("(max-width:991px),(hover:none)").matches;
+    const touch = matchMedia("(max-width:61.9375rem),(hover:none)").matches;
     const targetMedia = (touch ? target?.matches(".work-card__thumb,.home-slide-image") ? target : target?.querySelector(".work-card__thumb,.home-slide-image") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work-card__poster,.slide-thumbnail") || target;
     const sources = [ ...current.querySelectorAll(".case-media,.case-index__media") ].filter((el => {
       const r = el.getBoundingClientRect();
@@ -575,6 +583,7 @@
     if (frame.tagName === "IMG" && !frame.getAttribute("src") && v?.poster) frame.src = v.poster;
     const stage = document.createElement("div");
     stage.className = "case-return-media";
+    frame.classList.add("case-return-media__frame");
     stage.append(frame);
     document.body.append(stage);
     gsap.set(stage, {
@@ -599,7 +608,7 @@
     const dissolve = destinationImage?.cloneNode(true);
     if (dissolve) {
       dissolve.removeAttribute("id");
-      dissolve.removeAttribute("class");
+      dissolve.className = "case-return-media__frame";
       stage.append(dissolve);
       gsap.set(dissolve, {
         position: "absolute",
@@ -725,7 +734,7 @@
       };
       const link = e.target.closest("a");
       if (!link) return;
-      const preview = link.matches(".cv-credit") ? link.closest(".cv-credits")?.querySelector('.client-preview__visual[data-preview-position="current"]') : null;
+      const preview = link.matches(".clients__credit") ? link.closest(".clients__credits")?.querySelector('.client-preview__visual[data-preview-position="current"]') : null;
       if (preview) preview.setAttribute("data-next-media", "");
       const source = (preview ? preview.parentElement : null) || link.closest(".home-slide") || (link.matches(".work-list__center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work-card__link") ? link : null);
       const page = link.closest('[data-barba="container"]');

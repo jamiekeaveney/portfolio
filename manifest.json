@@ -1,5 +1,8 @@
 {
   "js": [
+    "assets/js/features/portrait-flight.js",
+    "assets/js/features/mobile-transition.js",
+    "assets/js/features/trigger-state.js",
     "assets/js/core/site.js",
     "assets/js/features/pointer-motion.js",
     "assets/js/features/project-lifecycle.js",
@@ -28,7 +31,9 @@
     "assets/js/features/projects.js",
     "assets/js/features/utility-pages.js",
     "assets/js/core/page-transitions.js",
-    "assets/js/core/clock.js"
+    "assets/js/core/clock.js",
+    "assets/js/features/tab-title.js",
+    "assets/js/features/portfolio-controls.js"
   ],
   "css": [
     "assets/css/components/loader.css",
@@ -37,8 +42,7 @@
     "assets/css/components/bunny-player.css",
     "assets/css/components/projects.css",
     "assets/css/components/interactions.css",
-    "assets/css/components/cursor.css",
-    "assets/css/base/scaling.css",
-    "assets/css/components/utility-pages.css"
+    "assets/css/components/utility-pages.css",
+    "assets/css/components/portfolio-controls.css"
   ]
 }

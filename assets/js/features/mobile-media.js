@@ -1,6 +1,6 @@
 /* Conventional touch player. Desktop keeps the original Mini Showreel timeline. */
 (() => {
-  const mobile=matchMedia('(max-width:991px), (pointer:coarse)');
+  const mobile=matchMedia('(max-width:61.9375rem), (pointer:coarse)');
   let dispose=()=>{},close=()=>{};
   const root=document.documentElement;
   document.addEventListener('pointerdown',e=>{
@@ -14,8 +14,8 @@
     const url=overrideURL||source.currentSrc||source.getAttribute('data-src')||source.src;
     if(!url)return;
     const dialog=document.createElement('dialog'),video=document.createElement('video'),exit=document.createElement('button'),label=document.createElement('span');
-    dialog.className='mobile-media-dialog';dialog.setAttribute('aria-label','Video player');
-    exit.type='button';exit.className='lightbox-close';label.textContent='Close';exit.append(label);
+    dialog.className='mobile-media';video.className='mobile-media__video';dialog.setAttribute('aria-label','Video player');
+    exit.type='button';exit.className='lightbox-close mobile-media__close';label.textContent='Close';exit.append(label);
     const menu=document.querySelector('.sitenav__menu');
     if(menu){const r=menu.getBoundingClientRect();exit.style.top=r.top+'px';exit.style.right=(innerWidth-r.right)+'px';exit.style.height=r.height+'px';}
     video.controls=true;video.playsInline=true;video.poster=source.poster||'';video.preload='metadata';
@@ -27,7 +27,7 @@
       hls=new Hls({maxBufferLength:10});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));
     }else{video.src=url;video.play().catch(()=>{});}
     const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const shell=source.closest?.('.mini-showreel__card,.video-wrap')||source;
+    const shell=source.closest?.('.mini-showreel__card,.services__video-wrap')||source;
     const sourceRadius=()=>parseFloat(getComputedStyle(shell).borderTopLeftRadius)||parseFloat(getComputedStyle(source).borderTopLeftRadius)||12;
     const finish=()=>{events.abort();video.pause();hls?.destroy();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
     close=(immediate=false)=>{
@@ -90,10 +90,10 @@
   function mount(page){
     dispose();const abort=new AbortController(),buttons=[];
     page.querySelectorAll('video').forEach(source=>{
-      if(source.closest('a,.mini-showreel,[data-project-lightbox],[data-follower-cursor],.about-portrait-flight'))return;
-      const host=source.closest('.video-wrap')||source.parentElement;
+      if(source.closest('a,.mini-showreel,[data-project-lightbox],[data-follower-cursor],.portrait-flight'))return;
+      const host=source.closest('.services__video-wrap')||source.parentElement;
       if(!host||host.querySelector('[data-mobile-play]'))return;
-      const button=document.createElement('button');button.type='button';button.className='mobile-media-play';button.dataset.mobilePlay='';button.setAttribute('aria-label','Play video');host.append(button);buttons.push(button);
+      const button=document.createElement('button');button.type='button';button.className='mobile-media__play';button.dataset.mobilePlay='';button.setAttribute('aria-label','Play video');host.append(button);buttons.push(button);
       button.addEventListener('click',()=>open(source,button),{signal:abort.signal});
     });
     dispose=()=>{close(true);abort.abort();buttons.forEach(b=>b.remove());};

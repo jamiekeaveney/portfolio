@@ -72,6 +72,7 @@ const initWorkSlider = (() => {
     };
     var setStatus = function(s) {
       root.setAttribute("data-work-status", s);
+      root.classList.toggle("work--dragging", s === "dragging");
     };
     var isMobile = function() {
       return mq.matches;
@@ -171,8 +172,7 @@ const initWorkSlider = (() => {
           mode: mode,
           phase: S.pitch ? S.cur / S.pitch : 0,
           listPhase: L.rowH ? L.cur / L.rowH : 0,
-          left: thumb.getBoundingClientRect().left / innerWidth,
-          previewX: (Number(gsap.getProperty(listCenter,'x'))||0)/innerWidth
+          left: thumb.getBoundingClientRect().left / innerWidth
         };
         try {
           sessionStorage.setItem("work-return-project", href);
@@ -194,8 +194,8 @@ const initWorkSlider = (() => {
         if (mode === "list") {
           setupList();
           if (saved?.href === href && saved.mode === "list" && Number.isFinite(saved.listPhase)) L.cur = L.tgt = saved.listPhase * L.rowH;
-          previewX=0;
-          alignListFrame();applyList(L.cur);previewMedia(L.cur);
+
+          alignListFrame();applyList(L.cur);showListThumbnail();
           return $('[data-work-state="active"]', listCenter);
         }
         setupSlide();
@@ -390,27 +390,10 @@ const initWorkSlider = (() => {
         }
       }
     };
-    let listVideos=[],previewX=0,previewPlaced=false,settledSince=0,lastPreviewValue=null;
-    function previewMedia(value){
-      if(!L.rowH)return;
-      const phase=value/L.rowH,now=performance.now();
-      const moving=lDrag||Math.abs(L.tgt-value)>.15||lastPreviewValue===null||Math.abs(value-lastPreviewValue)>.03;
-      if(moving)settledSince=now;
-      lastPreviewValue=value;
-      const settled=!moving&&now-settledSince>140;
-      listVideos.forEach(({el,video,image},index)=>{
-        el.style.transform='none';
-        el.style.visibility=index===activeIdx?'visible':'hidden';
-        const playing=settled&&index===activeIdx&&(listCenter.matches(':hover')||listCenter.matches(':focus-visible'))&&!fading&&!document.hidden&&!reducedMotion.matches;
-        if(playing===!!el._previewPlaying)return;
-        el._previewPlaying=playing;
-        if(!playing){video?.pause();el.removeAttribute('data-preview-playing');return;}
-        if(!video)return;
-        if(!video.getAttribute('src')&&video.dataset.src){video.src=video.dataset.src;video.load();}
-        video.play().then(()=>{
-          const reveal=()=>{if(!dead&&el._previewPlaying&&el.isConnected)el.setAttribute('data-preview-playing','');};
-          if(video.requestVideoFrameCallback)video.requestVideoFrameCallback(reveal);else reveal();
-        }).catch(()=>{el._previewPlaying=false;});
+    let listMedia = [];
+    function showListThumbnail() {
+      listMedia.forEach((item, index) => {
+        item.style.visibility = index === activeIdx ? "visible" : "hidden";
       });
     }
     var lDrag = false;
@@ -432,11 +415,6 @@ const initWorkSlider = (() => {
       while (amount--) out += string;
       return out;
     }
-    function pauseListVideos() {
-      $$("video", listCenter).forEach((function(video) {
-        video.pause();
-      }));
-    }
     function buildList() {
       [ listLeft, listRight, numLeft, numRight, listCenter ].forEach((function(el) {
         el.innerHTML = "";
@@ -451,13 +429,18 @@ const initWorkSlider = (() => {
         thumb.setAttribute('data-video-ignore','');
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});
         thumb.setAttribute("data-work-list-media", index);
-        var video = thumb.querySelector("video[data-src]");
-        if (video) video.removeAttribute("src");
+        const image = thumb.querySelector(".work-card__image");
+        const picture = thumb.querySelector("[data-next-media]");
+        if (picture && image) {
+          picture.classList.add("work-list__picture");
+          image.classList.add("work-list__thumbnail");
+          picture.replaceChildren(image);
+        }
+        thumb.querySelectorAll("video").forEach(video => video.remove());
         mediaFrag.appendChild(thumb);
       }));
       listCenter.appendChild(mediaFrag);
-      listVideos=$$('[data-work-list-media]',listCenter).map(el=>({el,video:el.querySelector('video'),image:el.querySelector('.project-preview__poster')}));
-      settledSince=performance.now();lastPreviewValue=null;previewPlaced=false;
+      listMedia = $$("[data-work-list-media]", listCenter);
       var leftMarkup = "";
       var rightMarkup = "";
       var numberMarkup = "";
@@ -490,7 +473,8 @@ const initWorkSlider = (() => {
       /* Centre one row vertically; computed once per setup, not per frame. */      L.align = (parseFloat(listEl.style.getPropertyValue('--list-midpoint'))||listEl.clientHeight/2)-L.rowH/2;
       L.cur = L.tgt = L.off0 + activeIdx * L.rowH;
       L.prevIdx = -1;
-      listEl.querySelectorAll(".work-list__label[data-work-active]").forEach((el => el.removeAttribute("data-work-active")));
+      prevLeftLabel?.classList.remove("work-list__label--active");
+      prevRightLabel?.classList.remove("work-list__label--active");
       prevLeftLabel = null;
       prevRightLabel = null;
       if (!frozen && !fading) gsap.ticker.add(listTick);
@@ -514,7 +498,7 @@ const initWorkSlider = (() => {
         L.tgt += L.span;
       }
       applyList(L.cur);
-      previewMedia(L.cur);
+      showListThumbnail();
     }
     function applyList(value) {
       var leftY = -value + L.align;
@@ -530,23 +514,29 @@ const initWorkSlider = (() => {
       var nextRightLabel = $(".work-list__label", rightRows[rightAt]);
       /* Visible repeated labels update independently of the logical
 			   project index so infinite wrapping remains seamless. */      if (nextLeftLabel !== prevLeftLabel) {
-        if (prevLeftLabel) prevLeftLabel.removeAttribute("data-work-active");
+        prevLeftLabel?.classList.remove("work-list__label--active");
         prevLeftLabel = nextLeftLabel;
-        prevLeftLabel.setAttribute("data-work-active", "true");
+        prevLeftLabel.classList.add("work-list__label--active");
       }
       if (nextRightLabel !== prevRightLabel) {
-        if (prevRightLabel) prevRightLabel.removeAttribute("data-work-active");
+        prevRightLabel?.classList.remove("work-list__label--active");
         prevRightLabel = nextRightLabel;
-        prevRightLabel.setAttribute("data-work-active", "true");
+        prevRightLabel.classList.add("work-list__label--active");
       }
       if (index === L.prevIdx) return;
       L.prevIdx = index;
       activeIdx = index;
       markCurrentSlide(index);
       var currentMedia = $('[data-work-list-media][data-work-state="active"]', listCenter);
-      if (currentMedia) currentMedia.removeAttribute("data-work-state");
+      if (currentMedia) {
+        currentMedia.removeAttribute("data-work-state");
+        currentMedia.classList.remove("work-list__media--active");
+      }
       var nextMedia = $('[data-work-list-media="' + index + '"]', listCenter);
-      if (nextMedia) nextMedia.setAttribute("data-work-state", "active");
+      if (nextMedia) {
+        nextMedia.setAttribute("data-work-state", "active");
+        nextMedia.classList.add("work-list__media--active");
+      }
       var link = originals[index] && originals[index].querySelector("a[href]");
       if (link) listCenter.setAttribute("href", link.getAttribute("href") || "#");
     }
@@ -567,8 +557,6 @@ const initWorkSlider = (() => {
       L.snapTimer = null;
       killSnap(L.snap);
       gsap.ticker.remove(listTick);
-      pauseListVideos();
-      listVideos.forEach(({el})=>{el._previewPlaying=false;el.removeAttribute('data-preview-playing');});
     }
     listEl.addEventListener("pointerdown", function(event) {
       if (mode !== "list" || isMobile() || locked() || event.button!==0) return;
@@ -647,12 +635,16 @@ const initWorkSlider = (() => {
         setupList();
         applyList(L.cur);
         alignListFrame();
-        previewMedia(L.cur);
+        showListThumbnail();
       }
+    }
+    function setViewLayout(next) {
+      root.setAttribute("data-work-mode", next);
+      root.classList.toggle("work--list", next === "list");
     }
     function applyMode(next) {
       mode = next;
-      root.setAttribute("data-work-mode", next);
+      setViewLayout(next);
       root.setAttribute("data-work-initialized", "");
       viewBtns.forEach((function(button) {
         button.setAttribute("data-work-active", button.getAttribute("data-work-view") === next ? "true" : "false");
@@ -677,7 +669,7 @@ const initWorkSlider = (() => {
       // Visibility keeps this synchronous measurement out of the painted frame.
       const gallery=track.closest('.work-slide'),saved=gallery.getAttribute('style');
       const host=listEl.getBoundingClientRect(),savedMode=root.getAttribute('data-work-mode');
-      root.setAttribute('data-work-mode','slide');
+      setViewLayout('slide');
       gallery.style.visibility='hidden';gallery.style.pointerEvents='none';
       const card=track.querySelector('.work-card__thumb'),r=card?.getBoundingClientRect();
       if(r?.width&&r.height){
@@ -688,72 +680,21 @@ const initWorkSlider = (() => {
         L.align=midpoint-L.rowH/2;
       }
       if(saved===null)gallery.removeAttribute('style');else gallery.setAttribute('style',saved);
-      root.setAttribute('data-work-mode',savedMode);
-      gsap.set(listCenter,{x:0,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";previewPlaced=true;
+      setViewLayout(savedMode);
+      gsap.set(listCenter,{x:0,y:0,xPercent:-50,yPercent:-50});listCenter.style.rotate="0deg";
     }
     function currentMedia(index = activeIdx) {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
       return $$(".work-card", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work-card__thumb");
     }
-    function modeVisual(source) {
-      const r = source.getBoundingClientRect(), poster = source.querySelector(".work-card__poster"), pr = poster?.getBoundingClientRect() || r;
-      const box = document.createElement("div"), back = source.querySelector(".work-card__image")?.cloneNode(true), front = document.createElement("div");
-      const video = source.querySelector("video"), image = source.querySelector(".project-preview__poster");
-      let visual;
-      if (video?.readyState >= 2 && (!image || parseFloat(getComputedStyle(image).opacity) < .1)) {
-        visual = document.createElement("canvas");
-        visual.width = video.videoWidth;
-        visual.height = video.videoHeight;
-        try {
-          visual.getContext("2d").drawImage(video, 0, 0);
-        } catch (_) {
-          visual = null;
+    function setGalleryInteractionLocked(locked) {
+      listEl.classList.toggle("work-list--switching", locked);
+      for (const item of $$(".work-card", track)) {
+        item.classList.toggle("work-card--switching", locked);
+        for (const part of item.querySelectorAll(".work-card__thumb,.work-card__link,.work-card__poster,.work-card__meta")) {
+          part.classList.toggle("work-card__part--switching", locked);
         }
       }
-      if (!visual) visual = image?.cloneNode(true) || back?.cloneNode(true) || document.createElement("img");
-      [ back, visual ].filter(Boolean).forEach((el => {
-        el.removeAttribute("class");
-        el.removeAttribute("id");
-        el.removeAttribute("style");
-        Object.assign(el.style, {
-          position: "absolute",
-          inset: "0",
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          objectPosition: "center",
-          opacity: "1"
-        });
-      }));
-      if (back) {
-        back.style.opacity = getComputedStyle(root).getPropertyValue("--project-peer-opacity").trim() || ".25";
-        back.style.filter = "blur(1rem)";
-        back.style.transform = "scale(1.08)";
-        box.append(back);
-      }
-      Object.assign(front.style, {
-        position: "absolute",
-        overflow: "hidden",
-        borderRadius: poster ? getComputedStyle(poster).borderRadius : "inherit"
-      });
-      front.append(visual);
-      box.append(front);
-      const pose = {
-        left: 100 * (pr.left - r.left) / r.width,
-        top: 100 * (pr.top - r.top) / r.height,
-        width: 100 * pr.width / r.width,
-        height: 100 * pr.height / r.height
-      };
-      gsap.set(front, {
-        left: pose.left + "%",
-        top: pose.top + "%",
-        width: pose.width + "%",
-        height: pose.height + "%"
-      });
-      return {
-        box: box,
-        front: front
-      };
     }
     function cancelModeFlip() {
       modeTween?.kill();
@@ -764,6 +705,7 @@ const initWorkSlider = (() => {
       });
       modeTween = modeContentTween = modeGhost = modeTarget = null;
       root.removeAttribute("data-work-switching");
+      setGalleryInteractionLocked(false);
       fading = false;
     }
     function freeze() {
@@ -772,7 +714,7 @@ const initWorkSlider = (() => {
         modeContentTween?.progress(1);
       }
       frozen = true;
-      previewX=0;
+
       killSlide();
       killList();
       clearTimeout(L.snapTimer);
@@ -793,19 +735,31 @@ const initWorkSlider = (() => {
         applyMode(next);
         return;
       }
-      previewX=0;
+
       const selected = activeIdx, source = currentMedia(selected);
       if (!source) {
         applyMode(next);
         return;
       }
-      const rect = source.getBoundingClientRect(), visual = modeVisual(source);
+      const image = source.querySelector(".work-card__image,.project-preview__poster");
+      if (!image) {
+        applyMode(next);
+        return;
+      }
+      const rect = source.getBoundingClientRect();
       fading = true;
       killSlide();
       killList();
       root.setAttribute("data-work-switching", "");
-      const ghost = modeGhost = visual.box;
+      setGalleryInteractionLocked(true);
+      const ghost = modeGhost = document.createElement("div");
       ghost.className = "work-mode-flip";
+      ghost.setAttribute("aria-hidden", "true");
+      const poster = image.cloneNode(false);
+      poster.removeAttribute("id");
+      poster.removeAttribute("style");
+      poster.className = "work-mode-flip__image";
+      ghost.append(poster);
       document.body.append(ghost);
       gsap.set(ghost, {
         position: "fixed",
@@ -841,7 +795,7 @@ const initWorkSlider = (() => {
           resume();
           return;
         }
-        const to = target.getBoundingClientRect(), poster = target.querySelector(".work-card__poster"), pr = poster?.getBoundingClientRect() || to;
+        const to = target.getBoundingClientRect();
         gsap.set(visualLayers(target), {
           visibility: "hidden"
         });
@@ -866,19 +820,11 @@ const initWorkSlider = (() => {
           height: to.height,
           duration: 1,
           ease: "case-two-step"
-        }, 0).to(visual.front, {
-          left: 100 * (pr.left - to.left) / to.width + "%",
-          top: 100 * (pr.top - to.top) / to.height + "%",
-          width: 100 * pr.width / to.width + "%",
-          height: 100 * pr.height / to.height + "%",
-          duration: 1,
-          ease: "case-two-step"
         }, 0).to(content, {
           autoAlpha: 1,
           duration: .65,
           ease: "expo.out"
-        }, .3).set(visualLayers(target),{clearProps:'visibility'},1)
-          .to(ghost,{opacity:0,duration:.14,ease:'none'},1);
+        }, .3).set(visualLayers(target),{clearProps:'visibility'},1);
       }));
     }
     viewBtns.forEach((function(button) {

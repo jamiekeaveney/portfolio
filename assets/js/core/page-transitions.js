@@ -54,7 +54,7 @@ function initScrollSaver() {
   }));
 }
 
-const desktopScroll = matchMedia("(min-width:992px) and (hover:hover) and (pointer:fine)");
+const desktopScroll = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
 
 const lenisTick = time => lenis?.raf(time * 1e3);
 
@@ -159,14 +159,14 @@ function initOnceFunctions() {
 
 function initBeforeEnterFunctions(t) {
   t?.querySelectorAll('.project-hero__meta-cell,.case-details__row').forEach(row=>{
-    const value=row.querySelector('.case-meta-value');
+    const value=row.querySelector('.case__meta-value');
     row.style.display=value && !value.textContent.trim() ? 'none' : '';
   });
   nextPage = t || document, has(".work") && initWorkSlider(nextPage);
 }
 
 function initAfterEnterFunctions(t) {
-  nextPage = t || document, has(".scroll-1_component") && initScroll1(nextPage), lenis && lenis.resize(), 
+  nextPage = t || document, initServices(nextPage), lenis && lenis.resize(),
   hasScrollTrigger && ScrollTrigger.refresh();
 }
 
@@ -191,15 +191,15 @@ function runPageOnceAnimation(page) {
   content.replaceChildren();bar.replaceChildren();
   const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
   const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='sitenav__wordmark loader-logo__base';fill.className='sitenav__wordmark loader-logo__fill';fill.dataset.loadLogo='';
+  base.className='sitenav__wordmark loader-logo__wordmark loader-logo__base';fill.className='sitenav__wordmark loader-logo__wordmark loader-logo__fill';fill.dataset.loadLogo='';
   base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
   const texts=document.createElement('div');texts.className='loader-messages';
-  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
+  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader-messages__message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
   content.append(logoWrap,texts);
   const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
-  // Match the large hero's masked character cadence, without an opacity wash.
+  for (const text of texts.children) text.firstElementChild?.classList.add('loader-messages__mask');
   const charStagger=s=>Math.min(.025,.16/Math.max(1,s.chars.length-1));
   let finished=false;
   const preparePage=async()=>{
@@ -345,6 +345,7 @@ barba.hooks.before((t => {
   closeMenuIfOpen();
   isPopstate = ["popstate", "back", "forward"].includes(t.trigger), saveScrollPosition(t.current.url.href, getCurrentScroll()), 
   freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
+  document.documentElement.classList.add("page-shell--transitioning");
 })), barba.hooks.beforeEnter((t => {
   gsap.set(t.next.container, {
     position: "fixed",
@@ -359,6 +360,7 @@ barba.hooks.before((t => {
   hasScrollTrigger && ScrollTrigger.refresh();
 })), barba.hooks.after((() => {
   isPopstate = !1, skipPageTransition = !1, document.documentElement.removeAttribute("data-transitioning");
+  document.documentElement.classList.remove("page-shell--transitioning");
 }));
 
 function startPortfolio() {

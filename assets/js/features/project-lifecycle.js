@@ -41,7 +41,7 @@
     };
     states.set(page, s);
     page.querySelectorAll(".project-hero__meta-cell,.case-details__row").forEach((row => {
-      const v = row.querySelector(".case-meta-value");
+      const v = row.querySelector(".case__meta-value");
       row.style.display = v && !v.textContent.trim() ? "none" : "";
     }));
     const source = page.querySelector("[data-case-next-source]");

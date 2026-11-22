@@ -82,3 +82,5 @@ require("./check-mobile-media.js");
 require("./check-list-preview.js");
 
 require("./check-error-game.js");
+
+require("./check-services.js");

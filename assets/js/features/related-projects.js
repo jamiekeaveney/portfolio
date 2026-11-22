@@ -26,7 +26,7 @@ JKProject.register((s => {
   ordered.forEach((item => grid.append(item)));
   let cards = ordered.map((item => item.querySelector(".case-index__card"))).filter(Boolean);
   // Touch layouts use ordinary named links. No scroll progress, dimming or auto-navigation.
-    if (innerWidth < 992 || matchMedia("(pointer:coarse)").matches) {
+    if (!matchMedia("(min-width:62rem)").matches || matchMedia("(pointer:coarse)").matches) {
     cards.forEach((card => {
       card.dataset.caseTransition = "continuation";
       card.querySelector(".case-index__media").dataset.nextMedia = "";
@@ -49,7 +49,7 @@ JKProject.register((s => {
   function label(el, prompt, value) {
     el.replaceChildren();
     const lead = document.createElement("span"), detail = document.createElement("span");
-    lead.className = "case-index__prompt";
+    lead.className = el === hint ? "case-index__prompt case-index__prompt--progress" : "case-index__prompt";
     lead.textContent = prompt;
     detail.className = "case-index__value";
     detail.textContent = value;
@@ -58,6 +58,9 @@ JKProject.register((s => {
   }
   label(idle, "Up next", cards[0].querySelector(".case-index__title").textContent.trim());
   const percent = label(hint, "Scroll to next project", "(0%)");
+  const suggestedTitle = cards[0].querySelector(".case-index__title");
+  suggestedTitle.classList.add("case-index__title--suggested");
+  status.classList.add("case-index__status--attached");
   cards[0].append(status);
   gsap.set(hint, {
     yPercent: 100,
@@ -292,6 +295,8 @@ JKProject.register((s => {
     signal: s.abort.signal
   });
   s.cleanups.push((() => {
+    suggestedTitle.classList.remove("case-index__title--suggested");
+    status.classList.remove("case-index__status--attached");
     statusParent.insertBefore(status, statusSibling?.parentNode === statusParent ? statusSibling : null);
     idle.textContent = idleText;
     clearTimeout(idleTimer);

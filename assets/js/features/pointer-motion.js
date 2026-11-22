@@ -1,6 +1,6 @@
 /* One shared velocity sample; translations retain the site's .35s Expo cursor response. */
 (() => {
-  const fine=matchMedia('(min-width:992px) and (hover:hover) and (pointer:fine)'),reduced=matchMedia('(prefers-reduced-motion:reduce)');
+  const fine=matchMedia('(min-width:62rem) and (hover:hover) and (pointer:fine)'),reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const motion=window.JKPointerMotion={x:0,y:0,known:false,velocity:0,angle:0};
   let lastX=0,lastTime=0,target=0;
   document.addEventListener('pointermove',e=>{

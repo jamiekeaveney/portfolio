@@ -2,23 +2,28 @@
 (() => {
   function init(){
     const root=document.querySelector('[data-error-game]');if(!root)return;
-    const court=root.querySelector('.error-court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
+    const court=root.querySelector('.error-game__court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
     const canvas=document.createElement('canvas'),status=document.createElement('p');
+    const ctx=canvas.getContext('2d');
+    if (!ctx) return;
     canvas.setAttribute('aria-label','Pong. Move or drag your paddle, or use the left and right arrow keys. Escape pauses.');
-    canvas.tabIndex=0;court.append(canvas);status.className='error-game__status';status.setAttribute('role','status');court.after(status);
-    const ctx=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion:reduce)');
+    canvas.className='error-game__canvas';canvas.tabIndex=0;court.append(canvas);status.className='error-game__status';status.setAttribute('role','status');court.after(status);
+    const reduced=matchMedia('(prefers-reduced-motion:reduce)');
     let countdown=0;
     let width=0,height=0,x=0,y=0,vx=170,vy=115,paddle=0,score=0,playing=false,paused=false,last=0,raf,keys={};
     const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
     const label=document.createElement('span'),replacement=document.createElement('span');
-    label.className=replacement.className='btn_text';
+    label.className='btn__text error-game__control-label';
+    replacement.className='btn__text error-game__control-label error-game__control-label--duplicate';
     replacement.setAttribute('aria-hidden','true');
     start.textContent='';
     start.append(label,replacement);
     function setLabel(value){label.textContent=replacement.textContent=value;}
     function showState(){
+      root.classList.toggle('error-game--in-progress',playing);
+      court.classList.toggle('error-game__court--playing',playing);
       root.dataset.gameState=playing?(paused?'paused':'playing'):'idle';
       setLabel(playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong'));
       status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns'):'';
@@ -91,7 +96,8 @@
       }
       raf=requestAnimationFrame(paint);
     }
-    raf=requestAnimationFrame(paint);
+    paint(0);
+    root.classList.add('error-game--ready');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

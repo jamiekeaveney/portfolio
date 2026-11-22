@@ -19,7 +19,7 @@
       timeline?.scrollTrigger?.kill();
       timeline?.kill();
       restore();
-      if (matchMedia("(max-width: 991px), (prefers-reduced-motion: reduce)").matches) return;
+      if (matchMedia("(max-width: 61.9375rem), (prefers-reduced-motion: reduce)").matches) return;
       // Interpolate one viewport rectangle. Scroll compensation is immediate;
       // only the A-to-B playhead is scrubbed, so vertical movement cannot lag twice.
       const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
@@ -67,7 +67,7 @@
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
     const resize = () => {
-      if (innerWidth === viewportWidth && innerWidth < 992) return;
+      if (innerWidth === viewportWidth && !matchMedia("(min-width:62rem)").matches) return;
       viewportWidth = innerWidth;
       clearTimeout(timer);
       timer = setTimeout(build, 120);

@@ -1,8 +1,0 @@
-/* Osmo Scaling System — calibrated opt-in, preserving existing rem-based page layouts. */
-:root{--size-unit:16;--size-container-ideal:1440;--size-container-min:992px;--size-container-max:1920px;--size-container:clamp(var(--size-container-min),100vw,var(--size-container-max));--size-font:calc(var(--size-container)/(var(--size-container-ideal)/var(--size-unit)))}
-@media(max-width:991px){:root{--size-container-ideal:834;--size-container-min:768px;--size-container-max:991px}}
-@media(max-width:767px){:root{--size-container-ideal:550;--size-container-min:480px;--size-container-max:767px}}
-@media(max-width:479px){:root{--size-container-ideal:390;--size-container-min:320px;--size-container-max:479px}}
-.osmo-scale{font-size:var(--size-font)}
-.osmo-container{width:100%;max-width:var(--size-container);margin-inline:auto}
-@media(min-width:992px){.work-list__col{font-size:calc(var(--size-font)*3.96)}}

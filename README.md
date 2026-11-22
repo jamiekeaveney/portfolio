@@ -35,7 +35,7 @@ Layout refinements are native Webflow styles and variants, not a second HTML sit
 
 ## Release
 
-Run `./release.sh` from a clean `main` checkout. It checks the source, builds, updates both snippet files to a patch version and pushes a matching tag. Copy the refreshed **head and footer snippets** into Webflow, publish staging and verify before publishing custom domains. A GitHub push alone does not change Webflow's pinned asset URLs.
+Run `./release.sh` from a clean `main` checkout. It checks and builds the source, updates both Webflow snippets and pushes one immutable `release-X.Y.Z` tag with the release commit. The script checks for existing release branches and tags before assigning a version. Paste the updated snippets into Webflow and verify staging before publishing to custom domains.
 
 ## Motion and responsive behaviour
 

@@ -1,60 +1,51 @@
-function initScroll1() {
+const initializedServices = new WeakSet();
+
+function initServices(page) {
   if (!hasScrollTrigger) return;
-  nextPage.querySelectorAll(".scroll-1_component").forEach((root => {
-    if (root.hasAttribute("data-scroll-1-init")) return;
-    const headings = [ ...root.querySelectorAll(".scroll-1_trigger_item") ], media = [ ...root.querySelectorAll(".scroll-1_target_item") ];
-    if (!headings.length || !media.length) return;
-    root.setAttribute("data-scroll-1-init", "");
-    let current = -1;
-    const select = () => {
-      if (innerWidth < 992) {
-        headings.forEach((el => el.classList.remove("is-active")));
+  page.querySelectorAll(".services__browser").forEach(browser => {
+    if (initializedServices.has(browser)) return;
+    const headings = [...browser.querySelectorAll(".services__heading")];
+    const panels = [...browser.querySelectorAll(".services__media-panel")];
+    if (!headings.length || !panels.length) return;
+    initializedServices.add(browser);
+
+    let active = -1;
+    const desktop = matchMedia("(min-width: 62rem)");
+    function update() {
+      if (!desktop.matches) {
+        active = -1;
+        headings.forEach(heading => heading.classList.remove("is-active"));
         return;
       }
-      const centre = innerHeight / 2, centres = headings.map((el => {
-        const r = el.getBoundingClientRect();
-        return r.top + r.height / 2;
-      }));
-      let closest = 0;
-      centres.forEach(((y, i) => {
-        if (Math.abs(y - centre) < Math.abs(centres[closest] - centre)) closest = i;
-      }));
-      if (current === closest) return;
-      current = closest;
-      headings.forEach(((el, i) => el.classList.toggle("is-active", i === closest)));
-      media.forEach(((el, i) => el.classList.toggle("is-active", i === closest)));
-    };
+
+      const middle = innerHeight / 2;
+      let nearest = 0;
+      let distance = Infinity;
+      headings.forEach((heading, index) => {
+        const bounds = heading.getBoundingClientRect();
+        const offset = Math.abs(bounds.top + bounds.height / 2 - middle);
+        if (offset < distance) {
+          nearest = index;
+          distance = offset;
+        }
+      });
+      if (nearest === active) return;
+      active = nearest;
+      headings.forEach((heading, index) => heading.classList.toggle("is-active", index === active));
+      panels.forEach((panel, index) => {
+        const selected = index === active;
+        panel.classList.toggle("is-active", selected);
+        panel.setAttribute("aria-hidden", String(!selected));
+      });
+    }
+
     ScrollTrigger.create({
-      trigger: root,
+      trigger: browser,
       start: "top bottom",
       end: "bottom top",
-      onUpdate: select,
-      onRefresh: select
+      onUpdate: update,
+      onRefresh: update
     });
-    select();
-  }));
+    update();
+  });
 }
-// -----------------------------------------
-// WORK PAGE — slide + list infinite scrollers
-// -----------------------------------------
-// Call: initWorkSlider(container) from initBeforeEnterFunctions.
-// Self-managing lifecycle (no destroy hook needed):
-//   1. create() tears down any previous instance
-//   2. all listeners bind through one AbortController
-//   3. the document wheel handler and ticker callbacks
-//      self-destruct when the Barba container leaves the DOM
-// Input locks during Barba transitions — flagged directly by
-// barba.hooks (before → after) — and during the first-load
-// loader, so the slider is inert exactly while pages animate.
-// -----------------------------------------
-// WORK PAGE — slide + list infinite scrollers
-// -----------------------------------------
-// Call: initWorkSlider(container) from initBeforeEnterFunctions.
-// Self-managing lifecycle (no destroy hook needed):
-//   1. create() tears down any previous instance
-//   2. all listeners bind through one AbortController
-//   3. the document wheel handler and ticker callbacks
-//      self-destruct when the Barba container leaves the DOM
-// Input locks during Barba transitions — flagged directly by
-// barba.hooks (before → after) — and during the first-load
-// loader, so the slider is inert exactly while pages animate.

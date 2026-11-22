@@ -245,7 +245,7 @@
     return () => mm.revert();
   }
   function initBottomStack(wrap) {
-    const list = wrap.querySelector(".cv-list");
+    const list = wrap.querySelector(".cv__list");
     if (!list) return () => {};
     const cards = [ ...list.children ], layers = [];
     cards.forEach(((card, i) => {
@@ -354,7 +354,7 @@
           ctx.revert();
         };
       }));
-      mm.add("(min-width: 992px) and (prefers-reduced-motion: no-preference)", (() => {
+      mm.add("(min-width: 62rem) and (prefers-reduced-motion: no-preference)", (() => {
         let trailCleanup;
         const stackCleanups = [];
         const ctx = gsap.context((() => {

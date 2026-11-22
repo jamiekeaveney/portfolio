@@ -11,7 +11,7 @@
   function bindTitle(page, title, slash) {
     const hero = page.querySelector('.project-hero__title');
     if (!hero) return;
-    const desktop = matchMedia('(min-width:992px)');
+    const desktop = matchMedia('(min-width:62rem)');
     let compact = document.querySelector('.nav-root')?.dataset.navCompact === 'true';
     let motion, pieces = [];
 

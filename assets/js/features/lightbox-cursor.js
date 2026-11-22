@@ -19,7 +19,7 @@
       y: 0,
       known: false
     };
-    const desktop = matchMedia("(min-width:992px) and (hover:hover) and (pointer:fine)");
+    const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
     function targetAt() {
       if (!desktop.matches || document.querySelector(".lightbox-close")) return null;
       const active = document.querySelector('[data-mini-showreel-player][data-mini-showreel-status="active"]');

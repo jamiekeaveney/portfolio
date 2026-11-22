@@ -7,17 +7,16 @@
     clean = () => abort.abort();
     const buttons = new Set([ ...document.querySelectorAll('.nav-root [data-wf--super-button--variant^="copy-email"]'), ...(page || document).querySelectorAll('[data-wf--super-button--variant^="copy-email"]') ]);
     buttons.forEach((button => {
-      const email = button.querySelector(".btn_text")?.textContent.trim();
+      const email = button.querySelector(".btn__text")?.textContent.trim();
       if (!email) return;
-      button.dataset.copyButton = "";
-      button.dataset.copyEmail = email;
+      button.classList.remove("btn--copied");
       button.setAttribute("role", "button");
       button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       button.setAttribute("data-barba-prevent", "");
       let pending = false, epoch = 0;
       const reset = () => {
         epoch++;
-        button.dataset.copyButton = "";
+        button.classList.remove("btn--copied");
         button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       };
       const copy = async event => {
@@ -28,8 +27,8 @@
         const token = epoch;
         try {
           await navigator.clipboard.writeText(email);
-          if (token === epoch && button.isConnected) {
-            button.dataset.copyButton = "copied";
+          if (token === epoch && !abort.signal.aborted && button.isConnected) {
+            button.classList.add("btn--copied");
             button.setAttribute("aria-label", "Email copied to clipboard");
           }
         } catch {
