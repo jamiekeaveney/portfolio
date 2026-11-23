@@ -21,7 +21,7 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both must pin the same immutable runtime revision. The planned repair release is `release-1.3.1`; publication and browser verification are separate release steps.
+- `webflow/`: the only site-wide head/footer snippets. Both must pin the same immutable runtime revision. The validated repair release is v1.3.1. Both snippets pin runtime commit `4939ec255b83d01558a7b371e679aa5b8959a100`, which was verified on Webflow staging on 23 November 2026. See `VALIDATION.md` and `webflow/LUMOS_REPAIRS.md`.
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 

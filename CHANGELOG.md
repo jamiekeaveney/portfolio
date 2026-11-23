@@ -1,4 +1,4 @@
-# v1.3.1 — Planned, 23 November 2026
+# v1.3.1 — 23 November 2026
 
 - Restore Designer grid geometry with explicit native tracks per breakpoint, preserving Lumos variables and modes for spacing, typography, gutters and themes.
 - Establish two section-heading layouts: first content section at column 3 with a top-aligned label; later sections at column 5 with a bottom-aligned label. Use muted labels and foreground heading copy.
@@ -8,7 +8,9 @@
 - Use standard page-parallax transitions for compact/touch project entry and return. Synchronise detached project-title visibility with the navigation fade during its movement.
 - Unify gaps around toolbar, breadcrumb and counter slashes. Add the shared up arrow to Back to top.
 
-Target runtime tag: `release-1.3.1`. Browser verification and publication are pending.
+Published and verified on the Webflow staging subdomain with runtime commit `4939ec255b83d01558a7b371e679aa5b8959a100`. The `release-1.3.1` branch records the release; Webflow uses the immutable commit URL. Custom domains were not published.
+
+Final QA also scoped the Gallery/List text rollover to keep labels inside their clickable controls and gave the footer Grid control its own text-only native variant.
 
 # v1.2.6 — 19 November 2026
 
