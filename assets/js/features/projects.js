@@ -416,6 +416,7 @@ const initWorkSlider = (() => {
       return out;
     }
     function buildList() {
+      listCenter.classList.add("trigger--focus");
       [ listLeft, listRight, numLeft, numRight, listCenter ].forEach((function(el) {
         el.innerHTML = "";
       }));
@@ -426,17 +427,19 @@ const initWorkSlider = (() => {
         var thumb = sourceThumb.cloneNode(true);
         thumb.querySelectorAll(".work-card__meta").forEach((el => el.remove()));
         thumb.classList.add("work-list__media");
-        thumb.setAttribute('data-video-ignore','');
+        thumb.removeAttribute("data-video-ignore");
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});
         thumb.setAttribute("data-work-list-media", index);
-        const image = thumb.querySelector(".work-card__image");
-        const picture = thumb.querySelector("[data-next-media]");
-        if (picture && image) {
-          picture.classList.add("work-list__picture");
-          image.classList.add("work-list__thumbnail");
-          picture.replaceChildren(image);
-        }
-        thumb.querySelectorAll("video").forEach(video => video.remove());
+        // Preserve the same inset 16:9 media frame as the gallery. The shared
+        // inline-video owner plays only the active, hovered/focused list item.
+        thumb.classList.remove("trigger--focused");
+        thumb.classList.add("trigger--hover");
+        thumb.querySelector(".project-preview__poster")?.classList.add("work-list__thumbnail");
+        thumb.querySelectorAll("video").forEach(video => {
+          video.pause();
+          video.removeAttribute("autoplay");
+          video.setAttribute("data-video-mode", "active-hover");
+        });
         mediaFrag.appendChild(thumb);
       }));
       listCenter.appendChild(mediaFrag);

@@ -37,6 +37,7 @@
     }
   };
   const frozen = new WeakMap;
+  const desktopMedia = matchMedia('(min-width:62rem) and (hover:hover) and (pointer:fine)');
   let pair = null, active = null, pending = null;
   function videoFrame(card) {
     const v = card?.querySelector(".mini-showreel__cover-image") || card?.querySelector("video"), poster = card?.querySelector(".project-preview__poster");
@@ -718,7 +719,7 @@
     const freeze = window.freezeContainer, leave = window.runPageLeaveAnimation, enter = window.runPageEnterAnimation;
     fallbackReturn = (current, next, y) => Promise.all([ leave(current), enter(next, y) ]);
     if (freeze) window.freezeContainer = function(page) {
-      if (!frozen.has(page) && (pair || page.matches("[data-case-page]"))) capture(page);
+      if (desktopMedia.matches && !frozen.has(page) && (pair || page.matches("[data-case-page]"))) capture(page);
       return freeze(page);
     };
     if (leave && enter) {
@@ -745,16 +746,20 @@
         overwrite: true
       });
       if (source && page && source.querySelector("[data-next-media]")) {
-        pending = {
-          page: page,
-          source: source,
-          href: link.href
-        };
-        capture(page, source);
         const home = !!source.closest(".home-slide");
-        if (!home && !preview && !window.JKWork?.capture(link)) {
-          pending = null;
-          return;
+        // Compact/touch layouts use the ordinary page transition. Preserve the
+        // breadcrumb origin without making media clones or a FLIP handoff.
+        if (desktopMedia.matches && !JKProject.reduced()) {
+          pending = {
+            page: page,
+            source: source,
+            href: link.href
+          };
+          capture(page, source);
+          if (!home && !preview && !window.JKWork?.capture(link)) {
+            pending = null;
+            return;
+          }
         }
         try {
           sessionStorage.setItem("jk-project-origin", JSON.stringify({
@@ -785,6 +790,11 @@
             href: d.next.url.path
           }));
         } catch {}
+      }
+      if (!desktopMedia.matches) {
+        pair = null;
+        pending = null;
+        return;
       }
       pair = nextCase && (d.current.container?.matches("[data-case-page]") || mediaSource) ? {
         next: d.next.container,

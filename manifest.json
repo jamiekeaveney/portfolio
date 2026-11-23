@@ -1,5 +1,6 @@
 {
   "js": [
+    "assets/js/core/scroll-media-motion.js",
     "assets/js/features/portrait-flight.js",
     "assets/js/features/mobile-transition.js",
     "assets/js/features/trigger-state.js",

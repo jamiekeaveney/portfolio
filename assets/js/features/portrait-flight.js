@@ -1,6 +1,7 @@
 (() => {
   const media = matchMedia('(min-width:62rem) and (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
   const controllers = new WeakMap();
+  const motion = window.JKScrollMediaMotion;
 
   function prepare(page, active=true) {
     const origin = page?.querySelector('[data-portrait-source]');
@@ -50,16 +51,15 @@
         });
       }
       tween=gsap.to(progress,{value:1,ease:'sine.inOut',onUpdate:paint,scrollTrigger:{
-        trigger:slot,start:'center center',endTrigger:target,end:'center center',scrub:.18,
+        trigger:slot,start:'center center',endTrigger:target,end:'center center',scrub:motion.settings.scrub,
         onRefresh:paint,invalidateOnRefresh:true
       }});
       function momentum(_,dt) {
         if (frozen || progress.value<=0 || progress.value>=1) {tilt=0;return;}
-        const wanted=gsap.utils.clamp(-26,26,tween.scrollTrigger.getVelocity()*.012);
-        tilt+=(wanted-tilt)*(1-Math.exp(-10*Math.min(dt,50)/1000));
+        tilt=motion.approach(tilt,tween.scrollTrigger.getVelocity(),dt);
         const edge=Math.min(1,progress.value/.16,(1-progress.value)/.16);
         const angle=tilt*edge*edge*(3-2*edge);
-        face.style.transform='perspective(43.75rem) rotateX('+(-angle*.6)+'deg) rotateY('+angle+'deg)';
+        face.style.transform=motion.transform(angle);
       }
       const size = new ResizeObserver(paint);
       size.observe(origin);size.observe(target);

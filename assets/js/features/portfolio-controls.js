@@ -1,5 +1,4 @@
 (() => {
-  const fine = matchMedia('(hover:hover) and (pointer:fine)');
   const motion = matchMedia('(prefers-reduced-motion:no-preference)');
   const pages = new WeakMap();
 
@@ -73,10 +72,10 @@
     const center=page.querySelector('[data-work-list-center]');
     if(!center)return;
     const root=center.closest('.work');
-    let last,kick,zoom,previousMedia;
+    let zoom,previousMedia;
     function settleThumbnail(){
       zoom?.kill();
-      previousMedia?.querySelector('.work-card__image')?.style.removeProperty('--list-thumb-scale');
+      previousMedia?.querySelector('.work-list__thumbnail')?.style.removeProperty('--list-thumb-scale');
       zoom=null;
     }
     function updateThumbnail(){
@@ -88,14 +87,14 @@
       settleThumbnail();
       previousMedia=active;
       if(!changedDuringUse)return;
-      const image=active.querySelector('.work-card__image');
+      const image=active.querySelector('.work-list__thumbnail');
       if(image)zoom=gsap.fromTo(image,{'--list-thumb-scale':1.12},{'--list-thumb-scale':1,duration:1,ease:'expo.out',
         onComplete:()=>image.style.removeProperty('--list-thumb-scale')});
     }
     const thumbnailObserver=new MutationObserver(updateThumbnail);
     thumbnailObserver.observe(center,{childList:true,subtree:true,attributes:true,attributeFilter:['data-work-state']});
     updateThumbnail();
-    function reset(){settleThumbnail();kick?.kill();center.style.removeProperty('--kick-x');center.style.removeProperty('--kick-y');center.style.removeProperty('--kick-angle');}
+    function reset(){settleThumbnail();}
     function sync(){
       if(root.dataset.workMode!=='list' || !matchMedia("(min-width:62rem)").matches)return;
       const box=center.getBoundingClientRect();
@@ -110,15 +109,6 @@
     const observer=new MutationObserver(sync);
     observer.observe(root,{attributeFilter:['data-work-mode']});observer.observe(center,{childList:true,subtree:true});
     sync();
-    page.addEventListener('pointermove',e=>{
-      const t=performance.now();if(last && t>last.t){const dt=Math.max(8,t-last.t);last={t,x:e.clientX,y:e.clientY,vx:(e.clientX-last.x)/dt,vy:(e.clientY-last.y)/dt};}else last={t,x:e.clientX,y:e.clientY,vx:0,vy:0};
-    },{signal,passive:true});
-    center.addEventListener('pointerenter',e=>{
-      if(!fine.matches||!motion.matches||!last||performance.now()-last.t>100||root.hasAttribute('data-work-switching')||document.documentElement.hasAttribute('data-transitioning'))return;
-      const bounds=center.getBoundingClientRect(),limit=gsap.utils.clamp(-1,1),vx=limit(last.vx/2),vy=limit(last.vy/2);
-      const torque=limit((e.clientX-bounds.left-bounds.width/2)*2/bounds.width*vy-(e.clientY-bounds.top-bounds.height/2)*2/bounds.height*vx);
-      kick?.kill();kick=gsap.timeline().to(center,{'--kick-x':vx*2.75+'rem','--kick-y':vy*2.75+'rem','--kick-angle':torque*9+'deg',duration:.22,ease:'power3.out'}).to(center,{'--kick-x':'0rem','--kick-y':'0rem','--kick-angle':'0deg',duration:.85,ease:'power3.out'});
-    },{signal});
     page.addEventListener('click',reset,{signal,capture:true});
     signal.addEventListener('abort',()=>{observer.disconnect();thumbnailObserver.disconnect();reset();});
   }

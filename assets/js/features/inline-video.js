@@ -94,7 +94,7 @@
       }));
       page.querySelectorAll("video").forEach((v => {
         if (entries.has(v) || v.controls || v.closest('.case-index__card,[data-video-ignore],[data-bunny-player-init],.lightbox,[role="dialog"]') || !(v.muted || v.hasAttribute("muted") || v.closest('[data-video="playpause"]'))) return;
-        const host = v.closest(".work-card__thumb,.home-slide-image,.work-list__center") || v.parentElement;
+        const host = v.closest(".work-list__center") || v.closest(".work-card__thumb,.home-slide-image") || v.parentElement;
         const media = v.closest(".work-card__thumb,.home-slide-image");
         const image = null;
  // Home/Work retain their own thumbnail hover presentation.

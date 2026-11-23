@@ -379,7 +379,7 @@ function startPortfolio() {
       to: {
         namespace: [ "case" ]
       },
-      custom: ({trigger: t}) => "string" != typeof t && t.hasAttribute("data-case-link"),
+      custom: ({trigger: t}) => desktopScroll.matches && !reducedMotion && t instanceof Element && t.hasAttribute("data-case-link"),
       leave: async t => runWorkLeaveAnimation(t.current.container, t.next.container, t.trigger),
       enter: async t => runCaseEnterAnimation(t.next.container)
     }, {

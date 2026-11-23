@@ -1,6 +1,7 @@
 /* Home-only scroll Flip. The preview's caption never contributes to the media ratio. */
 (() => {
   const instances = new Map;
+  const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
     const home = page?.querySelector(".scaling-video__wrapper");
@@ -37,7 +38,7 @@
           width:from.w+(to.w-from.w)*p,height:from.h+(to.h-from.h)*p});
       };
       timeline=gsap.timeline({scrollTrigger:{id:'jk-home-showreel',trigger:end,
-        start:0,end:'bottom bottom',scrub:.18,onUpdate:()=>render?.()}});
+        start:0,end:'bottom bottom',scrub:motion.settings.scrub,onUpdate:()=>render?.()}});
       timeline.to(playhead,{value:1,duration:1,ease:'sine.inOut',onUpdate:()=>render?.()},0);
       if (fade.length) timeline.fromTo(fade, {
         autoAlpha: 1
@@ -56,13 +57,13 @@
     function tilt(time,dt=16.667){
       if(!face)return;
       const track=timeline?.scrollTrigger;
-      if(!track||suspended||!track.enabled){face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
-      swing+=(gsap.utils.clamp(-26,26,track.getVelocity()*.012)-swing)*(1-Math.exp(-10*Math.min(dt,50)/1000));
+      if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
+      swing=motion.approach(swing,track.getVelocity(),dt);
       const progress=timeline.progress();
       face.style.transformOrigin='top left';
       const entry=Math.min(1,progress/.09);
       const tilt=swing*entry*entry*(3-2*entry)*(1-progress)**2;
-      face.style.transform='perspective(700px) rotateX('+(-tilt*.6)+'deg) rotateY('+tilt+'deg)';
+      face.style.transform=motion.transform(tilt);
     }
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;

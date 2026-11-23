@@ -124,21 +124,6 @@
 
 .layout-guide__column { background: rgb(255 255 255 / .16); }
 
-.work-list__center {
-  translate: var(--kick-x, 0rem) var(--kick-y, 0rem) !important;
-  rotate: var(--kick-angle, 0deg) !important;
-}
-
-.work-list__picture {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: none;
-  transition: none;
-  opacity: 1 !important;
-}
-
-.work-list__thumbnail,
 .work-mode-flip__image {
   position: absolute;
   inset: 0;

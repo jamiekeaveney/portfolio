@@ -3,6 +3,7 @@
   let stickies = null, sectionLabels = null, resizeTimer;
   const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
   const reduced = matchMedia("(prefers-reduced-motion:reduce)");
+  const bottomLabels = '.edit-label--bottom,.section-label--bottom,.clients__eyebrow,.services__eyebrow';
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
@@ -10,9 +11,11 @@
       const section=el.closest('.section')||el.closest('.edit-grid');
       const end=el.matches('.clients__eyebrow')?section?.querySelector('.cv__selected-caption'):el.closest('#about')?section?.querySelector('.section__action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
-    const serviceLabel=page.querySelector('#services .section__header .grey-label');
+    }).filter(s=>s.section&&!s.el.closest(bottomLabels)&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
+    const serviceCandidate=page.querySelector('#services .section__header .grey-label');
+    const serviceLabel=serviceCandidate?.closest(bottomLabels)?null:serviceCandidate;
     const serviceMedia=page.querySelector('#services .services__sticky-media');
+    if(!labels.length&&!serviceLabel)return;
     let serviceNatural=0,serviceLabelStyle=serviceLabel?.style.translate||'';
     const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services__media-container');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
     measureService();ScrollTrigger.addEventListener('refresh',measureService);
@@ -46,6 +49,9 @@
     if (library) {
       const found = library.findSticky();
       found.forEach((el => {
+        // Later section labels share their heading's baseline; their native
+        // placement must not gain an independent scroll displacement.
+        if (el.closest(bottomLabels)) {el.removeAttribute("data-site-eased-sticky");return;}
         if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer") || el.hasAttribute("data-home-scroll")) return;
         if (getComputedStyle(el).position === "sticky") el.setAttribute("data-site-eased-sticky", "");
       }));

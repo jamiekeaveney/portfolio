@@ -12,15 +12,25 @@
     const hero = page.querySelector('.project-hero__title');
     if (!hero) return;
     const desktop = matchMedia('(min-width:62rem)');
+    const nav = title.closest('[data-case-nav]');
     let compact = document.querySelector('.nav-root')?.dataset.navCompact === 'true';
     let motion, pieces = [];
 
+    function syncVisibility() {
+      if (!nav || !pieces.length) return;
+      // The travelling words are outside the navigation's DOM. Follow its live
+      // fade independently of their movement, including a fade begun mid-flight.
+      const style = getComputedStyle(nav);
+      const opacity = style.visibility === 'hidden' || style.display === 'none' ? '0' : style.opacity;
+      pieces.forEach(piece => { piece.node.style.opacity = opacity; });
+    }
     function settle() {
       hero.style.opacity = desktop.matches && compact ? '0' : '';
       title.style.opacity = desktop.matches && !compact ? '0' : '';
     }
     function stop() {
       motion?.kill();
+      gsap.ticker.remove(syncVisibility);
       pieces.forEach(piece => piece.node.remove());
       pieces = [];
     }
@@ -80,6 +90,8 @@
         });
       }
       render();
+      syncVisibility();
+      gsap.ticker.add(syncVisibility);
       motion = gsap.to(playhead,{p:1,duration:detail.duration,ease:detail.ease,onUpdate:render,onComplete(){stop();settle();}});
     }
     function resize() {
@@ -136,7 +148,15 @@
       bindTitle(page,title,slash);
       order().then((paths => {
         const idx = paths.indexOf(location.pathname);
-        if (idx >= 0) count.textContent = String(idx + 1).padStart(2, "0") + " / " + String(paths.length).padStart(2, "0");
+        if (idx >= 0) {
+          const current = document.createElement("span"), divider = document.createElement("span"), total = document.createElement("span");
+          current.className = total.className = "case-nav__number";
+          divider.className = "case-nav__count-divider";
+          current.textContent = String(idx + 1).padStart(2, "0");
+          divider.textContent = "/";
+          total.textContent = String(paths.length).padStart(2, "0");
+          count.replaceChildren(current, divider, total);
+        }
       }));
     }
   }

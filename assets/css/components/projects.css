@@ -107,6 +107,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.work-list__center {
+  --_trigger---on: 1;
+  --_trigger---off: 0;
+}
+
 .work-list__media {
   position: absolute;
   inset: 0;

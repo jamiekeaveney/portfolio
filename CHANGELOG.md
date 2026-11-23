@@ -1,3 +1,15 @@
+# v1.3.1 — Planned, 23 November 2026
+
+- Restore Designer grid geometry with explicit native tracks per breakpoint, preserving Lumos variables and modes for spacing, typography, gutters and themes.
+- Establish two section-heading layouts: first content section at column 3 with a top-aligned label; later sections at column 5 with a bottom-aligned label. Use muted labels and foreground heading copy.
+- Repair copy-email label positioning so hover instructions and copied confirmation occupy one clipped slot. Correct the native project-caption transition so both coordinates animate.
+- Restore active hover/focus video playback in the Projects list's 16:9 inset frame; remove pointer inertia and retain desktop media FLIP.
+- Share stronger scroll distortion between Home showreel and About portrait: 32-degree ceiling and `.015` velocity gain, with common perspective, response and scrub settings.
+- Use standard page-parallax transitions for compact/touch project entry and return. Synchronise detached project-title visibility with the navigation fade during its movement.
+- Unify gaps around toolbar, breadcrumb and counter slashes. Add the shared up arrow to Back to top.
+
+Target runtime tag: `release-1.3.1`. Browser verification and publication are pending.
+
 # v1.2.6 — 19 November 2026
 
 - Smooth sticky landings for About clients/work labels and Home Services.

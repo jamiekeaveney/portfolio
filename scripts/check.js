@@ -84,3 +84,5 @@ require("./check-list-preview.js");
 require("./check-error-game.js");
 
 require("./check-services.js");
+
+require("./check-motion.js");
