@@ -846,6 +846,17 @@ html[data-theme-status="light"] :is(.work__display--large[data-current-year],.se
   --work-active-off: 0;
 }
 
+
+@scope (.work__controls) {
+  .nav__link-text {
+    transform: none;
+    translate: none;
+    text-shadow: none;
+    transition: none;
+    will-change: auto;
+  }
+}
+
 [data-work-view] {
   --_trigger---on: 0;
   --_trigger---off: 1;

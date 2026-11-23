@@ -32,6 +32,17 @@
   --work-active-off: 0;
 }
 
+/* View controls have one label; keep its ink inside the clickable control. */
+@scope (.work__controls) {
+  .nav__link-text {
+    transform: none;
+    translate: none;
+    text-shadow: none;
+    transition: none;
+    will-change: auto;
+  }
+}
+
 [data-work-view] {
   --_trigger---on: 0;
   --_trigger---off: 1;
