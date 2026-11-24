@@ -241,11 +241,12 @@ function runPageOnceAnimation(page) {
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
     .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
-    .to(bar,{backgroundColor:'#8a8a8a',duration:.8,ease:'none'},'collapse')
+    .to(bar,{backgroundColor:'#666666',duration:.8,ease:'none'},'collapse')
     .add('revealPage')
     .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bar,{y:()=>-innerHeight+border,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(bar,{scaleY:0,opacity:0,duration:.4,ease:'sine.inOut'},'revealPage+='+PARALLAX_MOTION.duration)
     .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
     .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
   tl.call(()=>document.dispatchEvent(new Event('jk:nav-reveal')),null,'revealPage+=.85');
