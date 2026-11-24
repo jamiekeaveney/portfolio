@@ -1,7 +1,6 @@
 /* Home-only scroll Flip. The preview's caption never contributes to the media ratio. */
 (() => {
   const instances = new Map;
-  const tiltStrength = .25;
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
@@ -14,7 +13,7 @@
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
     const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask")));
-    let playhead, timeline, render, timer, suspended = false, dead = false;
+    let timeline, render, timer, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
     function build() {
       if (dead || suspended || target.dataset.miniShowreelStatus === "active") return;
@@ -27,7 +26,7 @@
       const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
       const from = {x:startRect.left,y:startRect.top + scrollY,w:startRect.width,h:startRect.height};
       const to = {x:endRect.left,y:endRect.top + scrollY,w:endRect.width,h:endRect.height};
-      playhead = {value:0};
+      const playhead = {value:0};
       render = () => {
         if (dead || suspended || !timeline?.scrollTrigger) return;
         const st=timeline.scrollTrigger, p=playhead.value, y=scrollY;
@@ -53,19 +52,6 @@
       timeline.progress(timeline.scrollTrigger.progress);
       render();
     }
-    const face=target.querySelector('.mini-showreel__card');
-    let swing=0;
-    function tilt(time,dt=16.667){
-      if(!face)return;
-      const track=timeline?.scrollTrigger;
-      if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
-      face.style.transformOrigin='top left';
-      // Weight the tilt by the rendered position, including while the scrub catches up.
-      const progress = playhead.value;
-      const midpointWeight = Math.sin(Math.PI * progress) ** 4;
-      swing = motion.updateTilt(face, swing, track.getVelocity(), dt, progress, tiltStrength * midpointWeight);
-    }
-    gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
     const resize = () => {
       if (innerWidth === viewportWidth && !matchMedia("(min-width:62rem)").matches) return;
@@ -79,7 +65,6 @@
       build: build,
       suspend() {
         suspended = true;
-        face?.style.removeProperty('transform');
         timeline?.scrollTrigger?.disable(false);
       },
       resume() {
@@ -88,9 +73,6 @@
       },
       cleanup() {
         dead = true;
-        gsap.ticker.remove(tilt);
-        face?.style.removeProperty('transform');
-        face?.style.removeProperty('transform-origin');
         clearTimeout(timer);
         timeline?.scrollTrigger?.kill();
         timeline?.kill();
