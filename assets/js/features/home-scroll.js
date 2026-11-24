@@ -1,7 +1,7 @@
 /* Home-only scroll Flip. The preview's caption never contributes to the media ratio. */
 (() => {
   const instances = new Map;
-  const tiltStrength = .075;
+  const tiltStrength = .25;
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
