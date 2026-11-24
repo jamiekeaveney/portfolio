@@ -198,9 +198,8 @@ function runPageOnceAnimation(page) {
   content.append(logoWrap,texts);
   const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
-  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
+  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines'}));
   for (const text of texts.children) text.firstElementChild?.classList.add('loader-messages__mask');
-  const charStagger=s=>Math.min(.025,.16/Math.max(1,s.chars.length-1));
   let finished=false;
   const preparePage=async()=>{
     await (document.fonts?.ready||Promise.resolve());
@@ -230,7 +229,7 @@ function runPageOnceAnimation(page) {
   gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});
   gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'#fff',transformOrigin:'left bottom'});
   gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
-  gsap.set(splits.flatMap(s=>s.chars),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
   document.documentElement.setAttribute('data-loader-active','');
   document.documentElement.removeAttribute('data-loader-pending');
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
@@ -248,10 +247,10 @@ function runPageOnceAnimation(page) {
     .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
     .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
   tl.call(()=>document.dispatchEvent(new Event('jk:nav-reveal')),null,'revealPage+=.85');
-  tl.to(splits[0].chars,{yPercent:0,duration:1,ease:'expo.out',stagger:charStagger(splits[0])},0)
-    .to(splits[0].chars,{yPercent:-125,duration:1,ease:'expo.out',stagger:charStagger(splits[0])},1.45)
-    .to(splits[1].chars,{yPercent:0,duration:1,ease:'expo.out',stagger:charStagger(splits[1])},1.6)
-    .to(splits[1].chars,{yPercent:-125,duration:1,ease:'expo.out',stagger:charStagger(splits[1])},'revealPage-=.2');
+  tl.to(splits[0].lines,{yPercent:0,duration:1,ease:'expo.out'},0)
+    .to(splits[0].lines,{yPercent:-125,duration:1,ease:'expo.out'},1.45)
+    .to(splits[1].lines,{yPercent:0,duration:1,ease:'expo.out'},1.6)
+    .to(splits[1].lines,{yPercent:-125,duration:1,ease:'expo.out'},'revealPage-=.2');
   return tl;
 }
 

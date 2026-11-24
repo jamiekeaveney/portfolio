@@ -7,11 +7,11 @@
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section__header .grey-label')].map(el=>{
-      const section=el.closest('.section')||el.closest('.edit-grid');
-      const end=el.matches('.clients__eyebrow')?section?.querySelector('.cv__selected-caption'):el.closest('#about')?section?.querySelector('.section__action'):null;
+    const labels=[...page.querySelectorAll('.section__header .grey-label,.edit-grid > .clients__eyebrow,.edit-overlap .edit-label--bottom')].map(el=>{
+      const section=el.closest('.edit-grid')||el.closest('.section');
+      const end=el.matches('.clients__eyebrow')?section?.querySelector('.clients__list'):el.closest('#about')?section?.querySelector('.section__action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section&&!s.el.closest(bottomLabels)&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
+    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit-grid > .clients__eyebrow,.edit-overlap .edit-label--bottom"))&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
     const serviceCandidate=page.querySelector('#services .section__header .grey-label');
     const serviceLabel=serviceCandidate?.closest(bottomLabels)?null:serviceCandidate;
     const serviceMedia=page.querySelector('#services .services__sticky-media');
@@ -26,8 +26,10 @@
       const positions=labels.map(s=>{
         const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
         const boundary=labels.find(label=>label.el===s.end);
-        const end=s.end?s.end.getBoundingClientRect().top-(boundary?.offset||0):s.section.getBoundingClientRect().bottom;
-        const travel=Math.max(0,end-natural-r.height-40);
+        const endBox=s.end?.getBoundingClientRect();
+        const clients=s.el.matches('.clients__eyebrow');
+        const end=endBox?(clients?endBox.bottom:endBox.top-(boundary?.offset||0)):s.section.getBoundingClientRect().bottom;
+        const travel=Math.max(0,end-natural-r.height-(clients?0:40));
         if(reduced.matches||!window.JKStickyLibrary)return Math.max(0,Math.min(top-natural,travel));
         if(!s.curve||Math.abs(s.travel-travel)>.5||s.viewport!==innerHeight){
           s.travel=travel;s.viewport=innerHeight;
