@@ -3,7 +3,7 @@
     compactAfter: 64,
     expandBefore: 24,
     desktopWidth: 992,
-    heroExitViewportFraction: .3,
+    heroExitFlipFraction: .5,
     layoutDuration: .95,
     layoutEase: "case-two-step",
     layoutCurve: "0.625, 0.05, 0, 1",
@@ -96,8 +96,11 @@
     let heroPage = document.querySelector('[data-barba="container"]');
     function seekHeroText(y) {
       if (!heroTween) return;
-      const distance = Math.max(1, innerHeight * SETTINGS.heroExitViewportFraction);
-      heroTween.progress(Math.max(0, Math.min(1, y / distance)));
+      const flip = window.ScrollTrigger?.getById("jk-home-showreel");
+      const start = flip?.start ?? 0;
+      const span = flip && flip.end > start ? flip.end - start : innerHeight;
+      const distance = Math.max(1, span * SETTINGS.heroExitFlipFraction);
+      heroTween.progress(Math.max(0, Math.min(1, (y - start) / distance)));
     }
     function refreshHeroText() {
       heroTween?.revert();
