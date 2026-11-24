@@ -3,7 +3,7 @@
     compactAfter: 64,
     expandBefore: 24,
     desktopWidth: 992,
-    heroExitViewportFraction: .5,
+    heroExitViewportFraction: .4,
     layoutDuration: .95,
     layoutEase: "case-two-step",
     layoutCurve: "0.625, 0.05, 0, 1",
