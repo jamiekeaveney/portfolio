@@ -1,7 +1,12 @@
 <meta name="theme-color" content="#000000">
 <style>
 .page-shell {
-  --loader-surface: rgb(0 0 0);
+  --loader-surface: #000;
+  --loader-ink: #fff;
+}
+.page-shell[data-theme-status="light"] {
+  --loader-surface: #f7f7f5;
+  --loader-ink: #111;
 }
 
 .page-shell--covered::before {

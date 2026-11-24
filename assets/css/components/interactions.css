@@ -227,26 +227,23 @@ html[data-touch-input] :is(.mini-showreel__card,.mini-showreel):focus-within{out
   pointer-events: none;
 }
 
-[data-wf--super-button--variant="footer-back-to-top"] .btn__icon {
-  width: 1.2em;
-  height: 1.2em;
-  margin-inline: auto;
-  overflow: hidden;
+[data-wf--super-button--variant="footer-back-to-top"] :is(.btn__aside,.btn__icon) {
+  width: 1em;
+  height: 1.3em;
+  flex: none;
 }
+[data-wf--super-button--variant="footer-back-to-top"] .btn__icon { overflow: hidden; }
 [data-wf--super-button--variant="footer-back-to-top"] .btn__icon svg { display: none; }
-[data-wf--super-button--variant="footer-back-to-top"] .btn__icon::before,
-[data-wf--super-button--variant="footer-back-to-top"] .btn__icon::after {
+[data-wf--super-button--variant="footer-back-to-top"] .btn__icon::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 0 0 -100%;
   background: currentColor;
-  clip-path: polygon(50% 7%, 92% 49%, 83% 58%, 56% 31%, 56% 92%, 44% 92%, 44% 31%, 17% 58%, 8% 49%);
-  translate: 0 calc(-100% * var(--button-shift, 0));
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M7 15V4.5L2.4 9.1 1 7.7 8 .7l7 7-1.4 1.4L9 4.5V15z'/%3E%3C/svg%3E") center top / 1em 1.3em repeat-y;
+  translate: 0 calc(-1.3em * var(--button-shift, 0));
   transition: translate 1s cubic-bezier(.19,1,.22,1);
 }
-[data-wf--super-button--variant="footer-back-to-top"] .btn__icon::after { inset: 100% 0 -100%; }
 @media (prefers-reduced-motion: reduce) {
-  [data-wf--super-button--variant="footer-back-to-top"] .btn__icon::before,
-  [data-wf--super-button--variant="footer-back-to-top"] .btn__icon::after { transition: none; }
+  [data-wf--super-button--variant="footer-back-to-top"] .btn__icon::before { transition: none; }
 }
 .error-game > :is(.btn,.error-game__control):is(:hover,:focus-visible) { color: #888; }

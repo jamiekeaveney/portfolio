@@ -226,8 +226,8 @@ function runPageOnceAnimation(page) {
     lenis?.resize();lenis?.start();finishLoaderCover();
   };
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
-  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});
-  gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'#fff',transformOrigin:'left bottom'});
+  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'var(--loader-surface)'});
+  gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'var(--loader-ink)',transformOrigin:'left bottom'});
   gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
   gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
   document.documentElement.setAttribute('data-loader-active','');
