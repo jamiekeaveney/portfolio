@@ -3,7 +3,7 @@
     compactAfter: 64,
     expandBefore: 24,
     desktopWidth: 992,
-    heroExitFlipFraction: .5,
+    heroExitViewportFraction: .5,
     layoutDuration: .95,
     layoutEase: "case-two-step",
     layoutCurve: "0.625, 0.05, 0, 1",
@@ -98,8 +98,7 @@
       if (!heroTween) return;
       const flip = window.ScrollTrigger?.getById("jk-home-showreel");
       const start = flip?.start ?? 0;
-      const span = flip && flip.end > start ? flip.end - start : innerHeight;
-      const distance = Math.max(1, span * SETTINGS.heroExitFlipFraction);
+      const distance = Math.max(1, innerHeight * SETTINGS.heroExitViewportFraction);
       heroTween.progress(Math.max(0, Math.min(1, (y - start) / distance)));
     }
     function refreshHeroText() {
@@ -110,8 +109,7 @@
       const chars = heroPage.querySelectorAll("[data-home-scroll] .hero-scroll-char");
       const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero-scroll-line");
       if (!chars.length && !lines.length) return;
-      if (window.CustomEase) CustomEase.create(SETTINGS.layoutEase, SETTINGS.layoutCurve);
-      heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:SETTINGS.layoutEase}});
+      heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:"none"}});
       if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {yPercent:-120, stagger:.025}, 0);
       if (lines.length) {
         const stagger = parseFloat(lines[0].closest("[data-home-intro-exit]").dataset.linesStagger) ||
