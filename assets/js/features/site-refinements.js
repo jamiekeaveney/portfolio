@@ -7,7 +7,7 @@
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section__header .grey-label,.clients__eyebrow,.cv__selected-caption')].map(el=>{
+    const labels=[...page.querySelectorAll('.section__header .grey-label')].map(el=>{
       const section=el.closest('.section')||el.closest('.edit-grid');
       const end=el.matches('.clients__eyebrow')?section?.querySelector('.cv__selected-caption'):el.closest('#about')?section?.querySelector('.section__action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
@@ -22,7 +22,7 @@
     let frozen=false;
     const tick=()=>{
       if(frozen)return;
-      const top=12*parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const top=8*parseFloat(getComputedStyle(document.documentElement).fontSize);
       const positions=labels.map(s=>{
         const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
         const boundary=labels.find(label=>label.el===s.end);

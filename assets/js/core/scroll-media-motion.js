@@ -15,6 +15,10 @@
       const target = Math.max(-settings.maximumDegrees, Math.min(settings.maximumDegrees, velocity * settings.velocityGain));
       return angle + (target - angle) * (1 - Math.exp(-settings.response * Math.min(deltaMs, 50) / 1000));
     },
+    endpointWeight(progress) {
+      const edge = Math.min(1, progress / .22, (1 - progress) / .22);
+      return edge * edge * (3 - 2 * edge);
+    },
     transform(angle) {
       return 'perspective(' + settings.perspectiveRem + 'rem) rotateX(' + (-angle * settings.pitchRatio) + 'deg) rotateY(' + angle + 'deg)';
     }

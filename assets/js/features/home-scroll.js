@@ -61,8 +61,7 @@
       swing=motion.approach(swing,track.getVelocity(),dt);
       const progress=timeline.progress();
       face.style.transformOrigin='top left';
-      const entry=Math.min(1,progress/.09);
-      const tilt=swing*entry*entry*(3-2*entry)*(1-progress)**2;
+      const tilt=swing*motion.endpointWeight(progress);
       face.style.transform=motion.transform(tilt);
     }
     gsap.ticker.add(tilt);

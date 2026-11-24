@@ -426,6 +426,8 @@ const initWorkSlider = (() => {
         if (!sourceThumb) return;
         var thumb = sourceThumb.cloneNode(true);
         thumb.querySelectorAll(".work-card__meta").forEach((el => el.remove()));
+        thumb.classList.remove("work-card__part--switching");
+        thumb.querySelectorAll(".work-card__part--switching").forEach(part => part.classList.remove("work-card__part--switching"));
         thumb.classList.add("work-list__media");
         thumb.removeAttribute("data-video-ignore");
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});

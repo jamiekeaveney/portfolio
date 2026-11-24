@@ -248,10 +248,10 @@ function runPageOnceAnimation(page) {
     .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
     .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
   tl.call(()=>document.dispatchEvent(new Event('jk:nav-reveal')),null,'revealPage+=.85');
-  tl.to(splits[0].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},0)
-    .to(splits[0].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},1.45)
-    .to(splits[1].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},1.6)
-    .to(splits[1].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},'revealPage-=.2');
+  tl.to(splits[0].chars,{yPercent:0,duration:1,ease:'expo.out',stagger:charStagger(splits[0])},0)
+    .to(splits[0].chars,{yPercent:-125,duration:1,ease:'expo.out',stagger:charStagger(splits[0])},1.45)
+    .to(splits[1].chars,{yPercent:0,duration:1,ease:'expo.out',stagger:charStagger(splits[1])},1.6)
+    .to(splits[1].chars,{yPercent:-125,duration:1,ease:'expo.out',stagger:charStagger(splits[1])},'revealPage-=.2');
   return tl;
 }
 

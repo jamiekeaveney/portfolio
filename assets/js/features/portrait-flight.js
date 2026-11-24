@@ -57,8 +57,7 @@
       function momentum(_,dt) {
         if (frozen || progress.value<=0 || progress.value>=1) {tilt=0;return;}
         tilt=motion.approach(tilt,tween.scrollTrigger.getVelocity(),dt);
-        const edge=Math.min(1,progress.value/.16,(1-progress.value)/.16);
-        const angle=tilt*edge*edge*(3-2*edge);
+        const angle=tilt*motion.endpointWeight(progress.value);
         face.style.transform=motion.transform(angle);
       }
       const size = new ResizeObserver(paint);

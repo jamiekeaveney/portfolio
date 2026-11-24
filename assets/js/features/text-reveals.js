@@ -109,9 +109,9 @@
               yPercent: SETTINGS.maskedTravelPercent
             }, {
               yPercent: 0,
-              duration: SETTINGS.textDuration,
+              duration: Number.parseFloat(el.dataset.revealDuration) || SETTINGS.textDuration,
               stagger: stagger,
-              ease: "power3.out",
+              ease: mode === "letters" ? SETTINGS.ease : "power3.out",
               paused: true,
               onComplete: () => entry.completed = true
             });
