@@ -13,7 +13,7 @@
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
     const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask")));
-    let timeline, render, timer, suspended = false, dead = false;
+    let playhead, timeline, render, timer, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
     function build() {
       if (dead || suspended || target.dataset.miniShowreelStatus === "active") return;
@@ -26,7 +26,7 @@
       const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
       const from = {x:startRect.left,y:startRect.top + scrollY,w:startRect.width,h:startRect.height};
       const to = {x:endRect.left,y:endRect.top + scrollY,w:endRect.width,h:endRect.height};
-      const playhead = {value:0};
+      playhead = {value:0};
       render = () => {
         if (dead || suspended || !timeline?.scrollTrigger) return;
         const st=timeline.scrollTrigger, p=playhead.value, y=scrollY;
@@ -58,12 +58,8 @@
       if(!face)return;
       const track=timeline?.scrollTrigger;
       if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
-      swing=motion.approach(swing,track.getVelocity(),dt);
-      const progress=timeline.progress();
       face.style.transformOrigin='top left';
-      const entry=Math.min(1,progress/.09);
-      const tilt=swing*entry*entry*(3-2*entry)*(1-progress)**2;
-      face.style.transform=motion.transform(tilt);
+      swing=motion.updateTilt(face,swing,track.getVelocity(),dt,playhead.value);
     }
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;

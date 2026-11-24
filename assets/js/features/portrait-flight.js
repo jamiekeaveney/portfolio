@@ -55,10 +55,8 @@
         onRefresh:paint,invalidateOnRefresh:true
       }});
       function momentum(_,dt) {
-        if (frozen || progress.value<=0 || progress.value>=1) {tilt=0;return;}
-        tilt=motion.approach(tilt,tween.scrollTrigger.getVelocity(),dt);
-        const angle=tilt*motion.endpointWeight(progress.value);
-        face.style.transform=motion.transform(angle);
+        if (frozen) return;
+        tilt=motion.updateTilt(face,tilt,tween.scrollTrigger.getVelocity(),dt,progress.value);
       }
       const size = new ResizeObserver(paint);
       size.observe(origin);size.observe(target);

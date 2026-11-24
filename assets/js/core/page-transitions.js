@@ -241,7 +241,7 @@ function runPageOnceAnimation(page) {
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
     .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
-    .to(bar,{backgroundColor:'#666666',duration:.8,ease:'none'},'collapse')
+    .to(bar,{backgroundColor:getComputedStyle(bar).getPropertyValue('--_theme---neutral--600').trim(),duration:.8,ease:'none'},'collapse')
     .add('revealPage')
     .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
