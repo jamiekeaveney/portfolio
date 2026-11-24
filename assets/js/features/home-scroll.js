@@ -60,7 +60,10 @@
       const track=timeline?.scrollTrigger;
       if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
       face.style.transformOrigin='top left';
-      swing=motion.updateTilt(face,swing,track.getVelocity(),dt,playhead.value,tiltStrength);
+      // Weight the tilt by the rendered position, including while the scrub catches up.
+      const progress = playhead.value;
+      const midpointWeight = Math.sin(Math.PI * progress) ** 4;
+      swing = motion.updateTilt(face, swing, track.getVelocity(), dt, progress, tiltStrength * midpointWeight);
     }
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
