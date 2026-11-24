@@ -3,6 +3,7 @@
     compactAfter: 64,
     expandBefore: 24,
     desktopWidth: 992,
+    heroExitViewportFraction: .3,
     layoutDuration: .95,
     layoutEase: "case-two-step",
     layoutCurve: "0.625, 0.05, 0, 1",
@@ -91,39 +92,43 @@
         wordmark.append(mask);
       }));
     }
-    let heroTween;
+    let heroTween, arrowTween;
     let heroPage = document.querySelector('[data-barba="container"]');
-    function moveHero(hidden, immediate = false) {
-      if (innerWidth < SETTINGS.desktopWidth) {
-        hidden = false;
-        immediate = true;
-      }
-      if (!heroPage) return;
-      const chars = [ ...heroPage.querySelectorAll("[data-home-scroll] .hero-scroll-char") ];
-      const lines = [ ...heroPage.querySelectorAll("[data-home-intro-exit] .hero-scroll-line") ], arrows = [ ...heroPage.querySelectorAll("[data-home-arrow-exit],.hero .scroll-arrow__mask") ];
-      if (!window.gsap || !chars.length && !lines.length && !arrows.length) return;
-      heroTween?.kill();
+    function seekHeroText(y) {
+      if (!heroTween) return;
+      const distance = Math.max(1, innerHeight * SETTINGS.heroExitViewportFraction);
+      heroTween.progress(Math.max(0, Math.min(1, y / distance)));
+    }
+    function refreshHeroText() {
+      heroTween?.revert();
+      heroTween = null;
+      if (!heroPage || !window.gsap || innerWidth < SETTINGS.desktopWidth ||
+          matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const chars = heroPage.querySelectorAll("[data-home-scroll] .hero-scroll-char");
+      const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero-scroll-line");
+      if (!chars.length && !lines.length) return;
       if (window.CustomEase) CustomEase.create(SETTINGS.layoutEase, SETTINGS.layoutCurve);
-      const duration = immediate ? 0 : SETTINGS.layoutDuration;
-      heroTween = gsap.timeline().to(chars, {
-        yPercent: hidden ? -120 : 0,
-        duration: duration,
-        stagger: immediate ? 0 : .025,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
-      }, 0).to(lines, {
-        yPercent: hidden ? -120 : 0,
-        duration: duration,
-        stagger: immediate ? 0 : parseFloat(lines[0]?.closest("[data-home-intro-exit]")?.dataset.linesStagger) || parseFloat(getComputedStyle(root).getPropertyValue("--motion-line-stagger")) || .1,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
-      }, 0).to(arrows, {
-        y: hidden ? "-1.5rem" : 0,
-        autoAlpha: hidden ? 0 : 1,
-        duration: immediate ? 0 : .3,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
-      }, 0);
+      heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:SETTINGS.layoutEase}});
+      if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {yPercent:-120, stagger:.025}, 0);
+      if (lines.length) {
+        const stagger = parseFloat(lines[0].closest("[data-home-intro-exit]").dataset.linesStagger) ||
+          parseFloat(getComputedStyle(root).getPropertyValue("--motion-line-stagger")) || .1;
+        heroTween.fromTo(lines, {yPercent:0}, {yPercent:-120, stagger}, 0);
+      }
+      seekHeroText(routeY ?? scrollY);
+    }
+    function moveHeroArrow(hidden, immediate = false) {
+      const arrows = heroPage?.querySelectorAll("[data-home-arrow-exit],.hero .scroll-arrow__mask");
+      if (!arrows?.length || !window.gsap) return;
+      if (innerWidth < SETTINGS.desktopWidth) { hidden = false; immediate = true; }
+      arrowTween?.kill();
+      if (window.CustomEase) CustomEase.create(SETTINGS.layoutEase, SETTINGS.layoutCurve);
+      arrowTween = gsap.to(arrows, {y:hidden ? "-1.5rem" : 0, autoAlpha:hidden ? 0 : 1,
+        duration:immediate ? 0 : .3, ease:SETTINGS.layoutEase, overwrite:true});
+    }
+    function moveHero(hidden, immediate) {
+      refreshHeroText();
+      moveHeroArrow(hidden, immediate);
     }
     let routeY = null;
     let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, fade, locked = false;
@@ -154,7 +159,7 @@
       const state = animate ? Flip.getState(moving) : null;
       document.dispatchEvent(new CustomEvent('jk:nav-layout',{detail:{compact:next,fadeDuration:SETTINGS.fadeDuration,duration:animate?(options.duration??SETTINGS.layoutDuration):0,ease:options.ease??SETTINGS.layoutEase}}));
       compact = next;
-      moveHero(next, immediate);
+      moveHeroArrow(next, immediate);
       applyLayout(animate && next);
       if (!animate) {
         applyLayout();
@@ -195,6 +200,7 @@
     }
     function update(immediate = false) {
       const y = routeY ?? scrollY;
+      seekHeroText(y);
       const nextDesktop = innerWidth >= SETTINGS.desktopWidth;
       if (nextDesktop !== desktop) {
         finish();
@@ -310,7 +316,9 @@
         const freeze = window.freezeContainer;
     if (freeze) window.freezeContainer = function(page) {
       routeY = typeof getCurrentScroll === "function" ? getCurrentScroll() : scrollY;
-      heroTween?.pause();
+      heroTween?.kill();
+      heroTween = null;
+      arrowTween?.pause();
       heroPage = null;
       return freeze(page);
     };
