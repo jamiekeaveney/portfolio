@@ -227,7 +227,8 @@ function runPageOnceAnimation(page) {
   };
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
   gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'var(--loader-surface)'});
-  gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'var(--loader-ink)',transformOrigin:'left bottom'});
+  const sweepHeight=8;
+  gsap.set(bar,{scaleX:0,scaleY:1,height:sweepHeight,y:0,yPercent:0,clipPath:'none',backgroundColor:'var(--loader-ink)',transformOrigin:'left bottom'});
   gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
   gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
   document.documentElement.setAttribute('data-loader-active','');
@@ -239,8 +240,8 @@ function runPageOnceAnimation(page) {
   const tl=gsap.timeline({defaults:{ease:'loader',duration:3},onComplete:finish,onInterrupt:finish})
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
-    .to(bar,{height:border,backgroundColor:getComputedStyle(page).getPropertyValue('--_theme---color--border').trim()||'#333',duration:.45,ease:'expo.out'},'collapse')
-    .add('revealPage','collapse+=.45')
+    .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
+    .add('revealPage')
     .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bar,{y:()=>-innerHeight+border,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
