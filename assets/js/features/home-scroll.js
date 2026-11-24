@@ -1,6 +1,7 @@
 /* Home-only scroll Flip. The preview's caption never contributes to the media ratio. */
 (() => {
   const instances = new Map;
+  const tiltStrength = .6;
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
@@ -59,7 +60,7 @@
       const track=timeline?.scrollTrigger;
       if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
       face.style.transformOrigin='top left';
-      swing=motion.updateTilt(face,swing,track.getVelocity(),dt,playhead.value);
+      swing=motion.updateTilt(face,swing,track.getVelocity(),dt,playhead.value,tiltStrength);
     }
     gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;

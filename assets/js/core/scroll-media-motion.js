@@ -19,9 +19,9 @@
       const edge = Math.min(1, progress / .22, (1 - progress) / .22);
       return edge * edge * (3 - 2 * edge);
     },
-    updateTilt(face, angle, velocity, deltaMs, progress) {
+    updateTilt(face, angle, velocity, deltaMs, progress, strength = 1) {
       const next = progress > 0 && progress < 1 ? this.approach(angle, velocity, deltaMs) : 0;
-      face.style.transform = this.transform(next * this.endpointWeight(progress));
+      face.style.transform = this.transform(next * this.endpointWeight(progress) * strength);
       return next;
     },
     transform(angle) {
