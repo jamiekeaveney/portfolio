@@ -4,7 +4,7 @@
   --work-list-display: none;
 }
 
-.work_list_mode {
+[data-work-mode="list"] {
   --work-gallery-display: none;
   --work-list-display: block;
 }
@@ -17,8 +17,8 @@
   display: var(--work-list-display);
 }
 
-.work_dragging,
-.work_dragging * {
+[data-work-status="dragging"],
+[data-work-status="dragging"] * {
   cursor: grabbing !important;
 }
 
@@ -67,7 +67,7 @@
   font-size: inherit;
   font-weight: 500;
   line-height: inherit;
-  letter-spacing: var(--spacing--heading-spacing);
+  letter-spacing: var(--_typography---letter-spacing--heading);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -84,9 +84,9 @@
   justify-content: center;
   align-items: center;
   color: var(--_theme---color--light-text);
-  font-size: var(--font-size--base);
+  font-size: var(--_typography---font-size--text-main);
   font-weight: 400;
-  letter-spacing: var(--spacing--spacing);
+  letter-spacing: var(--_typography---letter-spacing--main);
   font-variant-numeric: tabular-nums;
 }
 
@@ -123,7 +123,7 @@
     color: var(--_theme---color--foreground);
     font-size: var(--font-size--2xl, 2.5rem);
     font-weight: 500;
-    letter-spacing: var(--spacing--spacing);
+    letter-spacing: var(--_typography---letter-spacing--main);
     pointer-events: none;
   }
 
@@ -190,7 +190,7 @@
     --work-list-display: none;
   }
 
-  .work_list_mode {
+  [data-work-mode="list"] {
     --work-gallery-position: static;
   }
 

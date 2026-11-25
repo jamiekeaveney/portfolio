@@ -6,7 +6,7 @@
 .loader_logo_base{opacity:.2}
 .loader_logo_fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
 .loader_messages{position:absolute;bottom:3.5rem;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:var(--loader-ink,#fff)}
-.loader_messages_message{position:absolute;white-space:nowrap;text-transform:none;padding-bottom:.25em;margin-bottom:-.25em;font-family:var(--font-family--primary);font-size:var(--font-size--base,1rem);letter-spacing:var(--spacing--spacing)}
+.loader_messages_message{position:absolute;white-space:nowrap;text-transform:none;padding-bottom:.25em;margin-bottom:-.25em;font-family:var(--_typography---font--primary-family);font-size:var(--_typography---font-size--text-main,1rem);letter-spacing:var(--_typography---letter-spacing--main)}
 .loader_messages_mask{padding-bottom:.25em;margin-bottom:-.25em}
 
 .loader_bar{background:var(--loader-ink,#fff)}

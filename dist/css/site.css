@@ -6,7 +6,7 @@
 .loader_logo_base{opacity:.2}
 .loader_logo_fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
 .loader_messages{position:absolute;bottom:3.5rem;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:var(--loader-ink,#fff)}
-.loader_messages_message{position:absolute;white-space:nowrap;text-transform:none;padding-bottom:.25em;margin-bottom:-.25em;font-family:var(--font-family--primary);font-size:var(--font-size--base,1rem);letter-spacing:var(--spacing--spacing)}
+.loader_messages_message{position:absolute;white-space:nowrap;text-transform:none;padding-bottom:.25em;margin-bottom:-.25em;font-family:var(--_typography---font--primary-family);font-size:var(--_typography---font-size--text-main,1rem);letter-spacing:var(--_typography---letter-spacing--main)}
 .loader_messages_mask{padding-bottom:.25em;margin-bottom:-.25em}
 
 .loader_bar{background:var(--loader-ink,#fff)}
@@ -26,13 +26,12 @@
 .case_index_title_suggested{display:none;}
 
 .case_index_hint{font-variant-numeric:tabular-nums;}
-.work_list_mode{--work-caption-display:none}
+[data-work-mode="list"]{--work-caption-display:none}
 .work_card_meta{display:var(--work-caption-display,flex)}
 
  .case_index_prompt{color:var(--_theme---color--text-muted,#8a8a8a);margin-right:.55em;}
 .case_index_value,.case_index_title{color:var(--_theme---color--foreground,#fff);}
 
-.page_shell{--font-family--primary:'Delight',Arial,sans-serif}
 
 .page_theme_light { --services-heading-resting: #aaa; }
 
@@ -354,7 +353,7 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 .case_nav_back{color:var(--_theme---color--text-muted,#8a8a8a);transition:color .3s ease;}
 .case_nav_back:hover,.case_nav_back:focus-visible{color:var(--_theme---color--foreground,#fff);}
 .work_card_wrap{transition:opacity .3s ease;}
-.work_card_switching,.work_list_switching{transition:none!important;}
+:where([data-work-switching]) .work_card_wrap,:where([data-work-switching]) .work_list_wrap{transition:none!important;}
 
 .jk_close_cursor[data-cursor-kind="back"]{opacity:0!important;}
 @media(hover:hover) and (pointer:fine){
@@ -431,7 +430,7 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 
 
 
-.lightbox_close{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:var(--site--margin,2.5rem);z-index:10020;display:block;min-height:2.75rem;padding:.5rem .85rem;border:0;border-radius:var(--radius--radius,.75rem);background:#000;color:#fff;font:inherit;letter-spacing:var(--spacing--spacing);cursor:pointer;}
+.lightbox_close{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:var(--site--margin,2.5rem);z-index:10020;display:block;min-height:2.75rem;padding:.5rem .85rem;border:0;border-radius:var(--radius--radius,.75rem);background:#000;color:#fff;font:inherit;letter-spacing:var(--_typography---letter-spacing--main);cursor:pointer;}
 .lightbox_close:focus-visible{outline:0.125rem solid white;outline-offset:0.25rem;}
 [data-bunny-player-init]:fullscreen{width:100vw!important;height:100dvh!important;max-height:none!important;background:#000;}
 [data-bunny-player-init]:fullscreen video{width:100%;height:100%;object-fit:contain;}
@@ -724,7 +723,7 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   --work-list-display: none;
 }
 
-.work_list_mode {
+[data-work-mode="list"] {
   --work-gallery-display: none;
   --work-list-display: block;
 }
@@ -737,8 +736,8 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   display: var(--work-list-display);
 }
 
-.work_dragging,
-.work_dragging * {
+[data-work-status="dragging"],
+[data-work-status="dragging"] * {
   cursor: grabbing !important;
 }
 
@@ -787,7 +786,7 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   font-size: inherit;
   font-weight: 500;
   line-height: inherit;
-  letter-spacing: var(--spacing--heading-spacing);
+  letter-spacing: var(--_typography---letter-spacing--heading);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -804,9 +803,9 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   justify-content: center;
   align-items: center;
   color: var(--_theme---color--light-text);
-  font-size: var(--font-size--base);
+  font-size: var(--_typography---font-size--text-main);
   font-weight: 400;
-  letter-spacing: var(--spacing--spacing);
+  letter-spacing: var(--_typography---letter-spacing--main);
   font-variant-numeric: tabular-nums;
 }
 
@@ -843,7 +842,7 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
     color: var(--_theme---color--foreground);
     font-size: var(--font-size--2xl, 2.5rem);
     font-weight: 500;
-    letter-spacing: var(--spacing--spacing);
+    letter-spacing: var(--_typography---letter-spacing--main);
     pointer-events: none;
   }
 
@@ -910,7 +909,7 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
     --work-list-display: none;
   }
 
-  .work_list_mode {
+  [data-work-mode="list"] {
     --work-gallery-position: static;
   }
 
@@ -1064,7 +1063,7 @@ html[data-touch-input] :is(.showreel_card,.showreel_wrap):focus-within{outline:n
   margin: 0;
   padding: 0;
   overflow: hidden;
-  letter-spacing: var(--spacing--spacing);
+  letter-spacing: var(--_typography---letter-spacing--main);
 }
 
 .error_game_court {
@@ -1103,7 +1102,7 @@ html[data-touch-input] :is(.showreel_card,.showreel_wrap):focus-within{outline:n
   top: 9rem;
   font-size: var(--font-size--2xl, 2.5rem);
   line-height: 1.1;
-  letter-spacing: var(--spacing--spacing);
+  letter-spacing: var(--_typography---letter-spacing--main);
   font-weight: 500;
   pointer-events: none;
 }
@@ -1111,7 +1110,7 @@ html[data-touch-input] :is(.showreel_card,.showreel_wrap):focus-within{outline:n
 .error_game_status,
 .error_game_control {
   bottom: max(var(--error-gutter), env(safe-area-inset-bottom));
-  font-size: var(--font-size--base, 1rem);
+  font-size: var(--_typography---font-size--text-main, 1rem);
   line-height: 1.3;
 }
 
@@ -1125,7 +1124,7 @@ html[data-touch-input] :is(.showreel_card,.showreel_wrap):focus-within{outline:n
     justify-self: start;
     color: white;
     mix-blend-mode: difference;
-    font-size: var(--font-size--base, 1rem);
+    font-size: var(--_typography---font-size--text-main, 1rem);
     line-height: 1.3;
   }
 
@@ -1326,9 +1325,9 @@ html[data-touch-input] :is(.showreel_card,.showreel_wrap):focus-within{outline:n
 
 .work_list_thumbnail { scale: var(--list-thumb-scale, 1); }
 .work_mode_flip_image { scale: 1; }
-.work_card_switching { pointer-events: none !important; }
+:where([data-work-switching]) .work_card_wrap { pointer-events: none !important; }
 
-.work_card_part_switching {
+:where([data-work-switching] .work_card_wrap) :is(.work_card_thumb, .work_card_link, .work_card_poster, .work_card_meta) {
   --_trigger---on: 1 !important;
   --_trigger---off: 0 !important;
   transition: none !important;

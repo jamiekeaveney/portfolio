@@ -140,9 +140,9 @@
 
 .work_list_thumbnail { scale: var(--list-thumb-scale, 1); }
 .work_mode_flip_image { scale: 1; }
-.work_card_switching { pointer-events: none !important; }
+:where([data-work-switching]) .work_card_wrap { pointer-events: none !important; }
 
-.work_card_part_switching {
+:where([data-work-switching] .work_card_wrap) :is(.work_card_thumb, .work_card_link, .work_card_poster, .work_card_meta) {
   --_trigger---on: 1 !important;
   --_trigger---off: 0 !important;
   transition: none !important;

@@ -71,7 +71,6 @@ const initWorkSlider = (() => {
     };
     var setStatus = function(s) {
       root.setAttribute("data-work-status", s);
-      root.classList.toggle("work_dragging", s === "dragging");
     };
     var isMobile = function() {
       return mq.matches;
@@ -424,8 +423,6 @@ const initWorkSlider = (() => {
         if (!sourceThumb) return;
         var thumb = sourceThumb.cloneNode(true);
         thumb.querySelectorAll(".work_card_meta").forEach((el => el.remove()));
-        thumb.classList.remove("work_card_part_switching");
-        thumb.querySelectorAll(".work_card_part_switching").forEach(part => part.classList.remove("work_card_part_switching"));
         thumb.classList.add("work_list_media");
         thumb.removeAttribute("data-video-ignore");
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});
@@ -641,7 +638,6 @@ const initWorkSlider = (() => {
     }
     function setViewLayout(next) {
       root.setAttribute("data-work-mode", next);
-      root.classList.toggle("work_list_mode", next === "list");
     }
     function applyMode(next) {
       mode = next;
@@ -688,15 +684,6 @@ const initWorkSlider = (() => {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
       return $$(".work_card_wrap", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work_card_thumb");
     }
-    function setGalleryInteractionLocked(locked) {
-      listEl.classList.toggle("work_list_switching", locked);
-      for (const item of $$(".work_card_wrap", track)) {
-        item.classList.toggle("work_card_switching", locked);
-        for (const part of item.querySelectorAll(".work_card_thumb,.work_card_link,.work_card_poster,.work_card_meta")) {
-          part.classList.toggle("work_card_part_switching", locked);
-        }
-      }
-    }
     function cancelModeFlip() {
       modeTween?.kill();
       modeContentTween?.kill();
@@ -706,7 +693,6 @@ const initWorkSlider = (() => {
       });
       modeTween = modeContentTween = modeGhost = modeTarget = null;
       root.removeAttribute("data-work-switching");
-      setGalleryInteractionLocked(false);
       fading = false;
     }
     function freeze() {
@@ -752,7 +738,6 @@ const initWorkSlider = (() => {
       killSlide();
       killList();
       root.setAttribute("data-work-switching", "");
-      setGalleryInteractionLocked(true);
       const ghost = modeGhost = document.createElement("div");
       ghost.className = "work_mode_flip";
       ghost.setAttribute("aria-hidden", "true");

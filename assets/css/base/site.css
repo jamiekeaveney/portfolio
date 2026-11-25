@@ -5,13 +5,12 @@
 .case_index_title_suggested{display:none;}
 
 .case_index_hint{font-variant-numeric:tabular-nums;}
-.work_list_mode{--work-caption-display:none}
+[data-work-mode="list"]{--work-caption-display:none}
 .work_card_meta{display:var(--work-caption-display,flex)}
 
  .case_index_prompt{color:var(--_theme---color--text-muted,#8a8a8a);margin-right:.55em;}
 .case_index_value,.case_index_title{color:var(--_theme---color--foreground,#fff);}
 
-.page_shell{--font-family--primary:'Delight',Arial,sans-serif}
 
 .page_theme_light { --services-heading-resting: #aaa; }
 
@@ -333,7 +332,7 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 .case_nav_back{color:var(--_theme---color--text-muted,#8a8a8a);transition:color .3s ease;}
 .case_nav_back:hover,.case_nav_back:focus-visible{color:var(--_theme---color--foreground,#fff);}
 .work_card_wrap{transition:opacity .3s ease;}
-.work_card_switching,.work_list_switching{transition:none!important;}
+:where([data-work-switching]) .work_card_wrap,:where([data-work-switching]) .work_list_wrap{transition:none!important;}
 /* Back is a backdrop hover state, gated until the opening Flip has finished. */
 .jk_close_cursor[data-cursor-kind="back"]{opacity:0!important;}
 @media(hover:hover) and (pointer:fine){
@@ -410,7 +409,7 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 
 /* Lightbox UI is generated per instance and disposed on navigation. */
 
-.lightbox_close{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:var(--site--margin,2.5rem);z-index:10020;display:block;min-height:2.75rem;padding:.5rem .85rem;border:0;border-radius:var(--radius--radius,.75rem);background:#000;color:#fff;font:inherit;letter-spacing:var(--spacing--spacing);cursor:pointer;}
+.lightbox_close{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:var(--site--margin,2.5rem);z-index:10020;display:block;min-height:2.75rem;padding:.5rem .85rem;border:0;border-radius:var(--radius--radius,.75rem);background:#000;color:#fff;font:inherit;letter-spacing:var(--_typography---letter-spacing--main);cursor:pointer;}
 .lightbox_close:focus-visible{outline:0.125rem solid white;outline-offset:0.25rem;}
 [data-bunny-player-init]:fullscreen{width:100vw!important;height:100dvh!important;max-height:none!important;background:#000;}
 [data-bunny-player-init]:fullscreen video{width:100%;height:100%;object-fit:contain;}
