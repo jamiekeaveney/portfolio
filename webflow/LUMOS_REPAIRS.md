@@ -79,6 +79,6 @@ The Webflow Button component and the shared Global Styles component now own the 
 
 Footer email has three native label positions for the address, Copy Email and confirmation. The clipboard handler sets `data-copy-status="copied"` after a successful write. Back to Top uses the native up-arrow SVG and its own rollover. The footer invitation is a heading. The runtime no longer assigns generated trigger classes or repairs link semantics at startup.
 
-Use `--site--margin`, `--site--gutter` and `--site--column-count` for their respective layout measurements, and the Typography collection for shared family, size and letter spacing. The Projects CMS gallery's native card and track are `work_card_wrap` and `work_gallery_track`. The shared showreel preview uses `showreel_poster`. Earlier entries record historical selector names.
+Use `--site--margin`, `--site--gutter` and `--site--column-count` for their respective layout measurements, and the Typography collection for shared family, size and letter spacing. The Projects CMS gallery's native card and track are `work_card_wrap` and `work_gallery_track`. Native CMS video embeds use `media_video` on their video elements for fill and cover sizing. Their CMS media URLs and playback settings remain available to the player. The shared showreel preview uses `showreel_poster`. Earlier entries record historical selector names.
 
-The CSS and JavaScript for this cleanup are pinned at `aefab5d496cfdcc709c51f400e2c4030b8cc3e1f` in both Webflow custom-code snippets.
+The CSS and JavaScript for this cleanup are pinned at `8f764cff329dcee6ac5d135ef41e4573fc94a095` in both Webflow custom-code snippets.
