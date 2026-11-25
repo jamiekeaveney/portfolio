@@ -112,8 +112,11 @@
       if (!match) return;
       const target = Number(match[2]);
       if (target > 1e3) return;
-      el.setAttribute("aria-label", original);
       el.innerHTML = "";
+      const accessible = document.createElement("span");
+      accessible.className = "odometer_accessible_text";
+      accessible.textContent = original;
+      el.append(accessible);
       const add = text => {
         if (text) {
           const s = document.createElement("span");

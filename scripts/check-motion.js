@@ -311,3 +311,82 @@ function reducedScrollFixture() {
 }
 reducedScrollFixture();
 console.log('Event-driven cursor idle, input, route and dialog handling; live reduced-motion scrolling passed.');
+
+// Exercise the reveal integration with the actual generic headline wrappers and
+// semantic headings. SplitText must leave phrasing text readable instead of
+// replacing it with an aria-label on an element that cannot have a name.
+function revealSemanticsFixture() {
+  const elements = ['p', 'span', 'div', 'h1', 'h2'].map(tag => ({
+    tag,
+    dataset: {split: tag === 'h1' ? 'letters' : 'words', reveal: 'load'},
+    closest: () => null,
+    getClientRects: () => [{}],
+    matches(selector) { return selector.split(',').includes(tag); }
+  }));
+  const configs = new Map();
+  const SplitText = {create(el, config) { configs.set(el.tag, config); return {}; }};
+  const window = {SplitText};
+  const document = {documentElement: {}, readyState: 'loading', addEventListener() {}};
+  const page = {dataset: {}, querySelectorAll: () => elements};
+  vm.runInNewContext(fs.readFileSync('assets/js/features/text-reveals.js', 'utf8'), {
+    window, document, SplitText,
+    getComputedStyle: () => ({getPropertyValue: () => ''}),
+    matchMedia: query => ({matches: query.includes('min-width')})
+  });
+  window.JKReveals.prepare(page);
+  for (const tag of ['p', 'span', 'div']) assert.equal(configs.get(tag).aria, 'none', `${tag} keeps its actual split text exposed`);
+  for (const tag of ['p', 'span']) assert.equal(configs.get(tag).tag, 'span', `${tag} uses phrasing wrappers`);
+  for (const tag of ['h1', 'h2']) assert.equal(configs.get(tag).aria, 'auto', `${tag} retains a single accessible heading label`);
+}
+revealSemanticsFixture();
+
+// Read the accessibility text produced by the real odometer controller. Only
+// the final value should be exposed, never its animated sequence of digits.
+function odometerSemanticsFixture(reduced) {
+  class Node {
+    constructor(text = '') { this.value = text; this.children = []; this.dataset = {}; this.attributes = new Map(); }
+    set textContent(value) { this.value = value; this.children = []; }
+    get textContent() { return this.value + this.children.map(child => child.textContent).join(''); }
+    set innerHTML(value) { this.value = value; this.children = []; }
+    append(child) { child.parentElement = this; this.children.push(child); }
+    setAttribute(name, value) { this.attributes.set(name, value); }
+    getBoundingClientRect() { return {top: 100, bottom: 118, height: 18}; }
+    get firstElementChild() { return this.children[0]; }
+  }
+  const values = ['4+', '3', '2', '12+'];
+  const elements = values.map(value => { const el = new Node(value); el.parentElement = new Node(); return el; });
+  const events = new Map(), animations = [];
+  const page = {
+    dataset: {pageIntroStarted: 'true'},
+    addEventListener: (name, handler) => events.set(name, handler),
+    removeEventListener: name => events.delete(name)
+  };
+  const root = {querySelectorAll: () => elements, closest: () => page};
+  const source = fs.readFileSync('assets/js/features/editorial.js', 'utf8');
+  const controller = source.slice(source.indexOf('  function initNumberOdometer('), source.indexOf('  function initScalingMediaScroll('));
+  const context = {
+    root,
+    matchMedia: () => ({matches: reduced}),
+    document: {createElement: () => new Node()},
+    gsap: {to(target, options) { animations.push({target, options}); return {invalidate() {return this;}, play() {}}; }},
+    ScrollTrigger: {create() {}},
+    requestAnimationFrame() {}, innerHeight: 900
+  };
+  vm.runInNewContext(controller + '\nvar cleanup = initNumberOdometer(root);', context);
+  const read = node => node.attributes.get('aria-hidden') === 'true' ? '' : node.value + node.children.map(read).join('');
+  assert.deepEqual(elements.map(read), values, 'Each counter exposes its final number exactly once');
+  assert.ok(elements.every(el => !el.attributes.has('aria-label')), 'Generic counter nodes have no prohibited accessible name');
+  if (reduced) {
+    assert.equal(animations.length, 0);
+    assert.ok(elements.every(el => el.children.length === 0), 'Reduced motion retains the original static text');
+  } else {
+    assert.ok(elements.every(el => el.firstElementChild.className === 'odometer_accessible_text'));
+    assert.deepEqual(animations.map(({options}) => options.y()), [-72, -54, -36, -216], 'Accessible text does not alter rolling digit geometry');
+    assert.equal(events.size, 1);
+    context.cleanup();
+    assert.equal(events.size, 0);
+  }
+}
+odometerSemanticsFixture(false);
+odometerSemanticsFixture(true);
+console.log('Generic reveal semantics, readable odometer values and reduced-motion counters passed.');

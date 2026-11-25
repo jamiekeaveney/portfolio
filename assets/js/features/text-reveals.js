@@ -79,10 +79,10 @@
       if (mode && window.SplitText) {
         s.splits.push(SplitText.create(el, {
           type: mode === "letters" ? "lines,words,chars" : mode === "words" ? "lines,words" : "lines",
-          // Paragraphs cannot have accessible names. Keep their split text in
-          // the accessibility tree; headings retain SplitText's single label.
-          aria: el.matches("p") ? "none" : "auto",
-          tag: el.matches("p") ? "span" : "div",
+          // Only headings receive a replacement accessible name. Generic
+          // phrases and paragraphs keep their real text in the accessibility tree.
+          aria: el.matches("h1,h2,h3,h4,h5,h6,[role='heading']") ? "auto" : "none",
+          tag: el.matches("p,span") ? "span" : "div",
           mask: "lines",
           linesClass: "reveal_line",
           autoSplit: true,
