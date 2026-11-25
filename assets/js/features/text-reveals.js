@@ -82,7 +82,7 @@
           // Only headings receive a replacement accessible name. Generic
           // phrases and paragraphs keep their real text in the accessibility tree.
           aria: el.matches("h1,h2,h3,h4,h5,h6,[role='heading']") ? "auto" : "none",
-          tag: el.matches("p,span") ? "span" : "div",
+          // Keep SplitText's default block line/mask and inline-block glyph layout.
           mask: "lines",
           linesClass: "reveal_line",
           autoSplit: true,

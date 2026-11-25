@@ -207,7 +207,7 @@ function runPageOnceAnimation(page) {
   content.append(logoWrap,texts);
   const overlay=document.createElement('div');overlay.className='loader_reveal_overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
-  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines',aria:'none',tag:'span'}));
+  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines',aria:'none'}));
   for (const text of texts.children) text.firstElementChild?.classList.add('loader_messages_mask');
   let finished=false;
   const preparePage=async()=>{
