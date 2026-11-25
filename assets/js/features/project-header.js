@@ -60,7 +60,7 @@ JKProject.register((s => {
     const state = Flip.getState(media);
     s.expanded = expanding;
     root.setAttribute("data-list-grid-view", expanding ? "grid" : "list");
-    rail.classList.toggle("case-media-rail--expanded", expanding);
+    rail.classList.toggle("case_media_rail_expanded", expanding);
     keepScroll();
     details.style.pointerEvents = expanding ? "none" : "";
     if (toggle) {
@@ -116,7 +116,7 @@ JKProject.register((s => {
   s.cleanups.push((() => {
     flip?.kill();
     unlock();
-    rail.classList.remove("case-media-rail--expanded");
+    rail.classList.remove("case_media_rail_expanded");
     details.style.pointerEvents = "";
     gsap.set(details, {
       clearProps: "opacity,visibility"

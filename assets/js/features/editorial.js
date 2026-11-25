@@ -250,7 +250,7 @@
     const cards = [ ...list.children ], layers = [];
     cards.forEach(((card, i) => {
       const layer = document.createElement("div");
-      layer.className = "cv-stack-layer";
+      layer.className = "cv_stack_layer";
       card.before(layer);
       layer.append(card);
       layer.style.zIndex = cards.length - i;

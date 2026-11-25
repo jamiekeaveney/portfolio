@@ -189,17 +189,17 @@ function runPageOnceAnimation(page) {
   if(!bar||!content||!bg){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
   CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
   content.replaceChildren();bar.replaceChildren();
-  const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
+  const logoWrap=document.createElement('div');logoWrap.className='loader_logo';
   const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='sitenav_wordmark loader-logo__wordmark loader-logo__base';fill.className='sitenav_wordmark loader-logo__wordmark loader-logo__fill';fill.dataset.loadLogo='';
+  base.className='sitenav_wordmark loader_logo_wordmark loader_logo_base';fill.className='sitenav_wordmark loader_logo_wordmark loader_logo_fill';fill.dataset.loadLogo='';
   base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
-  const texts=document.createElement('div');texts.className='loader-messages';
-  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader-messages__message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
+  const texts=document.createElement('div');texts.className='loader_messages';
+  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader_messages_message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
   content.append(logoWrap,texts);
-  const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
+  const overlay=document.createElement('div');overlay.className='loader_reveal_overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines'}));
-  for (const text of texts.children) text.firstElementChild?.classList.add('loader-messages__mask');
+  for (const text of texts.children) text.firstElementChild?.classList.add('loader_messages_mask');
   let finished=false;
   const preparePage=async()=>{
     await (document.fonts?.ready||Promise.resolve());
@@ -347,7 +347,7 @@ barba.hooks.before((t => {
   closeMenuIfOpen();
   isPopstate = ["popstate", "back", "forward"].includes(t.trigger), saveScrollPosition(t.current.url.href, getCurrentScroll()), 
   freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
-  document.documentElement.classList.add("page-shell--transitioning");
+  document.documentElement.classList.add("page_shell_transitioning");
 })), barba.hooks.beforeEnter((t => {
   gsap.set(t.next.container, {
     position: "fixed",
@@ -362,7 +362,7 @@ barba.hooks.before((t => {
   hasScrollTrigger && ScrollTrigger.refresh();
 })), barba.hooks.after((() => {
   isPopstate = !1, skipPageTransition = !1, document.documentElement.removeAttribute("data-transitioning");
-  document.documentElement.classList.remove("page-shell--transitioning");
+  document.documentElement.classList.remove("page_shell_transitioning");
 }));
 
 function startPortfolio() {

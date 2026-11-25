@@ -70,7 +70,7 @@
       collection?.removeAttribute("data-preview-active");
       later((() => {
         if (!selected) {
-          inner?.querySelectorAll(".client-preview__visual").forEach(remove);
+          inner?.querySelectorAll(".client_preview_visual").forEach(remove);
           current = null;
           previousIndex = -1;
           placed = false;
@@ -113,7 +113,7 @@
       previousIndex = entry.index;
       inner.querySelectorAll('[data-preview-position="outgoing"]').forEach(remove);
       const old = current, visual = document.createElement("div");
-      visual.className = "client-preview__visual";
+      visual.className = "client_preview_visual";
       visual.dataset.mediaKey = entry.key;
       visual.style.setProperty("--preview-direction", direction);
       visual.setAttribute("data-preview-position", wasVisible ? "incoming" : "current");
@@ -244,7 +244,7 @@
       timers.forEach(clearTimeout);
       xTo?.tween.kill();
       yTo?.tween.kill();
-      inner?.querySelectorAll(".client-preview__visual").forEach(remove);
+      inner?.querySelectorAll(".client_preview_visual").forEach(remove);
       collection?.removeAttribute("data-preview-active");
       items.forEach((item => {
         if (mapping.has(item)) {

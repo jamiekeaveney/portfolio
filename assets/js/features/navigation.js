@@ -32,7 +32,7 @@
     if (!nav) return;
     const toggle = nav.querySelector("#nav-toggle");
     function syncMenu() {
-      nav.classList.toggle("sitenav--menu-open", Boolean(toggle?.checked));
+      nav.classList.toggle("sitenav_menu_open", Boolean(toggle?.checked));
     }
     toggle?.addEventListener("change", syncMenu);
     syncMenu();
@@ -41,30 +41,30 @@
       toggle.checked = false;
       toggle.dispatchEvent(new Event("change", { bubbles: true }));
     }, true);
-    nav.querySelector(".transition.mobile")?.classList.add("sitenav__overlay");
-    nav.querySelector(".transition_dark.mobile")?.classList.add("sitenav__overlay-shade");
+    nav.querySelector(".transition.mobile")?.classList.add("sitenav_overlay");
+    nav.querySelector(".transition_dark.mobile")?.classList.add("sitenav_overlay_shade");
     nav.querySelectorAll(".sitenav_project_count").forEach(count => {
       const button = count.closest(".sitenav_item")?.querySelector(".btn");
       if (button) {
-        button.classList.add("sitenav__link--counted");
+        button.classList.add("sitenav_link_counted");
         button.append(count);
       }
     });
 
     const contact = nav.querySelector(".sitenav_contact .btn");
-    contact?.classList.add("sitenav__contact-link", "sitenav__link-surface");
+    contact?.classList.add("sitenav_contact_link", "sitenav_link_surface");
     contact?.querySelectorAll(".btn_main, .btn_text_mask, .btn_text").forEach(part => {
-      part.classList.add("sitenav__contact-content");
+      part.classList.add("sitenav_contact_content");
     });
-    nav.querySelectorAll(".sitenav .btn_main").forEach(part => part.classList.add("sitenav__button-body"));
-    nav.querySelectorAll(".sitenav .btn_text_mask").forEach(part => part.classList.add("sitenav__button-mask"));
+    nav.querySelectorAll(".sitenav .btn_main").forEach(part => part.classList.add("sitenav_button_body"));
+    nav.querySelectorAll(".sitenav .btn_text_mask").forEach(part => part.classList.add("sitenav_button_mask"));
 
     const groups = Array.from(nav.querySelectorAll(".sitenav_links, .sitenav_socials"), group => {
       const links = Array.from(group.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]'));
       for (const link of links) {
-        link.classList.add("sitenav__link", "sitenav__link-surface");
-        link.addEventListener("pointerenter", () => group.classList.add("sitenav__group--pointed"));
-        link.addEventListener("pointerleave", () => group.classList.remove("sitenav__group--pointed"));
+        link.classList.add("sitenav_link", "sitenav_link_surface");
+        link.addEventListener("pointerenter", () => group.classList.add("sitenav_group_pointed"));
+        link.addEventListener("pointerleave", () => group.classList.remove("sitenav_group_pointed"));
       }
       return { group, links, primary: group.classList.contains("sitenav_links") };
     });
@@ -80,12 +80,12 @@
       wordmark.textContent = "";
       Array.from(label).forEach(((letter, i) => {
         const mask = document.createElement("span");
-        mask.className = "nav-logo__char";
+        mask.className = "nav_logo_char";
         mask.setAttribute("aria-hidden", "true");
         mask.style.setProperty("--char-i", i);
         for (let n = 0; n < 2; n++) {
           const glyph = document.createElement("span");
-          glyph.className = n === 0 ? "nav-logo__glyph" : "nav-logo__glyph nav-logo__glyph--repeat";
+          glyph.className = n === 0 ? "nav_logo_glyph" : "nav_logo_glyph nav_logo_glyph_repeat";
           glyph.textContent = letter === " " ? " " : letter;
           mask.append(glyph);
         }
@@ -106,8 +106,8 @@
       heroTween = null;
       if (!heroPage || !window.gsap || innerWidth < SETTINGS.desktopWidth ||
           matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const chars = heroPage.querySelectorAll("[data-home-scroll] .hero-scroll-char");
-      const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero-scroll-line");
+      const chars = heroPage.querySelectorAll("[data-home-scroll] .hero_scroll_char");
+      const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero_scroll_line");
       if (!chars.length && !lines.length) return;
       heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:"none"}});
       if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {yPercent:-120, stagger:.025}, 0);
@@ -249,12 +249,12 @@
         for (const link of links) {
           const current = primary && new URL(link.href, location.href).pathname === path;
           link.classList.toggle("w--current", current);
-          link.classList.toggle("sitenav__link--current", current);
+          link.classList.toggle("sitenav_link_current", current);
           if (current) link.setAttribute("aria-current", "page");
           else link.removeAttribute("aria-current");
           hasCurrent ||= current;
         }
-        group.classList.toggle("sitenav__group--current", hasCurrent);
+        group.classList.toggle("sitenav_group_current", hasCurrent);
       }
     }
     syncGroups();
@@ -275,7 +275,7 @@
       } catch {}
     }
     updateProjectCount();
-    document.querySelectorAll(".cta-section a.secondary-link,[data-footer-link]").forEach((a => {
+    document.querySelectorAll(".is-cta-section a.secondary-link,[data-footer-link]").forEach((a => {
       const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === location.pathname;
       a.classList.toggle("w--current", current);
       if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
@@ -326,7 +326,7 @@
     if (window.syncNavState) window.syncNavState = function(data) {
       const path = new URL(data.next.url.href).pathname;
       syncGroups(path);
-      document.querySelectorAll("a[data-barba-update],.cta-section a.secondary-link,[data-footer-link]").forEach((a => {
+      document.querySelectorAll("a[data-barba-update],.is-cta-section a.secondary-link,[data-footer-link]").forEach((a => {
         const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === path;
         a.classList.toggle("w--current", current);
         if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");

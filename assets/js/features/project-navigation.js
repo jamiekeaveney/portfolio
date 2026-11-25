@@ -114,7 +114,7 @@
       nav.dataset.jkNav = "";
       const row = nav.querySelector(".case_nav_row"), prev = row.querySelector('[data-case-direction="prev"]'), next = row.querySelector('[data-case-direction="next"]');
       const context = document.createElement("div");
-      context.className = "case-nav__context";
+      context.className = "case_nav_context";
       const back = document.createElement("a");
       let origin;
       try {
@@ -128,19 +128,19 @@
       };
       const path = Object.hasOwn(labels, origin?.path) ? origin.path : "/projects";
       back.href = path;
-      back.className = "case-nav__back";
+      back.className = "case_nav_back";
       back.innerHTML = chevron("prev") + "<span>" + labels[path] + "</span>";
       const slash = document.createElement("span");
       slash.textContent = "/";
-      slash.className = "case-nav__separator";
+      slash.className = "case_nav_separator";
       const title = document.createElement("span");
-      title.className = "case-nav__current";
+      title.className = "case_nav_current";
       title.textContent = page.querySelector("h1")?.textContent || "";
       context.append(back, slash, title);
       const controls = document.createElement("div");
-      controls.className = "case-nav__controls";
+      controls.className = "case_nav_controls";
       const count = document.createElement("span");
-      count.className = "case-nav__count";
+      count.className = "case_nav_count";
       prev.innerHTML = chevron("prev");
       next.innerHTML = chevron("next");
       controls.append(count, prev, next);
@@ -150,8 +150,8 @@
         const idx = paths.indexOf(location.pathname);
         if (idx >= 0) {
           const current = document.createElement("span"), divider = document.createElement("span"), total = document.createElement("span");
-          current.className = total.className = "case-nav__number";
-          divider.className = "case-nav__count-divider";
+          current.className = total.className = "case_nav_number";
+          divider.className = "case_nav_count_divider";
           current.textContent = String(idx + 1).padStart(2, "0");
           divider.textContent = "/";
           total.textContent = String(paths.length).padStart(2, "0");

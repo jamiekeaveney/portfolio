@@ -1,4 +1,4 @@
-.sitenav--menu-open {
+.sitenav_menu_open {
   --nav-menu-pointer: auto;
   --nav-menu-visibility: visible;
   --nav-row-offset: 0%;
@@ -10,8 +10,8 @@
   --nav-group-step: .1s;
 }
 
-.sitenav__overlay,
-.sitenav__overlay-shade,
+.sitenav_overlay,
+.sitenav_overlay_shade,
 .sitenav_mobile,
 .nav_mobile_appearance {
   pointer-events: var(--nav-menu-pointer, none);
@@ -26,7 +26,7 @@
 .sitenav_social_item { list-style: none; margin: 0; padding: 0; }
 
 .sitenav_brand:focus-visible { --nav-logo-offset: calc(-100% - .12em); }
-.nav-logo__char {
+.nav_logo_char {
   display: inline-block;
   position: relative;
   overflow: hidden;
@@ -36,7 +36,7 @@
   padding-bottom: .12em;
   margin-bottom: -.12em;
 }
-.nav-logo__glyph {
+.nav_logo_glyph {
   display: block;
   font: inherit;
   letter-spacing: inherit;
@@ -44,12 +44,12 @@
   transition: transform 1s cubic-bezier(.16, 1, .3, 1);
   transition-delay: calc(var(--char-i) * .008s);
 }
-.nav-logo__glyph--repeat { position: absolute; top: 100%; left: 0; }
-.sitenav__button-mask,
-.nav-logo__char { backface-visibility: hidden; will-change: transform; }
-.sitenav__button-body { background: transparent !important; box-shadow: none !important; }
+.nav_logo_glyph_repeat { position: absolute; top: 100%; left: 0; }
+.sitenav_button_mask,
+.nav_logo_char { backface-visibility: hidden; will-change: transform; }
+.sitenav_button_body { background: transparent !important; box-shadow: none !important; }
 .sitenav_project_count { color: inherit; }
-.sitenav__link--counted { position: relative; overflow: visible; padding-inline-end: 1em; }
+.sitenav_link_counted { position: relative; overflow: visible; padding-inline-end: 1em; }
 .sitenav_project_count {
   position: absolute;
   inset-inline-end: 0;
@@ -60,12 +60,12 @@
   pointer-events: none;
 }
 
-.sitenav__link-surface {
+.sitenav_link_surface {
   position: relative;
   isolation: isolate;
   text-decoration: none;
 }
-.sitenav__link-surface::before,
+.sitenav_link_surface::before,
 .nav_mobile_detail_link::before {
   content: "";
   position: absolute;
@@ -77,28 +77,28 @@
   z-index: -1;
 }
 .nav_mobile_detail_link::before { background: transparent !important; }
-.sitenav__link-surface:focus-visible::before { opacity: .16; }
+.sitenav_link_surface:focus-visible::before { opacity: .16; }
 .sitenav_contact { color: var(--_theme---color--text-muted, #8a8a8a); }
-.sitenav__contact-link {
+.sitenav_contact_link {
   line-height: 1.3;
   color: var(--_theme---color--text-muted, #8a8a8a) !important;
   transition: color .3s ease;
 }
-.sitenav__contact-content {
+.sitenav_contact_content {
   line-height: 1.3;
   color: inherit !important;
   background: transparent !important;
 }
-.sitenav__contact-link:is(:hover, :focus-visible) { color: var(--_theme---color--foreground, #fff) !important; }
+.sitenav_contact_link:is(:hover, :focus-visible) { color: var(--_theme---color--foreground, #fff) !important; }
 
-.sitenav__group--current { --nav-link-default: var(--_theme---color--text-muted, #8a8a8a); }
-.sitenav__link {
+.sitenav_group_current { --nav-link-default: var(--_theme---color--text-muted, #8a8a8a); }
+.sitenav_link {
   color: var(--nav-link-peer, var(--nav-link-current, var(--nav-link-default, var(--_theme---color--foreground, #fff)))) !important;
 }
-.sitenav__link--current { --nav-link-current: var(--_theme---color--foreground, #fff); }
-.sitenav__link:is(:hover, :focus-visible) { --nav-link-peer: var(--_theme---color--foreground, #fff); }
+.sitenav_link_current { --nav-link-current: var(--_theme---color--foreground, #fff); }
+.sitenav_link:is(:hover, :focus-visible) { --nav-link-peer: var(--_theme---color--foreground, #fff); }
 
-.page-theme--light {
+.page_theme_light {
   --nav-dot-active-offset: .75rem;
   --nav-overlay-color: var(--_theme---color--text);
 }
@@ -146,7 +146,7 @@
 }
 @media (hover: hover) {
   .sitenav_brand:hover { --nav-logo-offset: calc(-100% - .12em); }
-  .sitenav__link-surface:hover::before,
+  .sitenav_link_surface:hover::before,
   .nav_mobile_detail_link:hover::before { opacity: .16; }
 }
 @media (hover: hover) and (pointer: fine) {
@@ -158,9 +158,9 @@
   .btn_toggle_toggle { transition: background-color .3s; }
 }
 @media (min-width: 62rem) and (hover: hover) and (pointer: fine) {
-  .sitenav__group--pointed { --nav-link-peer: var(--_theme---color--text-muted, #8a8a8a); }
+  .sitenav_group_pointed { --nav-link-peer: var(--_theme---color--text-muted, #8a8a8a); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nav-logo__glyph,
+  .nav_logo_glyph,
   .btn_toggle_toggle_dot { transition: none; }
 }

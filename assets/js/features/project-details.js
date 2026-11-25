@@ -9,7 +9,7 @@ JKProject.register((s => {
   const {page: page, abort: abort, cleanups: cleanups} = s;
   if (!matchMedia("(pointer:fine)").matches || JKProject.reduced()) return;
   const cursor = document.createElement("div");
-  cursor.className = "case-cursor";
+  cursor.className = "case_cursor";
   cursor.setAttribute("aria-hidden", "true");
   document.body.append(cursor);
   // These are runtime animation coordinates; the visual styles live in Designer.

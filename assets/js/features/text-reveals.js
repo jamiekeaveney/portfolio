@@ -80,20 +80,20 @@
         s.splits.push(SplitText.create(el, {
           type: mode === "letters" ? "lines,words,chars" : mode === "words" ? "lines,words" : "lines",
           mask: "lines",
-          linesClass: "reveal-line",
+          linesClass: "reveal_line",
           autoSplit: true,
           onSplit(split) {
             if (el.hasAttribute("data-home-scroll")) split.chars.forEach((ch => {
               const wrap = document.createElement("span");
-              wrap.className = "hero-scroll-char";
+              wrap.className = "hero_scroll_char";
               ch.before(wrap);
               wrap.append(ch);
             }));
             split.lines.forEach((l => {
-              l.parentElement.classList.add("reveal-line-mask");
+              l.parentElement.classList.add("reveal_line_mask");
               if (el.hasAttribute("data-home-intro-exit")) {
                 const wrap = document.createElement("span");
-                wrap.className = "hero-scroll-line";
+                wrap.className = "hero_scroll_line";
                 wrap.style.display = "block";
                 l.before(wrap);
                 wrap.append(l);
@@ -125,7 +125,7 @@
       } else if (effect === "inline-media") {
         const bounds = el.getBoundingClientRect(), w = bounds.width;
         const slot=document.createElement('span');
-        slot.className='editorial-media-slot';
+        slot.className='editorial_media_slot';
         slot.style.height=(bounds.height + (parseFloat(getComputedStyle(el).marginBottom)||0))+'px';
         el.before(slot);slot.append(el);
         el.dataset.inlineWidth = String(w);

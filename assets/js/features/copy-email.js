@@ -9,14 +9,14 @@
     buttons.forEach((button => {
       const email = button.querySelector(".btn_text")?.textContent.trim();
       if (!email) return;
-      button.classList.remove("btn--copied");
+      button.classList.remove("btn_copied");
       button.setAttribute("role", "button");
       button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       button.setAttribute("data-barba-prevent", "");
       let pending = false, epoch = 0;
       const reset = () => {
         epoch++;
-        button.classList.remove("btn--copied");
+        button.classList.remove("btn_copied");
         button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       };
       const copy = async event => {
@@ -28,7 +28,7 @@
         try {
           await navigator.clipboard.writeText(email);
           if (token === epoch && !abort.signal.aborted && button.isConnected) {
-            button.classList.add("btn--copied");
+            button.classList.add("btn_copied");
             button.setAttribute("aria-label", "Email copied to clipboard");
           }
         } catch {

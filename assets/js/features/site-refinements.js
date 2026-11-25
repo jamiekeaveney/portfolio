@@ -3,21 +3,21 @@
   let stickies = null, sectionLabels = null, resizeTimer;
   const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
   const reduced = matchMedia("(prefers-reduced-motion:reduce)");
-  const bottomLabels = '.edit-label--bottom,.section_label_bottom,.clients_eyebrow,.services_eyebrow';
+  const bottomLabels = '.is-bottom-label,.section_label_bottom,.clients_eyebrow,.services_eyebrow';
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section_header .u-text-muted-label,.edit_grid > .clients_eyebrow,.edit_overlap .edit-label--bottom')].map(el=>{
+    const labels=[...page.querySelectorAll('.section_header .u-text-muted-label,.edit_grid > .clients_eyebrow,.edit_overlap .is-bottom-label')].map(el=>{
       const section=el.closest('.edit_grid')||el.closest('.section_wrap');
       const end=el.matches('.clients_eyebrow')?section?.querySelector('.clients_list'):el.closest('#about')?section?.querySelector('.section_action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit_grid > .clients_eyebrow,.edit_overlap .edit-label--bottom"))&&!s.section.querySelector('.marquee_advanced_logo')&&!s.el.closest('#services'));
+    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit_grid > .clients_eyebrow,.edit_overlap .is-bottom-label"))&&!s.section.querySelector('.marquee_advanced_logo')&&!s.el.closest('#services'));
     const serviceCandidate=page.querySelector('#services .section_header .u-text-muted-label');
     const serviceLabel=serviceCandidate?.closest(bottomLabels)?null:serviceCandidate;
     const serviceMedia=page.querySelector('#services .services_sticky_media');
     if(!labels.length&&!serviceLabel)return;
     let serviceNatural=0,serviceLabelStyle=serviceLabel?.style.translate||'';
-    const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services__media-container');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
+    const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.is-services-media');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
     measureService();ScrollTrigger.addEventListener('refresh',measureService);
     let frozen=false;
     const tick=()=>{
@@ -81,7 +81,7 @@
       target = selector?.startsWith("#") ? page.querySelector(selector) : null;
     } catch {}
     if (!target || target.getBoundingClientRect().height < 1) {
-      const section = arrow.closest("section,.hero,.editorial-hero");
+      const section = arrow.closest("section,.hero,.editorial_hero");
       target = section?.nextElementSibling;
     }
     if (!target) return;

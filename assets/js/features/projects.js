@@ -72,7 +72,7 @@ const initWorkSlider = (() => {
     };
     var setStatus = function(s) {
       root.setAttribute("data-work-status", s);
-      root.classList.toggle("work--dragging", s === "dragging");
+      root.classList.toggle("work_dragging", s === "dragging");
     };
     var isMobile = function() {
       return mq.matches;
@@ -408,7 +408,7 @@ const initWorkSlider = (() => {
       return text.innerHTML;
     }
     function row(side, index, label) {
-      return '<div class="work_list_row work-list__row--' + side + '" data-work-row-' + side + '="' + index + '">' + '<span class="work-list__label">' + escapeText(label) + "</span>" + "</div>";
+      return '<div class="work_list_row work_list_row_' + side + '" data-work-row-' + side + '="' + index + '">' + '<span class="work_list_label">' + escapeText(label) + "</span>" + "</div>";
     }
     function repeat(string, amount) {
       var out = "";
@@ -426,9 +426,9 @@ const initWorkSlider = (() => {
         if (!sourceThumb) return;
         var thumb = sourceThumb.cloneNode(true);
         thumb.querySelectorAll(".work_card_meta").forEach((el => el.remove()));
-        thumb.classList.remove("work-card__part--switching");
-        thumb.querySelectorAll(".work-card__part--switching").forEach(part => part.classList.remove("work-card__part--switching"));
-        thumb.classList.add("work-list__media");
+        thumb.classList.remove("work_card_part_switching");
+        thumb.querySelectorAll(".work_card_part_switching").forEach(part => part.classList.remove("work_card_part_switching"));
+        thumb.classList.add("work_list_media");
         thumb.removeAttribute("data-video-ignore");
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});
         thumb.setAttribute("data-work-list-media", index);
@@ -436,7 +436,7 @@ const initWorkSlider = (() => {
         // inline-video owner plays only the active, hovered/focused list item.
         thumb.classList.remove("trigger--focused");
         thumb.classList.add("trigger--hover");
-        thumb.querySelector(".project_preview_poster")?.classList.add("work-list__thumbnail");
+        thumb.querySelector(".project_preview_poster")?.classList.add("work_list_thumbnail");
         thumb.querySelectorAll("video").forEach(video => {
           video.pause();
           video.removeAttribute("autoplay");
@@ -451,7 +451,7 @@ const initWorkSlider = (() => {
       var numberMarkup = "";
       originals.forEach((function(item, index) {
         leftMarkup += row("left", index, $("[data-work-name]", item).textContent);
-        numberMarkup += '<div class="work-list__num-item">' + pad(index + 1) + "</div>";
+        numberMarkup += '<div class="work_list_num_item">' + pad(index + 1) + "</div>";
       }));
       // Opposing tracks meet on the same project/client at the centre.
             for (var index = N - 1; index >= 0; index--) {
@@ -470,7 +470,7 @@ const initWorkSlider = (() => {
       if (dead || isMobile() || !leftRows || !leftRows.length) return;
       L.rowH = leftRows[0].offsetHeight;
       if (!L.rowH) return;
-      leftRows.concat(rightRows, $$(".work-list__num-item"), $$(".work_list_num_clip")).forEach((function(el) {
+      leftRows.concat(rightRows, $$(".work_list_num_item"), $$(".work_list_num_clip")).forEach((function(el) {
         el.style.height = L.rowH + "px";
       }));
       L.span = L.rowH * N;
@@ -478,8 +478,8 @@ const initWorkSlider = (() => {
       /* Centre one row vertically; computed once per setup, not per frame. */      L.align = (parseFloat(listEl.style.getPropertyValue('--list-midpoint'))||listEl.clientHeight/2)-L.rowH/2;
       L.cur = L.tgt = L.off0 + activeIdx * L.rowH;
       L.prevIdx = -1;
-      prevLeftLabel?.classList.remove("work-list__label--active");
-      prevRightLabel?.classList.remove("work-list__label--active");
+      prevLeftLabel?.classList.remove("work_list_label_active");
+      prevRightLabel?.classList.remove("work_list_label_active");
       prevLeftLabel = null;
       prevRightLabel = null;
       if (!frozen && !fading) gsap.ticker.add(listTick);
@@ -515,18 +515,18 @@ const initWorkSlider = (() => {
       var leftAt = clamp(0, leftRows.length - 1, Math.round(value / L.rowH));
       var rightAt = clamp(0, rightRows.length - 1, Math.round((2 * L.off0 + (N - 1) * L.rowH - value) / L.rowH));
       var index = parseInt(leftRows[leftAt].getAttribute("data-work-row-left"), 10);
-      var nextLeftLabel = $(".work-list__label", leftRows[leftAt]);
-      var nextRightLabel = $(".work-list__label", rightRows[rightAt]);
+      var nextLeftLabel = $(".work_list_label", leftRows[leftAt]);
+      var nextRightLabel = $(".work_list_label", rightRows[rightAt]);
       /* Visible repeated labels update independently of the logical
 			   project index so infinite wrapping remains seamless. */      if (nextLeftLabel !== prevLeftLabel) {
-        prevLeftLabel?.classList.remove("work-list__label--active");
+        prevLeftLabel?.classList.remove("work_list_label_active");
         prevLeftLabel = nextLeftLabel;
-        prevLeftLabel.classList.add("work-list__label--active");
+        prevLeftLabel.classList.add("work_list_label_active");
       }
       if (nextRightLabel !== prevRightLabel) {
-        prevRightLabel?.classList.remove("work-list__label--active");
+        prevRightLabel?.classList.remove("work_list_label_active");
         prevRightLabel = nextRightLabel;
-        prevRightLabel.classList.add("work-list__label--active");
+        prevRightLabel.classList.add("work_list_label_active");
       }
       if (index === L.prevIdx) return;
       L.prevIdx = index;
@@ -535,12 +535,12 @@ const initWorkSlider = (() => {
       var currentMedia = $('[data-work-list-media][data-work-state="active"]', listCenter);
       if (currentMedia) {
         currentMedia.removeAttribute("data-work-state");
-        currentMedia.classList.remove("work-list__media--active");
+        currentMedia.classList.remove("work_list_media_active");
       }
       var nextMedia = $('[data-work-list-media="' + index + '"]', listCenter);
       if (nextMedia) {
         nextMedia.setAttribute("data-work-state", "active");
-        nextMedia.classList.add("work-list__media--active");
+        nextMedia.classList.add("work_list_media_active");
       }
       var link = originals[index] && originals[index].querySelector("a[href]");
       if (link) listCenter.setAttribute("href", link.getAttribute("href") || "#");
@@ -645,7 +645,7 @@ const initWorkSlider = (() => {
     }
     function setViewLayout(next) {
       root.setAttribute("data-work-mode", next);
-      root.classList.toggle("work--list", next === "list");
+      root.classList.toggle("work_list_mode", next === "list");
     }
     function applyMode(next) {
       mode = next;
@@ -693,11 +693,11 @@ const initWorkSlider = (() => {
       return $$(".work-card", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work_card_thumb");
     }
     function setGalleryInteractionLocked(locked) {
-      listEl.classList.toggle("work-list--switching", locked);
+      listEl.classList.toggle("work_list_switching", locked);
       for (const item of $$(".work-card", track)) {
-        item.classList.toggle("work-card--switching", locked);
+        item.classList.toggle("work_card_switching", locked);
         for (const part of item.querySelectorAll(".work_card_thumb,.work_card_link,.work_card_poster,.work_card_meta")) {
-          part.classList.toggle("work-card__part--switching", locked);
+          part.classList.toggle("work_card_part_switching", locked);
         }
       }
     }
@@ -758,12 +758,12 @@ const initWorkSlider = (() => {
       root.setAttribute("data-work-switching", "");
       setGalleryInteractionLocked(true);
       const ghost = modeGhost = document.createElement("div");
-      ghost.className = "work-mode-flip";
+      ghost.className = "work_mode_flip";
       ghost.setAttribute("aria-hidden", "true");
       const poster = image.cloneNode(false);
       poster.removeAttribute("id");
       poster.removeAttribute("style");
-      poster.className = "work-mode-flip__image";
+      poster.className = "work_mode_flip_image";
       ghost.append(poster);
       document.body.append(ghost);
       gsap.set(ghost, {

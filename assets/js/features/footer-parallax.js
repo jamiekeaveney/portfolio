@@ -19,7 +19,7 @@
       if(!wrap||!inner||!stage||!name)return;
       const title=panel.querySelector('.footer_editorial_contact');
       const legal=inner.querySelector('.footer_legal');
-      legal?.querySelectorAll('.btn').forEach(button=>button.classList.add('footer-legal__action'));
+      legal?.querySelectorAll('.btn').forEach(button=>button.classList.add('footer_legal_action'));
       if(title){title.removeAttribute('href');title.removeAttribute('tabindex');title.removeAttribute('data-trigger');title.setAttribute('role','heading');title.setAttribute('aria-level','2');}
       let tint=panel.querySelector(':scope > .footer_parallax_tint');
       if(!tint){tint=document.createElement('div');tint.className='footer_parallax_tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
@@ -34,8 +34,8 @@
         let placeholder,legalStyle;
         if(legal){
           legalStyle=legal.getAttribute('style');placeholder=document.createElement('div');
-          placeholder.className='footer-legal-placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
-          legal.before(placeholder);wrap.append(legal);legal.classList.add('footer-legal--floating');
+          placeholder.className='footer_legal_placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
+          legal.before(placeholder);wrap.append(legal);legal.classList.add('footer_legal_floating');
         }
         const paint=()=>{
           if(frozen)return;
@@ -47,7 +47,7 @@
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
         paintNow=paint;paint();gsap.ticker.add(paint);
-        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer-legal--floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
+        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer_legal_floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
       });
       states.set(panel,{
         refresh(){measure();paintNow();},

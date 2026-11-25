@@ -92,7 +92,7 @@
   }
   function floatNavigation(current, next) {
     const layer = document.createElement("div");
-    layer.className = "case-navigation-transition";
+    layer.className = "case_navigation_transition";
     document.body.append(layer);
     const records = [ current, next ].map((page => {
       const el = page.querySelector(".case_nav");
@@ -130,10 +130,10 @@
     window.JKReveals?.showLoad(next);
     const nav = floatNavigation(current, next);
     const stage = document.createElement("div"), out = document.createElement("div"), incoming = document.createElement("div");
-    stage.className = "case-transition";
+    stage.className = "case_transition";
     stage.dataset.transitionKind = "side";
-    out.className = "case-transition__page";
-    incoming.className = "case-transition__page";
+    out.className = "case_transition_page";
+    incoming.className = "case_transition_page";
     stage.append(out, incoming);
     document.body.append(stage);
     window.JKReveals?.showLoad(next);
@@ -269,7 +269,7 @@
     JKProject.transitioning = true;
     window.JKReveals?.prepare(next, true);
     const parent = next.parentNode, stage = document.createElement("div"), cover = source.clone;
-    stage.className = "case-transition";
+    stage.className = "case_transition";
     stage.dataset.transitionKind = "media";
     gsap.set(stage, {
       position: "fixed",
@@ -312,9 +312,9 @@
     });
     const touchOrigin = matchMedia("(max-width:61.9375rem)").matches ? current.querySelector("[data-case-origin]") : null;
     const originLayers = touchOrigin ? [...touchOrigin.children].filter(layer => !layer.matches(".work_card_meta")) : [];
-    for (const layer of originLayers) layer.classList.add("case-transition__concealed");
+    for (const layer of originLayers) layer.classList.add("case_transition_concealed");
     const image = oldMedia.querySelector(".project_preview_poster") || oldMedia.querySelector("img");
-    if (image) image.classList.add("case-transition__poster");
+    if (image) image.classList.add("case_transition_poster");
     if (image) gsap.set(image, {
       scale: 1,
       opacity: 1
@@ -346,7 +346,7 @@
     });
     const media = next.querySelector(".case_featured .case_media"), hero = next.querySelector(".project_hero");
     if (!media) {
-      for (const layer of originLayers) layer.classList.remove("case-transition__concealed");
+      for (const layer of originLayers) layer.classList.remove("case_transition_concealed");
       stage.remove();
       gsap.set(next, {
         clearProps: "all"
@@ -355,7 +355,7 @@
       return swap(current, next, null);
     }
     const landing = next.querySelector("[data-case-landing]");
-    landing?.classList.add("case-transition__concealed");
+    landing?.classList.add("case_transition_concealed");
     gsap.set(next.querySelector(".case_featured"), {
       clearProps: "transform,clipPath,opacity,visibility"
     });
@@ -372,7 +372,7 @@
       videoStyle = video.getAttribute("style");
       videoClass = video.className;
       oldMedia.prepend(video);
-      video.className = "case-index__video";
+      video.className = "case_index_video";
       video.muted = true;
       video.playsInline = true;
       if (!video.getAttribute("src")) video.src = video.dataset.src || "";
@@ -443,7 +443,7 @@
         }
         parent.append(next);
         current.remove();
-        landing?.classList.remove("case-transition__concealed");
+        landing?.classList.remove("case_transition_concealed");
         stage.remove();
         gsap.set([ media, hero ], {
           clearProps: "opacity,visibility"
@@ -583,8 +583,8 @@
     const frame = videoFrame(source) || source.querySelector("img")?.cloneNode(true) || document.createElement("img");
     if (frame.tagName === "IMG" && !frame.getAttribute("src") && v?.poster) frame.src = v.poster;
     const stage = document.createElement("div");
-    stage.className = "case-return-media";
-    frame.classList.add("case-return-media__frame");
+    stage.className = "case_return_media";
+    frame.classList.add("case_return_media_frame");
     stage.append(frame);
     document.body.append(stage);
     gsap.set(stage, {
@@ -609,7 +609,7 @@
     const dissolve = destinationImage?.cloneNode(true);
     if (dissolve) {
       dissolve.removeAttribute("id");
-      dissolve.className = "case-return-media__frame";
+      dissolve.className = "case_return_media_frame";
       stage.append(dissolve);
       gsap.set(dissolve, {
         position: "absolute",
@@ -621,7 +621,7 @@
       });
     }
     const others = work && work.dataset.workMode !== "list" ? [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !el.contains(targetMedia) && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth)) : !work ? [ ...next.querySelectorAll(".home_slide") ].filter((el => el !== card)) : [];
-    const controls = work ? work.querySelectorAll(".work_controls,.work_nav_wrap,.work_list_col,.work_list_num_clip") : next.querySelectorAll(".home-slide-info");
+    const controls = work ? work.querySelectorAll(".work_controls,.work_nav_wrap,.work_list_col,.work_list_num_clip") : next.querySelectorAll(".home_slide_info");
     const offset = peerOffsets(others, to.left + to.width / 2);
     if (others.length) gsap.set(others, {
       ...work ? {
@@ -735,7 +735,7 @@
       };
       const link = e.target.closest("a");
       if (!link) return;
-      const preview = link.matches(".clients_credit") ? link.closest(".clients_credits")?.querySelector('.client-preview__visual[data-preview-position="current"]') : null;
+      const preview = link.matches(".clients_credit") ? link.closest(".clients_credits")?.querySelector('.client_preview_visual[data-preview-position="current"]') : null;
       if (preview) preview.setAttribute("data-next-media", "");
       const source = (preview ? preview.parentElement : null) || link.closest(".home_slide") || (link.matches(".work_list_center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work_card_link") ? link : null);
       const page = link.closest('[data-barba="container"]');
@@ -779,7 +779,7 @@
     barba.hooks.before((d => {
       const trigger = d.trigger instanceof Element ? d.trigger.closest("a") : null;
       const captured = pending?.page === d.current.container && pending.href === d.next.url.href ? pending : null;
-      const mediaSource = captured?.source || (trigger?.matches(".home_slide_image,.slide_caption,.work_card_link,.work-list__media") ? trigger.closest(".home_slide") || trigger : null);
+      const mediaSource = captured?.source || (trigger?.matches(".home_slide_image,.slide_caption,.work_card_link,.work_list_media") ? trigger.closest(".home_slide") || trigger : null);
       const nextCase = d.next.container?.matches("[data-case-page]");
       if (nextCase && !d.current.container?.matches("[data-case-page]")) {
         try {

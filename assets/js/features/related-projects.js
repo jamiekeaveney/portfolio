@@ -49,9 +49,9 @@ JKProject.register((s => {
   function label(el, prompt, value) {
     el.replaceChildren();
     const lead = document.createElement("span"), detail = document.createElement("span");
-    lead.className = el === hint ? "case-index__prompt case-index__prompt--progress" : "case-index__prompt";
+    lead.className = el === hint ? "case_index_prompt case_index_prompt_progress" : "case_index_prompt";
     lead.textContent = prompt;
-    detail.className = "case-index__value";
+    detail.className = "case_index_value";
     detail.textContent = value;
     el.append(lead, detail);
     return detail;
@@ -59,8 +59,8 @@ JKProject.register((s => {
   label(idle, "Up next", cards[0].querySelector(".case_index_title").textContent.trim());
   const percent = label(hint, "Scroll to next project", "(0%)");
   const suggestedTitle = cards[0].querySelector(".case_index_title");
-  suggestedTitle.classList.add("case-index__title--suggested");
-  status.classList.add("case-index__status--attached");
+  suggestedTitle.classList.add("case_index_title_suggested");
+  status.classList.add("case_index_status_attached");
   cards[0].append(status);
   gsap.set(hint, {
     yPercent: 100,
@@ -149,7 +149,7 @@ JKProject.register((s => {
       let video = card.querySelector("video");
       if (video) return video;
       video = document.createElement("video");
-      video.className = "case-index__video";
+      video.className = "case_index_video";
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
@@ -295,8 +295,8 @@ JKProject.register((s => {
     signal: s.abort.signal
   });
   s.cleanups.push((() => {
-    suggestedTitle.classList.remove("case-index__title--suggested");
-    status.classList.remove("case-index__status--attached");
+    suggestedTitle.classList.remove("case_index_title_suggested");
+    status.classList.remove("case_index_status_attached");
     statusParent.insertBefore(status, statusSibling?.parentNode === statusParent ? statusSibling : null);
     idle.textContent = idleText;
     clearTimeout(idleTimer);

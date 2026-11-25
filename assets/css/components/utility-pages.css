@@ -1,9 +1,9 @@
-.sg-section :is(.home_intro_heading,.edit_heading,.clients_heading){max-width:100%;grid-column:auto;grid-row:auto}
-.sg-type .sitenav_wordmark{position:static}
-.sg-swatch{min-width:0}
-.utility-page .sg-grid .btn{justify-self:start;align-self:start}
-.utility-page .sg-grid .btn_aside{flex-shrink:0}
-@media(max-width:47.9375rem){.utility-page{padding-top:7rem}.sg-section{padding-block:3rem}}
+.styleguide_section :is(.home_intro_heading,.edit_heading,.clients_heading){max-width:100%;grid-column:auto;grid-row:auto}
+.styleguide_type .sitenav_wordmark{position:static}
+.styleguide_swatch{min-width:0}
+.utility-page .styleguide_grid .btn{justify-self:start;align-self:start}
+.utility-page .styleguide_grid .btn_aside{flex-shrink:0}
+@media(max-width:47.9375rem){.utility-page{padding-top:7rem}.styleguide_section{padding-block:3rem}}
 [data-style-guide] .swatch{position:relative;min-height:8rem;border-radius:var(--radius--radius,.75rem);border:0.0625rem solid #666}
 [data-style-guide] .swatch p{position:absolute;bottom:1rem;left:1rem;color:#fff;mix-blend-mode:difference;margin:0}
 [data-style-guide] .work{position:relative;height:auto;min-height:0;overflow:visible;width:100%;grid-column:1/-1}
@@ -11,7 +11,7 @@
 [data-style-guide] .work-slide__track{position:relative;inset:auto;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;transform:none!important;padding:0;height:auto}
 [data-style-guide] .work-card{width:100%;height:auto;opacity:1!important;flex:none}
 [data-style-guide] .work_card_thumb{width:100%;height:auto;aspect-ratio:9/10}
-[data-style-guide] :is(.work_list,.work_controls,.work-slide__nav,.work_nav_wrap,.projects_mobile_intro){display:none!important}
+[data-style-guide] :is(.work_list,.work_controls,.work_slide_nav,.work_nav_wrap,.projects_mobile_intro){display:none!important}
 @media(max-width:47.9375rem){[data-style-guide] .work-slide__track{grid-template-columns:1fr}}
 
 .error_game_wrap {
@@ -38,19 +38,19 @@
   border-radius: 0;
 }
 
-.error-game__canvas {
+.error_game_canvas {
   display: block;
   touch-action: none;
   outline-offset: -.25rem;
 }
 
-.error_game_court:has(.error-game__canvas:focus-visible) {
+.error_game_court:has(.error_game_canvas:focus-visible) {
   outline: .125rem solid currentColor;
   outline-offset: .25rem;
 }
 
 .error_game_heading,
-.error-game__status,
+.error_game_status,
 .error_game_control {
   position: absolute;
   z-index: 2;
@@ -69,7 +69,7 @@
   pointer-events: none;
 }
 
-.error-game__status,
+.error_game_status,
 .error_game_control {
   bottom: max(var(--error-gutter), env(safe-area-inset-bottom));
   font-size: var(--font-size--base, 1rem);
@@ -100,7 +100,7 @@
   .btn_aside { display: none; }
 }
 
-.error-game__status {
+.error_game_status {
   left: calc(var(--error-gutter) + (100% - 2 * var(--error-gutter) + var(--grid--gap, 1.5rem)) / 3);
   max-width: calc(3.5 * (100vw - 2 * var(--error-gutter)) / 12);
   min-height: 1.5em;
@@ -126,10 +126,10 @@
 }
 
 .error_game_control:is(:hover, :focus-visible) { --pong-label-offset: -100%; }
-.error-game__control-label { display: block; translate: 0 var(--pong-label-offset); }
-.error-game__control-label--duplicate { position: absolute; top: 100%; left: 0; }
+.error_game_control_label { display: block; translate: 0 var(--pong-label-offset); }
+.error_control_label_duplicate { position: absolute; top: 100%; left: 0; }
 
-.error-game__court--playing::after {
+.error_game_court_playing::after {
   content: "";
   position: absolute;
   inset: 50% 0 auto;
@@ -143,5 +143,5 @@
 
 @media (max-width: 47.9375rem) {
   .error_game_heading { top: 7rem; font-size: 2rem; }
-  .error-game__status { max-width: none; font-size: .875rem; }
+  .error_game_status { max-width: none; font-size: .875rem; }
 }

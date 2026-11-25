@@ -16,12 +16,12 @@
     function mount() {
       release?.(); release = null;
       if (!active || !media.matches || frozen || !page.isConnected || !window.ScrollTrigger) return;
-      const slot = origin.closest('.editorial-media-slot');
+      const slot = origin.closest('.editorial_media_slot');
       if (!slot) return;
       const flight = document.createElement('div'), face = image.cloneNode(true);
-      flight.className = 'portrait-flight';
+      flight.className = 'portrait_flight';
       flight.setAttribute('aria-hidden','true');
-      face.className = 'portrait-flight__image';
+      face.className = 'portrait_flight_image';
       face.removeAttribute('style'); face.alt = '';
       flight.append(face); page.append(flight);
       const coordinateRoot = flight.offsetParent || page;
@@ -68,7 +68,7 @@
     }
     function attach() { if(!release)mount(); }
     const observer = new MutationObserver(()=>{
-      if (!origin.closest('.editorial-media-slot')) return;
+      if (!origin.closest('.editorial_media_slot')) return;
       observer.disconnect();attach();
     });
     observer.observe(origin.parentElement,{childList:true,subtree:true});

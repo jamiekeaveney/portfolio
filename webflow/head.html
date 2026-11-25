@@ -1,15 +1,15 @@
 <meta name="theme-color" content="#000000">
 <style>
-.page-shell {
+.page_shell {
   --loader-surface: #000;
   --loader-ink: #fff;
 }
-.page-shell[data-theme-status="light"] {
+.page_shell[data-theme-status="light"] {
   --loader-surface: #f7f7f5;
   --loader-ink: #111;
 }
 
-.page-shell--covered::before {
+.page_shell_covered::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,7 +18,7 @@
   pointer-events: none;
 }
 
-.page-shell--loading {
+.page_shell_loading {
   --loader-display: block;
 }
 
@@ -37,7 +37,7 @@
   --loader-display: none;
 }
 
-.error-game--ready {
+.error_game_ready {
   --error-poster-display: none;
 }
 
@@ -46,7 +46,7 @@
 }
 
 @media (max-width: 61.9375rem) {
-  .page-shell::after {
+  .page_shell::after {
     content: "";
     position: fixed;
     inset: -100vh 0 auto;
@@ -56,11 +56,11 @@
     pointer-events: none;
   }
 
-  .page-shell--light::after {
+  .page_shell_light::after {
     background: var(--_theme---color--background);
   }
 
-  .page-shell--loading::after {
+  .page_shell_loading::after {
     background: var(--loader-surface);
   }
 }
@@ -75,8 +75,8 @@
     light = localStorage.getItem("jk-theme") === "light";
   } catch {}
 
-  root.classList.add("page-shell", "page-shell--covered", "page-shell--loading");
-  root.classList.toggle("page-shell--light", light);
+  root.classList.add("page_shell", "page_shell_covered", "page_shell_loading");
+  root.classList.toggle("page_shell_light", light);
   root.dataset.themeStatus = light ? "light" : "dark";
   root.setAttribute("data-loader-pending", "");
   root.setAttribute("data-loader-active", "");
@@ -94,11 +94,11 @@
   function applyTheme() {
     const body = document.body;
     if (!body) return;
-    body.classList.add("page-body");
+    body.classList.add("theme_body");
     const light = root.dataset.themeStatus === "light";
-    root.classList.toggle("page-shell--light", light);
+    root.classList.toggle("page_shell_light", light);
     body.classList.toggle("u-theme-light", light);
-    body.classList.toggle("page-theme--light", light);
+    body.classList.toggle("page_theme_light", light);
     if (light && chrome && !palette) {
       const colors = getComputedStyle(chrome);
       palette = Array.from(colors)
@@ -118,8 +118,8 @@
   }
 
   function syncLoader() {
-    root.classList.toggle("page-shell--covered", root.hasAttribute("data-loader-pending"));
-    root.classList.toggle("page-shell--loading", root.hasAttribute("data-loader-active"));
+    root.classList.toggle("page_shell_covered", root.hasAttribute("data-loader-pending"));
+    root.classList.toggle("page_shell_loading", root.hasAttribute("data-loader-active"));
   }
 
   const attributes = {

@@ -3,7 +3,7 @@
     if (window.JKCloseCursor || !window.gsap || !matchMedia("(pointer:fine)").matches) return;
     window.JKCloseCursor = true;
     const label = document.createElement("div");
-    label.className = "jk-close-cursor";
+    label.className = "jk_close_cursor";
     label.setAttribute("aria-hidden", "true");
     document.body.append(label);
     const vars = getComputedStyle(document.documentElement), duration = parseFloat(vars.getPropertyValue("--motion-cursor-duration")) || .35;
@@ -21,7 +21,7 @@
     };
     const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
     function targetAt() {
-      if (!desktop.matches || document.querySelector(".lightbox-close")) return null;
+      if (!desktop.matches || document.querySelector(".lightbox_close")) return null;
       const active = document.querySelector('[data-mini-showreel-player][data-mini-showreel-status="active"]');
       const player = active?.querySelector("[data-bunny-player-init]");
       if (!player || !pointer.known || active.dataset.lightboxPhase !== "open") return null;
