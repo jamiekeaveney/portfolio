@@ -86,3 +86,5 @@ require("./check-error-game.js");
 require("./check-services.js");
 
 require("./check-motion.js");
+
+require("./check-video-playback.js");

@@ -1,4 +1,4 @@
-.page_shell{--motion-ease:expo.out;--motion-counter-ease:power2.out;--motion-lightbox-ease:expo.inOut;--motion-media-duration:var(--_motion---media-duration,1.5);--motion-nav-duration:var(--_motion---nav-duration,.3);--motion-nav-stagger:var(--_motion---nav-stagger,.06);--motion-text-duration:var(--_motion---text-duration,1.25);--motion-fade-duration:var(--_motion---fade-duration,.8);--motion-line-stagger:var(--_motion---line-stagger,.1);--motion-counter-duration:var(--_motion---counter-duration,3.2);--motion-cursor-duration:var(--_motion---cursor-duration,.35);--motion-lightbox-duration:var(--_motion---lightbox-duration,1);--motion-cursor-offset-x:18;--motion-cursor-offset-y:22}
+.page_shell{--motion-ease:expo.out;--motion-counter-ease:power2.out;--motion-lightbox-ease:expo.inOut;--motion-media-duration:var(--_motion---media-duration,1.5);--motion-nav-duration:var(--_motion---nav-duration,.3);--motion-nav-stagger:var(--_motion---nav-stagger,.06);--motion-text-duration:var(--_motion---text-duration,1.25);--motion-fade-duration:var(--_motion---fade-duration,.8);--motion-line-stagger:var(--_motion---line-stagger,.1);--motion-cursor-duration:var(--_motion---cursor-duration,.35);--motion-lightbox-duration:var(--_motion---lightbox-duration,1);--motion-cursor-offset-x:18;--motion-cursor-offset-y:22}
 
 /* Context-specific rules; base layout and transition timings remain in Designer. */
 .case_index_status_attached{width:100%;margin:.5rem 0 0;color:inherit;}
@@ -69,7 +69,6 @@ html[data-theme-status="light"] :is(.project_hero_deliverables,.case_details_gro
 
 .case_index_meta,.case_index_hint,.case_index_title,.case_index_prompt,.case_index_value{font-weight:500}
 
-@font-face{font-family:"Delight";src:url("https://cdn.prod.website-files.com/677ec1f8458ab71b3bab4e74/fonts/6af51c931c8fb338c6310358-Delight-VF.ttf") format("truetype");font-weight:100 900;font-display:swap}
 
 /* Theme dissolve applies to every Barba page; the toggle retains its own transform timing. */
 html[data-theme-changing],
@@ -212,9 +211,6 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 .jk_play_icon{position:absolute;left:50%;top:50%;width:2.5rem;height:2.5rem;transform:translate(-50%,-50%);color:#fff;mix-blend-mode:difference;opacity:0;pointer-events:none;transition:opacity .25s ease;}
 [data-mini-showreel-open]:hover .jk_play_icon,[data-mini-showreel-open]:focus-visible .jk_play_icon{opacity:1;}
 [data-mini-showreel-status="active"] .jk_play_icon{opacity:0;}
-
-/* The same border occupies the shared boundary, rather than two adjacent pixels. */
-.cv_list:not([data-stack-ready])>.cv_row+.cv_row{margin-top:-0.0625rem;}
 
 @media(max-width:47.9375rem){.project_hero_deliverables{width:100%;max-width:none;margin-left:0;}.project_hero_deliverables>.case_meta_value{grid-column:1/3;}}
 

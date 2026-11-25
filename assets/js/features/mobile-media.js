@@ -18,15 +18,14 @@
     video.controls=true;video.playsInline=true;video.poster=source.poster||'';video.preload='metadata';
     video.style.aspectRatio=(source.videoWidth||16)+' / '+(source.videoHeight||9);
     dialog.append(video);document.body.append(dialog);
-    let hls,closing=false,gesture=null,suppressClick=false;
+    let closing=false,gesture=null,suppressClick=false;
     const events=new AbortController();
-    if(/\.m3u8(?:[?#]|$)/i.test(url)&&!video.canPlayType('application/vnd.apple.mpegurl')&&window.Hls?.isSupported()){
-      hls=new Hls({maxBufferLength:10});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));
-    }else{video.src=url;video.play().catch(()=>{});}
+    const playback=createPortfolioPlayback(video,url,events.signal);
+    playback.play().catch(()=>{});
     const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
     const shell=source.closest?.('.showreel_card,.services_video_wrap')||source;
     const sourceRadius=()=>parseFloat(getComputedStyle(shell).borderTopLeftRadius)||parseFloat(getComputedStyle(source).borderTopLeftRadius)||12;
-    const finish=()=>{events.abort();video.pause();hls?.destroy();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
+    const finish=()=>{events.abort();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
     close=(immediate=false)=>{
       if(closing&&!immediate)return;closing=true;gsap.killTweensOf([dialog,video]);
       if(immediate||reduced){finish();return;}

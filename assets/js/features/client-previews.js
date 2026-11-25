@@ -3,7 +3,6 @@
   "use strict";
   if (window.JKHoverAdditions) return;
   const states = new Map, fine = matchMedia("(hover:hover) and (pointer:fine)"), reduced = matchMedia("(prefers-reduced-motion:reduce)");
-  const normalise = s => s.trim().replace(/\s+/g, " ").toLowerCase();
   const pointer = window.JKProject?.pointer || {
     x: 0,
     y: 0,
@@ -28,7 +27,7 @@
       return id;
     };
     const cursor = collection?.querySelector("[data-follower-cursor]"), inner = cursor?.querySelector("[data-follower-cursor-inner]");
-    const items = [ ...collection?.querySelectorAll("[data-follower-item]") || [] ], mapping = new Map, media = new Map;
+    const items = [ ...collection?.querySelectorAll("[data-follower-item]") || [] ], mapping = new Map;
     const vars = getComputedStyle(document.documentElement), duration = parseFloat(vars.getPropertyValue("--motion-cursor-duration")) || .35;
     const ox = parseFloat(vars.getPropertyValue("--motion-cursor-offset-x")) || 18, oy = parseFloat(vars.getPropertyValue("--motion-cursor-offset-y")) || 22;
     const xTo = cursor && window.gsap ? gsap.quickTo(cursor, "x", {
@@ -43,10 +42,12 @@
       const text = s => item.querySelector(s)?.textContent.trim() || "";
       const project = text("[data-client-project-slug]"), slug = text("[data-client-media-slug]");
       if (item.tagName === "A") item.href = project ? "/project/" + encodeURIComponent(project) : "/projects";
-      const poster = item.querySelector("img[data-client-poster]")?.getAttribute("src") || "";
+      const sourceImage = item.querySelector("img[data-client-poster]");
+      const poster = sourceImage?.getAttribute("src") || "";
       const video = text("[data-client-video-url]") || (project && slug ? "https://jamie-keaveney-portfolio-videos.b-cdn.net/projects/" + encodeURIComponent(project) + "/" + encodeURIComponent(slug) + ".mp4" : "");
       const entry = poster || video ? {
-        poster: poster,
+        poster,
+        srcset: sourceImage?.srcset || "",
         video: video,
         key: video || poster
       } : null;
@@ -99,7 +100,7 @@
     function select(item) {
       if (item === selected) return;
       const entry = mapping.get(item);
-      if (!entry || !inner) {
+      if (!entry || !inner || (reduced.matches && !entry.poster)) {
         if (selected) hide();
         return;
       }
@@ -120,11 +121,16 @@
       if (entry.poster) {
         const img = new Image;
         img.alt = "";
-        img.src = entry.poster;
         img.decoding = "async";
+        if (entry.srcset) {
+          const width = Math.ceil(cursor.getBoundingClientRect().width);
+          if (width > 0) img.sizes = width + "px";
+          img.srcset = entry.srcset;
+        }
+        img.src = entry.poster;
         visual.append(img);
       }
-      if (entry.video) {
+      if (entry.video && !reduced.matches) {
         const video = document.createElement("video");
         video.muted = true;
         video.loop = true;
@@ -132,7 +138,6 @@
         video.preload = "metadata";
         video.setAttribute("muted", "");
         video.setAttribute("playsinline", "");
-        if (entry.poster) video.poster = entry.poster;
         video.src = entry.video;
         visual.append(video);
         video.addEventListener("playing", (() => {
@@ -141,12 +146,11 @@
           once: true,
           signal: abort.signal
         });
-        // Playback starts after this visual is attached; the follower opts out of the general video owner.
-            }
+      }
       inner.append(visual);
       current = visual;
       const clip = visual.querySelector("video");
-      if (clip && !reduced.matches) clip.play().catch((() => {}));
+      if (clip) clip.play().catch((() => {}));
       void visual.offsetHeight;
       visual.setAttribute("data-preview-position", "current");
       if (old) {

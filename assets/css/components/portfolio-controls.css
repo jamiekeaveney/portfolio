@@ -257,9 +257,6 @@
   }
 }
 .page_theme_light {
-  --_theme---neutral--100: inherit;
-  --_theme---neutral--200: inherit;
-  --_theme---neutral--300: inherit;
   --_theme---neutral--400: inherit;
   --_theme---neutral--500: inherit;
   --_theme---neutral--600: inherit;
@@ -279,7 +276,6 @@
   --_theme---color--border: inherit;
   --_theme---color--hover-fill: inherit;
   --_theme---color--nav-link: inherit;
-  --_theme---color--nav-border: inherit;
   --_theme---color--cta-card: inherit;
   --_theme---color--light-text: inherit;
 }

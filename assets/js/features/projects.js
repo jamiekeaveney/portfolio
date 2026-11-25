@@ -99,6 +99,10 @@ const initWorkSlider = (() => {
     if (!N) return;
     originals.forEach((function(item, i) {
       item.setAttribute("data-work-index", i);
+      const link = item.querySelector("a[href]");
+      const title = item.querySelector("[data-work-name]")?.textContent.trim();
+      const client = item.querySelector("[data-work-client]")?.textContent.trim();
+      if (link && title) link.setAttribute("aria-label", [title, client].filter(Boolean).join(", "));
     }));
     /* Block native image/link ghost-drag in both modes. */    root.addEventListener("dragstart", (function(event) {
       event.preventDefault();
@@ -236,16 +240,37 @@ const initWorkSlider = (() => {
     var sLastX = 0;
     var sPid = null;
     var markedSlideIdx = -1;
+    let markedSlideStep;
     const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
-    function markCurrentSlide(index) {
-      if (index === markedSlideIdx) return;
+    function exposeSlide(card, exposed) {
+      const link = card.querySelector("a[href]");
+      if (exposed) {
+        card.removeAttribute("aria-hidden");
+        link?.removeAttribute("tabindex");
+      } else {
+        card.setAttribute("aria-hidden", "true");
+        if (link) link.tabIndex = -1;
+      }
+    }
+    function markCurrentSlide(index, step) {
+      if (index === markedSlideIdx && step === markedSlideStep) return;
       markedSlideIdx = index;
-      $$(".work_card_wrap[data-work-current]", track).forEach((function(card) {
-        card.removeAttribute("data-work-current");
-      }));
-      const edge = parseFloat(getComputedStyle(track).paddingLeft) || 0;
-      const focused = $$('.work_card_wrap[data-work-index="' + index + '"]', track).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - edge) - Math.abs(b.getBoundingClientRect().left - edge)))[0];
-      focused?.setAttribute("data-work-current", "true");
+      markedSlideStep = step;
+      if (step !== undefined) {
+        const previous = track.querySelector("[data-work-current]");
+        const edge = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+        const current = $$('.work_card_wrap[data-work-index="' + index + '"]', track).sort((a, b) =>
+          Math.abs(a.getBoundingClientRect().left - edge) - Math.abs(b.getBoundingClientRect().left - edge))[0];
+        if (current && current !== previous) {
+          exposeSlide(current, true);
+          current.setAttribute("data-work-current", "true");
+          if (previous) {
+            if (previous.contains(document.activeElement)) current.querySelector("a[href]")?.focus({preventScroll: true});
+            previous.removeAttribute("data-work-current");
+            exposeSlide(previous, false);
+          }
+        }
+      }
       if (counterEl) {
         counterEl.querySelector("[data-work-counter-current]").textContent = pad(index + 1);
         counterEl.querySelector("[data-work-counter-total]").textContent = pad(N);
@@ -268,6 +293,10 @@ const initWorkSlider = (() => {
       for (j = 0; j < N; j++) frag.appendChild(originals[j]);
       for (i = 0; i < COPIES; i++) {
         for (j = 0; j < N; j++) frag.appendChild(cloneItem(originals[j]));
+      }
+      for (const card of frag.children) {
+        card.removeAttribute("data-work-current");
+        exposeSlide(card, false);
       }
       track.appendChild(frag);
       markedSlideIdx = -1;
@@ -298,11 +327,12 @@ const initWorkSlider = (() => {
     }
     function renderSlide() {
       if (!S.wrap) return;
-      track.style.transform = "translate3d(" + S.wrap(S.cur) + "px,0,0)";
+      const position = S.wrap(S.cur);
+      track.style.transform = "translate3d(" + position + "px,0,0)";
       var span = S.pitch * N;
       var offset = (-S.cur % span + span) % span;
       activeIdx = Math.round(offset / span * N) % N;
-      markCurrentSlide(activeIdx);
+      markCurrentSlide(activeIdx, Math.round(position / S.pitch));
     }
     function snapSlideStep(direction) {
       if (!S.pitch) return;
@@ -315,6 +345,14 @@ const initWorkSlider = (() => {
       killSnap(S.snap);
       gsap.ticker.remove(slideTick);
     }
+    root.addEventListener("keydown", event => {
+      if (isMobile() || locked() || fading || !["ArrowLeft","ArrowRight"].includes(event.key)) return;
+      if (!track.contains(event.target) && !listCenter.contains(event.target)) return;
+      event.preventDefault();
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      if (mode === "slide") snapSlideStep(-direction);
+      else if (L.rowH) listSnapTo((Math.round(L.tgt / L.rowH) + direction) * L.rowH);
+    }, sig);
     track.addEventListener("pointerdown", (function(event) {
       if (mode !== "slide" || isMobile() || locked()) return;
       sDrag = true;
@@ -536,7 +574,11 @@ const initWorkSlider = (() => {
         nextMedia.classList.add("work_list_media_active");
       }
       var link = originals[index] && originals[index].querySelector("a[href]");
-      if (link) listCenter.setAttribute("href", link.getAttribute("href") || "#");
+      if (link) {
+        listCenter.setAttribute("href", link.getAttribute("href"));
+        const label = link.getAttribute("aria-label");
+        if (label) listCenter.setAttribute("aria-label", label);
+      }
     }
     function listSnapTo(target) {
       snapTween((function(v) {
@@ -642,6 +684,11 @@ const initWorkSlider = (() => {
     function applyMode(next) {
       mode = next;
       setViewLayout(next);
+      const gallery = track.closest(".work_gallery_wrap");
+      if (gallery) gallery.inert = next !== "slide";
+      listEl.inert = next !== "list";
+      // The opposing text strips are visual copies. The active link carries the title and client.
+      [listLeft, listRight, numLeft, numRight].forEach(el => el.setAttribute("aria-hidden", "true"));
       root.setAttribute("data-work-initialized", "");
       viewBtns.forEach((function(button) {
         button.setAttribute("aria-pressed", String(button.dataset.workView === next));
@@ -654,6 +701,8 @@ const initWorkSlider = (() => {
         track.innerHTML = "";
         originals.forEach((function(el) {
           el.style.transform = "";el.style.removeProperty("translate");
+          el.removeAttribute("data-work-current");
+          exposeSlide(el, true);
           track.appendChild(el);
         }));
         track.style.transform = "";

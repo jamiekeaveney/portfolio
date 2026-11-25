@@ -8,7 +8,9 @@ const hasLenis = void 0 !== window.Lenis, hasScrollTrigger = void 0 !== window.S
 
 let reducedMotion = rmMQ.matches;
 
-rmMQ.addEventListener?.("change", (t => reducedMotion = t.matches)), rmMQ.addListener?.((t => reducedMotion = t.matches));
+const syncMotionPreference = event => { reducedMotion = event.matches; };
+if (rmMQ.addEventListener) rmMQ.addEventListener("change", syncMotionPreference);
+else rmMQ.addListener(syncMotionPreference);
 
 const navEntry = performance.getEntriesByType("navigation")[0], navType = navEntry ? navEntry.type : "navigate";
 
@@ -301,12 +303,25 @@ function runPageEnterAnimation(t, restoreY) {
   }, 0), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady"))));
 }
 
+// Barba updates the document title. Carry the other page-specific head fields
+// through client navigation without executing scripts from the incoming page.
+function syncPageMetadata(html) {
+  if (!html) return;
+  const head = html.match(/<head(?:\s[^>]*)?>([\s\S]*?)<\/head>/i);
+  if (!head) return;
+  const incoming = new DOMParser().parseFromString(head[0], 'text/html').head;
+  const fields = 'meta[name="description" i],meta[name="robots" i],meta[property^="og:" i],meta[name^="twitter:" i],meta[property^="twitter:" i],link[rel~="canonical" i]';
+  document.head.querySelectorAll(fields).forEach(node => node.remove());
+  incoming.querySelectorAll(fields).forEach(node => document.head.append(document.importNode(node, true)));
+}
+
 barba.hooks.before((t => {
   closeMenuIfOpen();
   isPopstate = ["popstate", "back", "forward"].includes(t.trigger), saveScrollPosition(t.current.url.href, getCurrentScroll()), 
   freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
   document.documentElement.classList.add("page_shell_transitioning");
 })), barba.hooks.beforeEnter((t => {
+  syncPageMetadata(t.next.html);
   gsap.set(t.next.container, {
     position: "fixed",
     top: 0,

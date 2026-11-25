@@ -5,6 +5,7 @@ class Element {
   constructor(tag){this.tagName=tag;this.style={};this.events={};this.children=[];this.attrs={};this.offsetWidth=390;this.offsetHeight=219.375;this.classList={add(){},remove(){}};}
   setAttribute(k,v){this.attrs[k]=v;}
   getAttribute(k){return this.attrs[k];}
+  hasAttribute(k){return k in this.attrs;}
   append(...els){this.children.push(...els);if(this.tagName==='body')dialogs.push(...els);}
   addEventListener(k,fn){(this.events[k]??=[]).push(fn);}
   fire(k,data={}){for(const fn of this.events[k]||[])fn({type:k,pointerType:'touch',pointerId:1,clientX:195,clientY:400,preventDefault(){},stopPropagation(){},...data});}
@@ -23,7 +24,7 @@ const document={readyState:'complete',body:new Element('body'),documentElement:n
 const gsap={killTweensOf(){},set(el,p){Object.assign(el.style,p);},timeline(options={}){const record={options,steps:[]};animations.push(record);return {to(el,p){record.steps.push({el,p});return this;},fromTo(el,from,to){record.steps.push({el,p:to});return this;}};}};
 const window={};
 document.addEventListener=()=>{};
-vm.runInNewContext(fs.readFileSync('assets/js/features/mobile-media.js','utf8'),{getComputedStyle:()=>({getPropertyValue:()=>""}),document,window,gsap,AbortController,performance:{now:()=>now},matchMedia:q=>({matches:!q.includes('reduced-motion')}),innerWidth:390,innerHeight:844,setTimeout(){}});
+vm.runInNewContext(['assets/js/core/video-playback.js','assets/js/features/mobile-media.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n'),{getComputedStyle:()=>({getPropertyValue:()=>""}),document,window,gsap,AbortController,performance:{now:()=>now},matchMedia:q=>({matches:!q.includes('reduced-motion')}),innerWidth:390,innerHeight:844,setTimeout(){}});
 const source=new Element('video');source.currentSrc='https://example.test/video.mp4';source.videoWidth=1920;source.videoHeight=1080;source.getBoundingClientRect=()=>({left:24,top:200,bottom:392,width:342,height:192});
 function open(){window.JKMobileMedia.open(source,new Element('button'));const dialog=dialogs.at(-1);return {dialog,video:dialog.children[0]};}
 let {dialog,video}=open();

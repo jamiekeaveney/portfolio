@@ -77,7 +77,7 @@
 .player_controls {
   opacity: var(--player-hover-interface-opacity, var(--showreel-interface-opacity, var(--player-interface-opacity, 1)));
   transform: var(--player-hover-interface-transform, var(--showreel-interface-transform, var(--player-interface-transform, none)));
-  transition: all .6s cubic-bezier(.625, .05, 0, 1);
+  transition: opacity .6s cubic-bezier(.625, .05, 0, 1), transform .6s cubic-bezier(.625, .05, 0, 1);
 }
 .player_timeline { pointer-events: var(--player-timeline-events, inherit); }
 .player_timeline_handle {
@@ -112,7 +112,7 @@
 }
 
 .showreel_lightbox_shade {
-  transition: all 1s cubic-bezier(0.87, 0, 0.13, 1);
+  transition: opacity 1s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
 [data-mini-showreel-status="active"] .showreel_lightbox_shade {
@@ -142,4 +142,18 @@
 [data-mini-showreel-status="active"] .player_wrap.is-showreel {
   opacity: 1;
   transition: opacity .6s ease .5s;
+}
+
+/* The closed native player starts visibility:hidden. Expose both its controls
+   and backdrop immediately when the shared player becomes a dialog. */
+.showreel_wrap[aria-modal="true"] .player_controls,
+.showreel_wrap[aria-modal="true"] .showreel_lightbox_shade { visibility: visible; }
+
+/* Keep keyboard controls visible while pointer-idle controls fade away. */
+.player_wrap:has(:focus-visible) .player_controls { opacity: 1; transform: none; }
+.showreel_wrap [data-player-control]:focus-visible,
+.showreel_wrap [data-player-timeline]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.showreel_lightbox_shade:focus-visible::after {
+  content: "Close video"; position: absolute; top: 1rem; right: 1rem;
+  background: #151515; color: white; padding: .5em .8em; outline: 2px solid white;
 }

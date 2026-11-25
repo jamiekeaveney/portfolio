@@ -17,6 +17,7 @@
     "assets/js/features/marquees.js",
     "assets/js/features/footer-parallax.js",
     "assets/js/features/editorial.js",
+    "assets/js/core/video-playback.js",
     "assets/js/features/lightbox.js",
     "assets/js/features/mobile-media.js",
     "assets/js/vendor/sticky-library.js",

@@ -77,15 +77,14 @@ for (const index of [0, 1, 2, 0]) {
 // Exercise the actual shared playback policy across hover/focus, active item,
 // hidden tab, reduced motion, offscreen, and detached-page cases.
 const inline = fs.readFileSync("assets/js/features/inline-video.js", "utf8");
-const policy = { document: { hidden: false, activeElement: null }, reduced: false,
-  isVisible: () => true };
+const policy = { document: { hidden: false, activeElement: null }, motion: { matches: false } };
 vm.createContext(policy);
 vm.runInContext(inline.slice(inline.indexOf("    function wanted("), inline.indexOf("    function sync(")), policy);
 let active = true, hover = false, focused = false;
 const media = { dataset: { workState: "active" } };
 const video = { isConnected: true, dataset: { videoMode: context.listMedia[0].video.mode },
-  closest: selector => selector === "[data-work-list-media]" ? media : active ? media : null };
-const entry = { host: { matches: () => hover, contains: () => focused } };
+  closest: selector => selector.includes("data-video-ignore") ? null : selector === "[data-work-list-media]" ? media : active ? media : null };
+const entry = { visible: true, host: { matches: () => hover, contains: () => focused } };
 assert.equal(policy.wanted(video, entry), false, "Selected item alone cannot autoplay");
 hover = true;
 assert.equal(policy.wanted(video, entry), true, "Hovered active item plays");
@@ -96,10 +95,10 @@ assert.equal(policy.wanted(video, entry), false, "Old active item pauses while s
 active = true; media.dataset.workState = "active";
 policy.document.hidden = true;
 assert.equal(policy.wanted(video, entry), false, "Hidden tabs pause playback");
-policy.document.hidden = false; policy.reduced = true;
+policy.document.hidden = false; policy.motion.matches = true;
 assert.equal(policy.wanted(video, entry), false, "Reduced motion preserves the poster");
-policy.reduced = false; policy.isVisible = () => false;
+policy.motion.matches = false; entry.visible = false;
 assert.equal(policy.wanted(video, entry), false, "Hidden gallery/list modes pause playback");
-policy.isVisible = () => true; video.isConnected = false;
+entry.visible = true; video.isConnected = false;
 assert.equal(policy.wanted(video, entry), false, "Detached pages pause playback");
 console.log("List media cloning, active hover/focus playback and pause lifecycle passed.");

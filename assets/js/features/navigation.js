@@ -40,7 +40,8 @@
       if (button) button.append(count);
     });
 
-    const variants = ["77974df0-b189-fee1-a56a-288237d327e5", "e72fbfa9-7432-caad-d8b8-f691e4b91418", "0f7d95bf-3fe7-c346-459f-79ff0521e166"];
+    const scrolledVariant = "w-variant-e72fbfa9-7432-caad-d8b8-f691e4b91418";
+    const mobileVariant = "w-variant-0f7d95bf-3fe7-c346-459f-79ff0521e166";
     const layoutNodes = [ nav, ...nav.querySelectorAll("*") ];
     nav.querySelectorAll(".nav_project_count").forEach(el => el.removeAttribute("data-nav-fade"));
     const fading = [ ...nav.querySelectorAll("[data-nav-fade]") ];
@@ -108,14 +109,14 @@
     function applyLayout(preserveFading = false) {
       const brand = nav.querySelector(".nav_brand");
       if (brand) brand.setAttribute("aria-label", "Jamie Keaveney — home");
-      const id = desktop ? compact ? variants[1] : null : variants[2];
+      const id = desktop ? compact ? scrolledVariant : null : mobileVariant;
       layoutNodes.forEach((el => {
         if (preserveFading && el.closest("[data-nav-fade]")) return;
-        variants.forEach((v => el.classList.remove("w-variant-" + v)));
-        if (id) el.classList.add("w-variant-" + id);
+        el.classList.remove(scrolledVariant, mobileVariant);
+        if (id) el.classList.add(id);
       }));
       nav.dataset.navCompact = String(compact);
-      nav.setAttribute("data-wf--nav--variant", desktop ? compact ? "scrolled" : "top-of-page" : "mobile");
+      nav.setAttribute("data-wf--navigation--variant", desktop ? compact ? "scrolled" : "top-of-page" : "mobile");
       fading.forEach((el => el.inert = compact || !desktop));
     }
     function finish() {
