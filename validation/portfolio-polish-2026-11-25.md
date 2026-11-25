@@ -3,11 +3,13 @@
 **Date:** 25 November 2026  
 **Publication target:** [Webflow staging](https://jamiekeaveneyportfolio.webflow.io/)  
 **Measured runtime revision:** `1ac983f` — Polish native controls and remove idle animation work  
-**Final source cleanup revision:** `d60998215ed8a2314e2640c377265c3924c64f43` — published to staging and verified
+**Semantic cleanup revision:** `d60998215ed8a2314e2640c377265c3924c64f43` — published; later found to contain a visual regression
+
+**SplitText repair revision:** `7132182d87408ded835d20bd632103243dbde743` — published to staging; loader and hero visually verified
 
 This record covers the native control repairs, runtime optimisation and measured staging results. It supplements the historical [release validation](../VALIDATION.md) and [native implementation notes](../webflow/LUMOS_REPAIRS.md).
 
-Custom production domains were not published in this pass. The final source cleanup follows the measurement snapshot; the scores below describe the `1ac983f` staging state, not the later revision. Both live asset URLs were verified at the final cleanup revision; the CDN CSS and JavaScript bytes match the local build outputs.
+Custom production domains were not published in this pass. The semantic cleanup and subsequent repair follow the measurement snapshot; the scores below describe the `1ac983f` staging state, not either later revision. The cleanup's asset bytes and selected DOM states were verified, but those checks missed the visual regression documented below. The repair is now published; the loader sequence, hero placement and scroll return were inspected visually and measured in the live page.
 
 ## Changes in the measured staging release
 
@@ -22,14 +24,24 @@ Custom production domains were not published in this pass. The final source clea
 | Reduced motion | Lenis is disabled for the initial preference and is destroyed/recreated when it changes. Re-creation preserves loader, transition and open-lightbox scroll locks. |
 | Accessible interaction | Hidden desktop service comparisons are inert; compact layouts restore interaction. Paragraph SplitText retains exposed text without a prohibited paragraph ARIA label. |
 
-### Final semantic and contrast cleanup
+### Semantic and contrast cleanup — wrapper choice corrected below
 
 The subsequent source revision `d60998215ed8a2314e2640c377265c3924c64f43` adds the following refinements. Its source checks pass. Published DOM inspection confirms no artificial labels on the generic split phrases on Home, Approach and About, four counter values exposed once, and the final colour values described below.
 
-- SplitText gives a replacement accessible name only to headings. Generic phrases and paragraphs keep their real text; paragraph/span content uses span wrappers. Loader text also uses span wrappers without an artificial accessible name.
+- SplitText gives a replacement accessible name only to headings. Generic phrases, paragraphs and loader text keep their real text without an artificial accessible name. This revision also forced span wrappers; that wrapper choice caused a visual regression and is superseded by the repair below.
 - Odometer values expose one visually hidden static text value instead of an unsupported label on a generic element; decorative digit animation remains separate.
 - Inactive Projects controls use the shared muted-text token.
 - Light-theme muted text resolves to the existing neutral-600 token, preserving the native palette rather than introducing a separate hard-coded colour.
+
+### Correction: SplitText layout regression
+
+The user identified stacked loader messages, excessive gaps between the homepage introduction lines, and the large Jamie heading being displaced or clipped after the cleanup was published. The previous DOM, source and computed-style checks did not detect these visible failures. The earlier verification statement should therefore not be read as confirmation that the loader and homepage hero rendered correctly.
+
+The explicit `tag: 'span'` option bypassed SplitText's expected block display handling for line and mask wrappers. Inline masks and non-transformable inline line children broke the established masking and layout geometry.
+
+Repair revision `7132182d87408ded835d20bd632103243dbde743` removes the forced tag options from the text-reveal and loader SplitText setup, restoring the default wrappers. It retains `aria: 'none'` where required, the heading accessibility handling, all loader timing and the **40vh** homepage text exit. The span-wrapper descriptions in this audit and the native notes are superseded by that default-wrapper restoration.
+
+The repair is published and **visually verified**. Live inspection observed Hold tight within its block mask while Hi there was clipped below it; the next loader screenshot showed Hi there alone. The restored intro occupies 171.07px for three lines at a 57.024px line height, down from the broken 399.16px height. The full Jamie heading ends at 872px in a 904px viewport. Scrolling down animates both the paragraph and letters; returning to zero restores the same geometry. Chrome reported no warnings or errors. No new PageSpeed result or performance gain is claimed for this repair; all measurements below remain associated with `1ac983f`.
 
 ### Preserved design constraints
 
@@ -92,11 +104,11 @@ These repetitions test interaction continuity; they are not a server-concurrency
 
 ### Final published verification
 
-The published head and footer both load `d60998215ed8a2314e2640c377265c3924c64f43`. CDN bytes matched the local build: CSS SHA-256 `f116ba22c6f92a165ba29b9ebeecfd472e513f5fa79f62585572c4b6958da465`; JavaScript SHA-256 `e3d6ccd3ca5f1cc53932df59e859dc61b6adaca2f0fa39b4ba2a8d223d95bd6f`.
+At the earlier cleanup inspection, the published head and footer both loaded `d60998215ed8a2314e2640c377265c3924c64f43`. CDN bytes matched the local build: CSS SHA-256 `f116ba22c6f92a165ba29b9ebeecfd472e513f5fa79f62585572c4b6958da465`; JavaScript SHA-256 `e3d6ccd3ca5f1cc53932df59e859dc61b6adaca2f0fa39b4ba2a8d223d95bd6f`. These hashes record that snapshot; they do not verify the subsequent repair deployment.
 
 Final Chrome inspection reconfirmed the transparent, borderless Projects buttons and the shared `788px` control centreline. Light-theme inactive controls and the showreel year both resolve to `rgb(110, 110, 110)`. All four FAQ icons resolve to `16px 16px` transform origins and centred flex alignment. Showreel hover resolves to opacity `1`, with one native icon and no legacy clone. Home and Projects console checks returned no warnings or errors.
 
-About exposes each odometer value (`4+`, `3`, `2`, `12+`) once through static accessible text; all visual digit children are hidden from the accessibility tree. Generic split phrases on Home, About and Approach no longer carry artificial accessible names. The loader options are covered by source checks; these observations do not constitute a full screen-reader certification.
+About exposes each odometer value (`4+`, `3`, `2`, `12+`) once through static accessible text; all visual digit children are hidden from the accessibility tree. Generic split phrases on Home, About and Approach no longer carry artificial accessible names. Source checks covered the loader options but missed the span-wrapper layout regression. These observations establish neither correct rendered loader/hero geometry nor a full screen-reader certification.
 
 ## Source and regression checks
 
@@ -128,7 +140,7 @@ A shorter first-visit sequence or a minimal repeat-visit sequence is a future de
 
 ### 3. Complete accessibility validation, then rerun
 
-The source refinements and final published DOM/contrast checks are complete. The table records the earlier accessibility scores; no later score is claimed. A full screen-reader pass and fresh automated scoring should accompany the next media optimisation release. Automated accessibility scores are useful checks; they do not certify full keyboard, screen-reader or visual accessibility.
+The semantic refinements and selected published DOM/contrast checks were completed, but the resulting visual regression was resolved and separately verified as described above. The table records the earlier accessibility scores; no later score is claimed. A full screen-reader pass and fresh automated scoring should accompany the next media optimisation release. Automated accessibility scores are useful checks; they do not certify full keyboard, screen-reader or visual accessibility.
 
 ### 4. Profile the remaining animation work
 
@@ -147,11 +159,15 @@ At this record's measurement boundary:
 
 - A `390 × 844` viewport override was attempted, but the browser still reported a width of `1728px` after the override and reload. The override was reset. This attempt does not establish narrow-layout visual validation; the independent mobile PageSpeed lab runs remain valid.
 - No Safari, Firefox, physical iPhone or physical iPad verification is claimed for this pass.
-- The final DOM and computed contrast states were verified in Chrome. A complete screen-reader audit and fresh automated accessibility scoring remain separate checks.
+- Selected DOM and computed contrast states were verified in Chrome before the user found the loader/hero regression. Published visual verification of repair revision `7132182d87408ded835d20bd632103243dbde743` is now complete for the loader and homepage hero. A complete screen-reader audit and fresh automated accessibility scoring remain separate checks.
 - Custom production domains remain unpublished; final production URLs, indexing and asset pins must be checked only after an authorised publication.
 
 ## Assessment
 
 The site has a coherent split between native CSS states and JavaScript behaviour. Ordinary hover/focus appearance should continue to use native trigger variables and CSS. JavaScript remains appropriate for clipboard results, video playback, cursor coordinates and coordinated scroll/media transitions.
 
-The measured desktop scores are strong, and the repaired controls remove visible interaction defects. The remaining submission priorities are mobile media loading, a complete accessibility/device pass, the loader's perceived wait and a real-device/browser pass. This record does not establish an Awwwards outcome or a guaranteed production-readiness pass.
+The measured desktop scores are strong, and the control fixes address the originally reported interaction defects. The user-reported loader/hero regression was subsequently repaired and visually verified. Remaining submission priorities include mobile media loading, a complete accessibility/device pass and the loader's perceived wait. This record does not establish an Awwwards outcome or a guaranteed production-readiness pass.
+
+### Repair asset verification
+
+Both live asset URLs now pin `7132182d87408ded835d20bd632103243dbde743`. CDN CSS and JavaScript match the local build. CSS SHA-256 remains `f116ba22c6f92a165ba29b9ebeecfd472e513f5fa79f62585572c4b6958da465`; repaired JavaScript SHA-256 is `b60434f5fc43116d90ba813cb0dc3cdf1a477b710e00bdf58596c37e9f8ab3a9`. `npm run check`, `npm run build` and `git diff --check` pass.

@@ -103,8 +103,16 @@ The cursor controller schedules hit tests only after pointer, scroll, viewport, 
 
 ### 25 November 2026 · Final semantics and contrast
 
-Source revision `d60998215ed8a2314e2640c377265c3924c64f43` reserves SplitText replacement accessible names for headings. Generic phrases and paragraphs retain their real text; paragraph/span content and loader messages use span wrappers. Odometer values expose one visually hidden static value while the animated digit layers remain decorative.
+Source revision `d60998215ed8a2314e2640c377265c3924c64f43` reserves SplitText replacement accessible names for headings. Generic phrases and paragraphs retain their real text. This revision also forced span wrappers for paragraph/span content and loader messages; that wrapper choice caused the regression documented below and is superseded by default-wrapper restoration. Odometer values expose one visually hidden static value while the animated digit layers remain decorative.
 
 Inactive Projects controls consume the shared muted-text token. Light-theme muted text uses the existing neutral-600 token. The native palette and the existing CSS hover, focus and selected states remain the owners of appearance.
 
-`npm run check`, `npm run build` and `git diff --check` pass for this cleanup. Staging publication and final Chrome DOM/contrast verification are complete; both asset pins and CDN content match this revision. The [performance audit](../validation/portfolio-polish-2026-11-25.md) contains the PageSpeed report links and explicitly associates those measurements with the earlier `1ac983f` runtime. The unsuccessful narrow-viewport override is recorded separately from the valid mobile lab runs. No custom production domains were published in this pass.
+`npm run check`, `npm run build` and `git diff --check` passed for this cleanup. Staging publication, asset pins and selected Chrome DOM/contrast states were verified, but those checks missed the visible loader/hero regression. The [performance audit](../validation/portfolio-polish-2026-11-25.md) contains the PageSpeed report links and explicitly associates those measurements with the earlier `1ac983f` runtime. The unsuccessful narrow-viewport override is recorded separately from the valid mobile lab runs. No custom production domains were published in this pass.
+
+### Correction · Restore SplitText's default wrappers
+
+The user subsequently reported stacked loader messages, excessive homepage introduction line gaps and displacement/clipping of the large Jamie heading. The forced `tag: 'span'` option prevented SplitText's expected block display handling for line and mask wrappers. Inline masks and non-transformable inline line children broke the established geometry. The prior DOM/source checks did not establish visual correctness and missed this regression.
+
+Repair revision `7132182d87408ded835d20bd632103243dbde743` removes the forced tag options from the text-reveal and loader setup, restoring SplitText's default wrappers. It retains the required `aria: 'none'` behaviour, heading semantics, existing loader timing and the forty-vh homepage text exit. The earlier span-wrapper statement is superseded by this restoration.
+
+The repair is published to staging and **visually verified**. Loader messages appear sequentially within block masks. The three-line hero paragraph measures 171.07px rather than the broken 399.16px, and the full Jamie heading fits in the viewport. Scroll exit and return restore the expected geometry. Both pinned asset files match the local build. All recorded PageSpeed measurements remain attached to `1ac983f`; no new score or performance gain is claimed for the repair.
