@@ -37,7 +37,6 @@ if(!lb)return;
 const name='project-lightbox-'+(++mountOne.serial);
 root.setAttribute('data-mini-showreel-player',name);lb.setAttribute('data-mini-showreel-lightbox',name);
 root.querySelectorAll('[data-mini-showreel-open]').forEach(el=>{el.setAttribute('data-mini-showreel-open',name);el.setAttribute('aria-label',hero?'View full screen':'Play video');});
-if(!hero){const svg=root.querySelector('.player_play_icon');const trigger=root.querySelector('[data-mini-showreel-open]');if(svg&&trigger&&!trigger.querySelector('.jk_play_icon')){const icon=svg.cloneNode(true);icon.setAttribute('class','jk_play_icon');icon.setAttribute('aria-hidden','true');root.querySelector('.showreel_card').append(icon);}}
 root.querySelectorAll('[data-mini-showreel-close]').forEach(el=>{el.setAttribute('aria-label','Back');});
 root.querySelectorAll('[data-mini-showreel-open]').forEach(el=>{
  if(!el.matches('a,button')){el.setAttribute('role','button');el.tabIndex=0;}

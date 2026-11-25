@@ -101,4 +101,26 @@ policy.motion.matches = false; entry.visible = false;
 assert.equal(policy.wanted(video, entry), false, "Hidden gallery/list modes pause playback");
 entry.visible = true; video.isConnected = false;
 assert.equal(policy.wanted(video, entry), false, "Detached pages pause playback");
+
+// Run the real frame scheduler to ensure sleeping at rest never prevents a
+// resize, changed row geometry or resumed input from painting.
+let listPaints = 0, thumbnailPaints = 0;
+const idle = {root:{isConnected:true},frozen:false,fading:false,
+  L:{cur:120,tgt:120,off0:100,span:60,align:40,snap:{t:null},paintedValue:null,paintedAlign:null},
+  teardown(){throw new Error("A connected list must not be torn down");},
+  applyList(value){listPaints++;idle.L.paintedValue=value;idle.L.paintedAlign=idle.L.align;},
+  showListThumbnail(){thumbnailPaints++;}};
+vm.createContext(idle);
+vm.runInContext(source.slice(source.indexOf("    function listTick("),source.indexOf("    function applyList(")),idle);
+idle.listTick();
+assert.equal(listPaints,1);
+for(let frame=0;frame<120;frame++)idle.listTick();
+assert.equal(listPaints,1,"A settled list avoids repeated track writes and active-row queries");
+assert.equal(thumbnailPaints,1,"Settled thumbnails do not receive repeated visibility writes");
+idle.L.align+=10;idle.listTick();
+assert.equal(listPaints,2,"A geometry change repaints without requiring scroll input");
+idle.L.paintedValue=idle.L.paintedAlign=null;idle.listTick();
+assert.equal(listPaints,3,"A rebuilt list invalidates its old paint");
+idle.L.tgt+=10;idle.listTick();
+assert.equal(listPaints,4,"New input resumes list painting immediately");
 console.log("List media cloning, active hover/focus playback and pause lifecycle passed.");

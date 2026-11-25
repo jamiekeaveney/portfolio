@@ -227,6 +227,7 @@ const initWorkSlider = (() => {
       tgt: 0,
       pitch: 0,
       wrap: null,
+      paintedPosition: null,
       snap: {
         t: null,
         from: function() {
@@ -303,6 +304,7 @@ const initWorkSlider = (() => {
     }
     function setupSlide() {
       killSlide();
+      S.paintedPosition = null;
       if (dead || isMobile()) return;
       var cards = $$(".work_card_wrap", track);
       if (cards.length < 2) return;
@@ -328,6 +330,8 @@ const initWorkSlider = (() => {
     function renderSlide() {
       if (!S.wrap) return;
       const position = S.wrap(S.cur);
+      if (position === S.paintedPosition) return;
+      S.paintedPosition = position;
       track.style.transform = "translate3d(" + position + "px,0,0)";
       var span = S.pitch * N;
       var offset = (-S.cur % span + span) % span;
@@ -418,6 +422,8 @@ const initWorkSlider = (() => {
       span: 0,
       off0: 0,
       align: 0,
+      paintedValue: null,
+      paintedAlign: null,
       prevIdx: -1,
       snap: {
         t: null,
@@ -498,6 +504,7 @@ const initWorkSlider = (() => {
     }
     function setupList() {
       killList();
+      L.paintedValue = L.paintedAlign = null;
       if (dead || isMobile() || !leftRows || !leftRows.length) return;
       L.rowH = leftRows[0].offsetHeight;
       if (!L.rowH) return;
@@ -533,10 +540,13 @@ const initWorkSlider = (() => {
         L.cur += L.span;
         L.tgt += L.span;
       }
+      if (L.cur === L.paintedValue && L.align === L.paintedAlign) return;
       applyList(L.cur);
       showListThumbnail();
     }
     function applyList(value) {
+      L.paintedValue = value;
+      L.paintedAlign = L.align;
       var leftY = -value + L.align;
       var rightY = value - 2 * L.off0 - (N - 1) * L.rowH + L.align;
       listLeft.style.transform = "translate3d(0," + leftY + "px,0)";
@@ -673,8 +683,8 @@ const initWorkSlider = (() => {
       } else {
         buildList();
         setupList();
-        applyList(L.cur);
         alignListFrame();
+        applyList(L.cur);
         showListThumbnail();
       }
     }

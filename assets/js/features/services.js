@@ -11,10 +11,23 @@ function initServices(page) {
 
     let active = -1;
     const desktop = matchMedia("(min-width: 62rem)");
+    const originalHeadings = headings.map(heading => heading.classList.contains("is-active"));
+    const originalPanels = panels.map(panel => ({
+      active: panel.classList.contains("is-active"),
+      hidden: panel.getAttribute("aria-hidden"),
+      inert: panel.inert
+    }));
     function update() {
       if (!desktop.matches) {
         active = -1;
         headings.forEach(heading => heading.classList.remove("is-active"));
+        // Compact layouts use their native flow; desktop selection must not
+        // leave a visible comparison hidden from the keyboard or screen reader.
+        panels.forEach(panel => {
+          panel.classList.remove("is-active");
+          panel.removeAttribute("aria-hidden");
+          panel.inert = false;
+        });
         return;
       }
 
@@ -35,16 +48,30 @@ function initServices(page) {
       panels.forEach((panel, index) => {
         const selected = index === active;
         panel.classList.toggle("is-active", selected);
+        panel.inert = !selected;
         panel.setAttribute("aria-hidden", String(!selected));
       });
     }
 
+    desktop.addEventListener("change", update);
     ScrollTrigger.create({
       trigger: browser,
       start: "top bottom",
       end: "bottom top",
       onUpdate: update,
-      onRefresh: update
+      onRefresh: update,
+      onKill() {
+        desktop.removeEventListener("change", update);
+        headings.forEach((heading, index) => heading.classList.toggle("is-active", originalHeadings[index]));
+        panels.forEach((panel, index) => {
+          const original = originalPanels[index];
+          panel.classList.toggle("is-active", original.active);
+          panel.inert = original.inert;
+          if (original.hidden === null) panel.removeAttribute("aria-hidden");
+          else panel.setAttribute("aria-hidden", original.hidden);
+        });
+        initializedServices.delete(browser);
+      }
     });
     update();
   });

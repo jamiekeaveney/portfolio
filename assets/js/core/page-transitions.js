@@ -8,7 +8,11 @@ const hasLenis = void 0 !== window.Lenis, hasScrollTrigger = void 0 !== window.S
 
 let reducedMotion = rmMQ.matches;
 
-const syncMotionPreference = event => { reducedMotion = event.matches; };
+const syncMotionPreference = event => {
+  reducedMotion = event.matches;
+  initLenis();
+  if (hasScrollTrigger) ScrollTrigger.refresh();
+};
 if (rmMQ.addEventListener) rmMQ.addEventListener("change", syncMotionPreference);
 else rmMQ.addListener(syncMotionPreference);
 
@@ -61,7 +65,7 @@ const desktopScroll = matchMedia("(min-width:62rem) and (hover:hover) and (point
 const lenisTick = time => lenis?.raf(time * 1e3);
 
 function initLenis() {
-  if (!desktopScroll.matches) {
+  if (!desktopScroll.matches || reducedMotion) {
     if (lenis) {
       lenis.destroy();
       lenis = null;
@@ -78,6 +82,9 @@ function initLenis() {
     if (hasScrollTrigger) lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add(lenisTick);
     gsap.ticker.lagSmoothing(0);
+    if (document.documentElement.hasAttribute("data-transitioning") ||
+        document.documentElement.hasAttribute("data-loader-active") ||
+        document.querySelector('[data-mini-showreel-player][data-mini-showreel-status="active"]')) lenis.stop();
   }
 }
 

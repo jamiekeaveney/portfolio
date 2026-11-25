@@ -154,3 +154,160 @@ function transitionFixture(desktop) {
 transitionFixture(false);
 transitionFixture(true);
 console.log('Shared scroll motion, mid-flight title visibility and mobile parallax routing passed.');
+
+// Exercise event-driven cursor updates with a stationary pointer, live dialog
+// state and route changes. Resting pages must not request another frame.
+function cursorFixture() {
+  const events = () => {
+    const handlers = new Map();
+    return {
+      addEventListener(type, fn) { if (!handlers.has(type)) handlers.set(type, []); handlers.get(type).push(fn); },
+      emit(type, event = {}) { handlers.get(type)?.forEach(fn => fn(event)); }
+    };
+  };
+  const attrs = new Set(), frames = new Map(), observers = [], hooks = {};
+  const desktop = Object.assign(events(), {matches:true}), reduced = Object.assign(events(), {matches:false});
+  const root = {hasAttribute: name => attrs.has(name)};
+  let nextFrame = 0, label, hit = null, reads = 0, writes = 0, moves = 0, instantMoves = 0, closed = 0;
+  const video = {videoWidth:1600, videoHeight:900};
+  const player = {
+    querySelector: () => video,
+    getBoundingClientRect() { reads++; return {left:100, top:100, width:800, height:450}; }
+  };
+  const close = {click() { closed++; }};
+  const playerRoot = {
+    dataset:{miniShowreelStatus:'not-active', lightboxPhase:'closed'}, style:{cursor:'crosshair'}, isConnected:true,
+    querySelector: selector => selector === '[data-bunny-player-init]' ? player : close
+  };
+  let currentPage = {querySelectorAll: () => [playerRoot]};
+  const document = Object.assign(events(), {
+    readyState:'complete', hidden:false, documentElement:root,
+    body:{append(value) { label = value; }},
+    querySelector: () => currentPage,
+    createElement: () => ({dataset:{}, setAttribute() {}, style:new Proxy({}, {set(target, key, value) { writes++; target[key] = value; return true; }})}),
+    elementFromPoint() { reads++; return hit; }
+  });
+  const window = Object.assign(events(), {JKProject:{}});
+  const gsap = {
+    quickTo() { const move = () => moves++; move.tween = {pause() {}}; return move; },
+    set() { instantMoves++; },
+    ticker:{add() { assert.fail('A resting cursor must not register a permanent ticker'); }}
+  };
+  const barba = {hooks:Object.fromEntries(['beforeLeave','afterEnter','afterOnce'].map(name => [name, fn => hooks[name] = fn]))};
+  class Observer {
+    constructor(fn) { this.callback = fn; this.targets = new Set(); observers.push(this); }
+    observe(target) { this.targets.add(target); }
+    disconnect() { this.targets.clear(); }
+  }
+  Object.assign(window, {gsap, barba});
+  vm.runInNewContext(fs.readFileSync('assets/js/features/lightbox-cursor.js','utf8'), {
+    window, document, gsap, barba, MutationObserver:Observer, ResizeObserver:Observer,
+    matchMedia: query => query.includes('reduced-motion') ? reduced : desktop,
+    getComputedStyle: () => ({getPropertyValue: () => '.35'}),
+    requestAnimationFrame: fn => { const id = ++nextFrame; frames.set(id,fn); return id; },
+    cancelAnimationFrame: id => frames.delete(id)
+  });
+  function flush() { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn()); }
+  function mutate(target) { observers.filter(observer => observer.targets.has(target)).forEach(observer => observer.callback()); }
+  const move = (x = 50, y = 50, pointerType = 'mouse') => document.emit('pointermove', {clientX:x, clientY:y, pointerType});
+  flush();
+  assert.equal(frames.size,0,'Initial setup settles without idle work');
+  assert.equal(reads,0,'An unknown pointer does not hit-test');
+  hit = {closest: () => ({})};
+  for (let i = 0; i < 10; i++) move(50 + i);
+  assert.equal(frames.size,1,'A burst of pointer events shares one update');
+  flush();
+  assert.equal(reads,1);
+  assert.equal(label.style.opacity,'1');
+  assert.equal(moves,2,'Only the latest pointer position starts the two easing tweens');
+  assert.equal(frames.size,0,'Pointer easing does not keep the DOM scanner running');
+  const settledWrites = writes, settledMoves = moves;
+  window.emit('scroll'); flush();
+  assert.equal(writes,settledWrites,'Unchanged visibility does not rewrite inline styles');
+  assert.equal(moves,settledMoves,'Stationary scrolling does not restart cursor easing');
+  hit = null; window.emit('scroll'); flush();
+  assert.equal(label.style.opacity,'0','Scrolling content away hides a stationary pointer label');
+  playerRoot.dataset.miniShowreelStatus = 'active'; playerRoot.dataset.lightboxPhase = 'opening';
+  mutate(playerRoot); flush();
+  assert.equal(label.style.opacity,'0');
+  playerRoot.dataset.lightboxPhase = 'open'; mutate(playerRoot); flush();
+  assert.equal(label.textContent,'Back');
+  assert.equal(label.style.opacity,'1','Completing the dialog updates a stationary backdrop pointer');
+  assert.equal(playerRoot.style.cursor,'pointer');
+  let prevented = false;
+  document.emit('click',{isTrusted:true,detail:1,clientX:59,clientY:50,target:{closest:()=>null},preventDefault(){prevented=true;},stopImmediatePropagation(){}});
+  assert.equal(closed,1,'A backdrop click retains its close behaviour');
+  assert.equal(prevented,true);
+  playerRoot.dataset.lightboxPhase = 'closing'; playerRoot.dataset.miniShowreelStatus = 'not-active';
+  hit = {closest:()=>({})}; mutate(playerRoot); flush();
+  assert.equal(label.style.opacity,'0','Closing FLIP does not expose the underlying project label early');
+  assert.equal(playerRoot.style.cursor,'crosshair','The original cursor style is restored');
+  playerRoot.dataset.lightboxPhase = 'closed'; mutate(playerRoot); flush();
+  assert.equal(label.style.opacity,'1');
+  document.emit('keydown',{key:'Tab'});
+  assert.equal(label.style.opacity,'0');
+  assert.equal(label.dataset.pointerKnown,'false');
+  move(); flush();
+  document.emit('pointerdown',{pointerType:'touch'});
+  document.emit('click',{isTrusted:true,detail:1,clientX:50,clientY:50,target:{closest:()=>null}}); flush();
+  assert.equal(label.dataset.pointerKnown,'false','A touch-generated click does not restore a mouse cursor');
+  move(); flush();
+  reduced.matches = true; reduced.emit('change'); flush();
+  assert.equal(instantMoves,1,'Reduced motion places the cursor immediately');
+  desktop.matches = false; desktop.emit('change'); window.emit('scroll');
+  assert.equal(frames.size,0,'Compact and coarse-pointer layouts do not schedule cursor work');
+  desktop.matches = true; desktop.emit('change'); flush();
+  move(70); document.hidden = true; document.emit('visibilitychange');
+  assert.equal(frames.size,0,'Hiding the document cancels pending geometry work');
+  document.hidden = false; document.emit('visibilitychange'); flush();
+  move(); flush();
+  hooks.beforeLeave();
+  assert.equal(frames.size,0);
+  assert.ok(observers.every(observer => !observer.targets.has(playerRoot)),'Route leave detaches player observers');
+  currentPage = {querySelectorAll:()=>[]}; hooks.afterEnter({next:{container:currentPage}}); flush();
+  assert.equal(frames.size,0);
+  window.emit('pagehide');
+  assert.ok(observers.every(observer => !observer.targets.size),'Page hiding disconnects all observers');
+  window.emit('pageshow'); flush();
+  assert.equal(frames.size,0,'Restoring from page cache remains idle');
+}
+cursorFixture();
+
+// Exercise the real Lenis lifecycle: reduced motion must destroy the smooth
+// scroller and remove its ticker, including when the preference changes live.
+function reducedScrollFixture() {
+  const source = fs.readFileSync('assets/js/core/page-transitions.js','utf8');
+  const controller = source.slice(source.indexOf('const hasLenis'), source.indexOf('if (hasScrollTrigger) ScrollTrigger.config'));
+  const queries = query => ({matches:query.includes('reduced-motion'), addEventListener(type, fn) { this.change = fn; }});
+  const reduce = queries('reduced-motion'), desktop = queries('desktop'), ticker = new Set(), created = [];
+  desktop.matches = true;
+  let dialog = false, refreshes = 0;
+  class Lenis {
+    constructor() { created.push(this); }
+    on() {}
+    destroy() { this.destroyed = true; }
+    stop() { this.stopped = true; }
+  }
+  const ScrollTrigger = {update(){}, refresh(){refreshes++;}};
+  const context = vm.createContext({
+    window:{Lenis,ScrollTrigger,matchMedia:()=>reduce},Lenis,ScrollTrigger,
+    matchMedia:()=>desktop,performance:{getEntriesByType:()=>[]},
+    document:{documentElement:{hasAttribute:()=>false},querySelector:()=>dialog},
+    gsap:{ticker:{add:fn=>ticker.add(fn),remove:fn=>ticker.delete(fn),lagSmoothing(){}}}
+  });
+  vm.runInContext(controller + '\ninitLenis();',context);
+  assert.equal(created.length,0,'Reduced motion starts with native scrolling');
+  reduce.matches = false; reduce.change({matches:false});
+  assert.equal(created.length,1); assert.equal(ticker.size,1);
+  reduce.change({matches:false});
+  assert.equal(created.length,1,'Repeated media events do not duplicate Lenis');
+  reduce.matches = true; reduce.change({matches:true});
+  assert.equal(created[0].destroyed,true); assert.equal(ticker.size,0);
+  dialog = true; reduce.matches = false; reduce.change({matches:false});
+  assert.equal(created.length,2); assert.equal(created[1].stopped,true,'Re-enabling motion respects an open lightbox');
+  desktop.matches = false; desktop.change();
+  assert.equal(created[1].destroyed,true); assert.equal(ticker.size,0);
+  assert.ok(refreshes >= 3,'Preference changes refresh scroll geometry');
+}
+reducedScrollFixture();
+console.log('Event-driven cursor idle, input, route and dialog handling; live reduced-motion scrolling passed.');

@@ -90,3 +90,13 @@ The Home work and services sections display their first class, `section_wrap`, i
 Project search and sharing previews use the Projects collection's Name, Project Summary and Thumbnail fields. Client names come from the Clients reference. The Services collection feeds the Home listings and has its detail template disabled.
 
 The gallery exposes its current desktop card to keyboard and screen-reader navigation. Full players load video on demand and share the playback adapter. About’s client previews request a responsive poster on hover. The current asset commit is recorded in `head.html` and `footer.html`.
+
+### 25 November 2026 · Control polish and idle work
+
+The FAQ icon's native `faq_icon` class centres its glyph in the existing two-rem square with an explicit centre transform origin. The existing attribute-driven CSS rotation and timing remain unchanged.
+
+Projects Gallery/List controls use a two-and-a-half-rem-high native rail to share the counter/arrow centreline. The `nav_link` class resets button appearance, background, borders and padding; its labels retain the existing CSS current, hover and focus states. Both rails use the same typography token. The view controls have a labelled `group` role and native pressed buttons.
+
+Project Lightbox now contains a native decorative `showreel_play_icon` SVG, outside the hidden full player. The card's `data-trigger="hover focus"` drives its opacity through the Global Styles trigger variables. It appears on touch layouts without requiring hover and hides while the full player is active. Project hero media retains its existing cursor label. The runtime no longer clones a play SVG or carries the old `jk_play_icon` selectors.
+
+The cursor controller schedules hit tests only after pointer, scroll, viewport, route or player-state changes. Gallery and List skip identical resting paints. Marquees pause outside the viewport and in hidden tabs. Reduced-motion changes disable Lenis and stop marquee movement. Hidden desktop service comparisons are inert; compact layouts restore their interaction. Paragraph SplitText keeps real text exposed without a prohibited paragraph ARIA label. Loader choreography and the forty-vh homepage text exit are preserved.
