@@ -81,4 +81,12 @@ Footer email has three native label positions for the address, Copy Email and co
 
 Use `--site--margin`, `--site--gutter` and `--site--column-count` for their respective layout measurements, and the Typography collection for shared family, size and letter spacing. The Projects CMS gallery's native card and track are `work_card_wrap` and `work_gallery_track`. Native CMS video embeds use `media_video` on their video elements for fill and cover sizing. Their CMS media URLs and playback settings remain available to the player. The shared showreel preview uses `showreel_poster`. Earlier entries record historical selector names.
 
-The CSS and JavaScript for this cleanup are pinned at `8f764cff329dcee6ac5d135ef41e4573fc94a095` in both Webflow custom-code snippets.
+This earlier staging build used `8f764cff329dcee6ac5d135ef41e4573fc94a095` in both Webflow custom-code snippets.
+
+### Production-readiness checks
+
+The Home work and services sections display their first class, `section_wrap`, in Navigator. Use the shared native `u-section` utility for their section spacing. The portfolio has 527 native styles, including the draft Style Guide, and 119 variables across 12 collections. All Webflow Classic events and action lists were removed.
+
+Project search and sharing previews use the Projects collection's Name, Project Summary and Thumbnail fields. Client names come from the Clients reference. The Services collection feeds the Home listings and has its detail template disabled.
+
+The gallery exposes its current desktop card to keyboard and screen-reader navigation. Full players load video on demand and share the playback adapter. About’s client previews request a responsive poster on hover. The current asset commit is recorded in `head.html` and `footer.html`.
