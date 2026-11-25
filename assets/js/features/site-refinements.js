@@ -7,11 +7,11 @@
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section_header .u-text-muted-label,.edit_grid > .clients_eyebrow,.edit_overlap .is-bottom-label')].map(el=>{
-      const section=el.closest('.edit_grid')||el.closest('.section_wrap');
+    const labels=[...page.querySelectorAll('.section_header .u-text-muted-label,.editorial_grid > .clients_eyebrow,.editorial_overlap .is-bottom-label')].map(el=>{
+      const section=el.closest('.editorial_grid')||el.closest('.section_wrap');
       const end=el.matches('.clients_eyebrow')?section?.querySelector('.clients_list'):el.closest('#about')?section?.querySelector('.section_action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit_grid > .clients_eyebrow,.edit_overlap .is-bottom-label"))&&!s.section.querySelector('.marquee_advanced_logo')&&!s.el.closest('#services'));
+    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".editorial_grid > .clients_eyebrow,.editorial_overlap .is-bottom-label"))&&!s.section.querySelector('.marquee_logo')&&!s.el.closest('#services'));
     const serviceCandidate=page.querySelector('#services .section_header .u-text-muted-label');
     const serviceLabel=serviceCandidate?.closest(bottomLabels)?null:serviceCandidate;
     const serviceMedia=page.querySelector('#services .services_sticky_media');
@@ -81,13 +81,13 @@
       target = selector?.startsWith("#") ? page.querySelector(selector) : null;
     } catch {}
     if (!target || target.getBoundingClientRect().height < 1) {
-      const section = arrow.closest("section,.hero,.editorial_hero");
+      const section = arrow.closest("section");
       target = section?.nextElementSibling;
     }
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    const nav = document.querySelector(".sitenav_bar"), offset = !matchMedia("(min-width:62rem)").matches ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
+    const nav = document.querySelector(".nav_bar"), offset = !matchMedia("(min-width:62rem)").matches ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
     const smooth = window.JKProject?.lenis();
     if (smooth) smooth.scrollTo(target, {
       offset: offset,

@@ -6,7 +6,7 @@ let panelTop=1000,stageTop=2200,paint,cleanup;
 const inner={style:style(),querySelector:()=>null},tint={style:{}},name={offsetHeight:400,style:style()};
 const stage={getBoundingClientRect:()=>({top:stageTop}),querySelector:()=>name};
 const wrap={style:style(),querySelector:()=>stage};
-const panel={closest:()=>wrap,getBoundingClientRect:()=>({top:panelTop}),querySelector:s=>s==='.footer_editorial'?inner:s.includes('tint')?tint:null};
+const panel={closest:()=>wrap,getBoundingClientRect:()=>({top:panelTop}),querySelector:s=>s==='.footer_editorial_wrap'?inner:s.includes('tint')?tint:null};
 const page={hasAttribute:()=>revealing,querySelectorAll:()=>[panel],contains:e=>e===panel};
 const context={innerHeight:800,document:{...page,readyState:'complete',addEventListener(){},querySelector:()=>null},window:{gsap:true,ScrollTrigger:true},ResizeObserver:class{observe(){}disconnect(){}},gsap:{getProperty:()=>pageY,ticker:{add:f=>paint=f,remove:()=>{}},matchMedia:()=>({add:(q,f)=>cleanup=f(),revert:()=>cleanup()})}};
 vm.runInNewContext(fs.readFileSync('assets/js/features/footer-parallax.js','utf8'),context);

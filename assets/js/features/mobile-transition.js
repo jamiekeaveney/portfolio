@@ -25,7 +25,7 @@
     document.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse' || !mobile.matches) return;
       clearPressedPoster();
-      pressedPoster = event.target.closest('.home_slide_image,.work_card_thumb')?.querySelector('.project_preview_poster');
+      pressedPoster = event.target.closest('.home_card_visual,.work_card_thumb')?.querySelector('.project_preview_poster');
       pressedPoster?.classList.add('project_preview_poster_touching');
     }, {passive:true});
     document.addEventListener('pointercancel', clearPressedPoster);

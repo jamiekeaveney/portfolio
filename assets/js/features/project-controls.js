@@ -7,8 +7,8 @@
       root: root,
       rail: rail,
       details: details,
-      featured: page.querySelector(".case_featured .case_media"),
-      first: rail?.querySelector(".case_media"),
+      featured: page.querySelector(".case_featured .case_media_wrap"),
+      first: rail?.querySelector(".case_media_wrap"),
       toggle: page.querySelector("[data-case-expand]"),
       ready: true,
       progress: 1

@@ -58,14 +58,14 @@
       started: false
     };
     pages.set(page, s);
-    if (mobileCards) page.querySelectorAll(".work-slide__track > .work-card:not([data-work-clone])").forEach(((el, i) => {
+    if (mobileCards) page.querySelectorAll(".work_gallery_track > .work_card_wrap:not([data-work-clone])").forEach(((el, i) => {
       el.dataset.reveal = i < 2 ? "load" : "scroll";
       el.dataset.revealEffect = "rise";
       el.dataset.revealDelay = String(i % 2 * .1);
     }));
     page.querySelectorAll('[data-reveal="load"],[data-reveal="scroll"]').forEach((el => {
       if (s.entries.some((e => e.el === el)) || responsive && !el.matches("[data-home-scroll],[data-home-intro-exit]")) return;
-      if (el.closest('[data-reveal="none"],.work_list,.case_index_card,.clients_credits') || el.closest(".work-card") && !(mobileCards && el.matches(".work-card")) || !el.getClientRects().length) return;
+      if (el.closest('[data-reveal="none"],.work_list_wrap,.case_index_card,.clients_credits') || el.closest(".work_card_wrap") && !(mobileCards && el.matches(".work_card_wrap")) || !el.getClientRects().length) return;
       if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case_featured,.case_featured *")) return;
       const entry = {
         el: el,
@@ -164,7 +164,7 @@
         entry.tween = t;
         s.tweens.push(t);
       } else {
-        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case_media,.mini_showreel_card") || el).borderTopLeftRadius : "0px";
+        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case_media_wrap,.showreel_card") || el).borderTopLeftRadius : "0px";
         const round = radius === "0px" ? SETTINGS.radiusFallback : radius;
         const from = effect === "height" ? {
           clipPath: "inset(0% 0% 100% 0% round " + round + ")"
@@ -182,7 +182,7 @@
         } : {
           autoAlpha: 1
         };
-        const followers = effect === "height" && el.matches(".mini_showreel_media") ? [ ...el.parentElement.querySelectorAll(".mini_showreel_info") ] : [];
+        const followers = effect === "height" && el.matches(".showreel_media") ? [ ...el.parentElement.querySelectorAll(".showreel_info") ] : [];
         if (followers.length) gsap.set(followers, {
           y: -el.offsetHeight
         });
@@ -314,7 +314,7 @@
     const page = document.querySelector('[data-barba="container"]');
     prepare(page);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const nav = [ ...document.querySelectorAll(".sitenav") ].filter((el => el.getClientRects().length));
+      const nav = [ ...document.querySelectorAll(".nav_layout") ].filter((el => el.getClientRects().length));
       document.addEventListener('jk:nav-reveal',()=>{
         navIntro?.restart(true);
         navIntro=null;

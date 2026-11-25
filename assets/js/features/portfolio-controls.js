@@ -71,7 +71,7 @@
   function list(page,signal) {
     const center=page.querySelector('[data-work-list-center]');
     if(!center)return;
-    const root=center.closest('.work');
+    const root=center.closest('.projects_wrap');
     let zoom,previousMedia;
     function settleThumbnail(){
       zoom?.kill();
@@ -113,7 +113,7 @@
     signal.addEventListener('abort',()=>{observer.disconnect();thumbnailObserver.disconnect();reset();});
   }
   function editorial(page,signal) {
-    const heading=page.querySelector('.folio_statement_heading[data-highlight-text]');
+    const heading=page.querySelector('.statement_heading[data-highlight-text]');
     if(!heading || !motion.matches) return;
     let cleanup;
     function connect() {
@@ -170,7 +170,6 @@
   const gridControl='.footer_legal a[href="#layout-grid"]';
   function prepareGridControls(page){
     if(!page)return;
-    for (const link of page.querySelectorAll('.footer_legal a[href="#back-to-top"]')) link.classList.add('footer_back_to_top');
     const pressed=document.querySelector('[data-animated-grid]')?.dataset.open==='true';
     for(const button of page.querySelectorAll(gridControl)){
       button.setAttribute('role','button');

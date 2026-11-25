@@ -138,7 +138,7 @@ JKProject.register((s => {
       if (!r.ok) throw Error(r.status);
       return r.text();
     })).then((html => {
-      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured video") || doc.querySelector(".case_media video");
+      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured video") || doc.querySelector(".case_media_wrap video");
       return v ? {
         src: v.getAttribute("data-src") || v.getAttribute("src"),
         poster: v.getAttribute("poster")
@@ -240,7 +240,7 @@ JKProject.register((s => {
     }
   });
   // Entry easing ends well before the progress window reaches its final fifth.
-    const sticky = source.closest(".case_next_sticky") || wrap.querySelector("[data-scroll-next-sticky]") || source;
+    const sticky = source.closest(".case_next_sticky") || source;
   const entry = ScrollTrigger.create({
     trigger: wrap,
     start: "top bottom",

@@ -4,11 +4,11 @@
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
-    const home = page?.querySelector(".scaling_video_wrapper");
+    const home = page?.querySelector(".hero_reel_media");
     if (!home || instances.has(home) || !window.Flip || !window.ScrollTrigger) return;
     window.JKLightbox?.mount(page);
     const target = home.querySelector(".showreel_wrap");
-    const destination = page.querySelector('.scaling_element_big_box[data-flip-element="wrapper"]');
+    const destination = page.querySelector('.hero_reel_destination[data-flip-element="wrapper"]');
     const end = page.querySelector('[data-flip-element="end"]');
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");

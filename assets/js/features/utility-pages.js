@@ -15,8 +15,8 @@
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
     const label=document.createElement('span'),replacement=document.createElement('span');
-    label.className='btn_text error_game_control_label';
-    replacement.className='btn_text error_game_control_label error_control_label_duplicate';
+    label.className='button_text error_game_control_label';
+    replacement.className='button_text error_game_control_label error_control_label_duplicate';
     replacement.setAttribute('aria-hidden','true');
     start.textContent='';
     start.append(label,replacement);

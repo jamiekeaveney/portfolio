@@ -3,7 +3,7 @@
   const states=new Map();
   const OVERLAP=.6; // Fallback until the actual font metrics are available.
   function glyphMidpoint(name){
-    const text=name.querySelector?.('.marquee_advanced_text');if(!text)return name.offsetHeight*OVERLAP;
+    const text=name.querySelector?.('.marquee_text');if(!text)return name.offsetHeight*OVERLAP;
     const css=getComputedStyle(text),ctx=document.createElement('canvas').getContext('2d');ctx.font=css.font;
     const m=ctx.measureText('e'),size=parseFloat(css.fontSize),line=parseFloat(css.lineHeight)||size*1.08;
     const ascent=m.fontBoundingBoxAscent||size*.8,descent=m.fontBoundingBoxDescent||size*.2;
@@ -14,15 +14,10 @@
   function init(page) {
     page.querySelectorAll('.footer_editorial_panel').forEach(panel=>{
       if(states.has(panel))return;
-      const wrap=panel.closest('.footer_wrap'),inner=panel.querySelector('.footer_editorial');
-      const stage=wrap?.querySelector('.footer_sticky'),name=stage?.querySelector('.footer');
+      const wrap=panel.closest('.footer_wrap'),inner=panel.querySelector('.footer_editorial_wrap');
+      const stage=wrap?.querySelector('.footer_sticky'),name=stage?.querySelector('.footer_main');
       if(!wrap||!inner||!stage||!name)return;
-      const title=panel.querySelector('.footer_editorial_contact');
       const legal=inner.querySelector('.footer_legal');
-      legal?.querySelectorAll('.btn').forEach(button=>button.classList.add('footer_legal_action'));
-      if(title){title.removeAttribute('href');title.removeAttribute('tabindex');title.removeAttribute('data-trigger');title.setAttribute('role','heading');title.setAttribute('aria-level','2');}
-      let tint=panel.querySelector(':scope > .footer_parallax_tint');
-      if(!tint){tint=document.createElement('div');tint.className='footer_parallax_tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
       let frozen=false;const mm=gsap.matchMedia();
       let overlap=0,paintNow=()=>{};
       const measure=()=>{if(!frozen){overlap=glyphMidpoint(name);wrap.style.setProperty('--footer-overlap',overlap+'px');}};
@@ -47,7 +42,7 @@
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
         paintNow=paint;paint();gsap.ticker.add(paint);
-        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer_legal_floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
+        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer_legal_floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');};
       });
       states.set(panel,{
         refresh(){measure();paintNow();},

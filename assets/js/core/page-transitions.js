@@ -12,9 +12,9 @@ rmMQ.addEventListener?.("change", (t => reducedMotion = t.matches)), rmMQ.addLis
 
 const navEntry = performance.getEntriesByType("navigation")[0], navType = navEntry ? navEntry.type : "navigate";
 
-let lenis = null, nextPage = document, onceFunctionsInitialized = !1, flipState = null, flippedThumbnail = null, skipPageTransition = !1, isPopstate = !1, staggerDefault = .05, durationDefault = .6;
+let lenis = null, isPopstate = false;
 
-const has = t => !!nextPage.querySelector(t), SCROLL_STORAGE_KEY = "osmo_scroll_positions";
+const SCROLL_STORAGE_KEY = "osmo_scroll_positions";
 
 function getScrollPositions() {
   try {
@@ -140,34 +140,34 @@ function applyThemeFrom(t) {
   o && (o.dataset.themeNav = n.nav);
 }
 
-function syncNavState(t) {
-  const e = document.createElement("template");
-  e.innerHTML = t.next.html.trim();
-  const n = e.content.querySelectorAll("[data-barba-update]");
-  document.querySelectorAll("nav [data-barba-update]").forEach(((t, e) => {
-    const r = n[e];
-    if (!r) return;
-    const o = r.getAttribute("aria-current");
-    null !== o ? t.setAttribute("aria-current", o) : t.removeAttribute("aria-current"), 
-    t.setAttribute("class", r.getAttribute("class") || "");
-  }));
+function syncNavState(path = location.pathname) {
+  for (const link of document.querySelectorAll('a[data-barba-update][href^="/"]')) {
+    const target = new URL(link.href, location.href);
+    const current = target.origin === location.origin && target.pathname === path;
+    link.classList.toggle("w--current", current);
+    if (current) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
 }
 
 function initOnceFunctions() {
-  initLenis(), initScrollSaver(), onceFunctionsInitialized || (onceFunctionsInitialized = !0);
+  initLenis();
+  initScrollSaver();
 }
 
 function initBeforeEnterFunctions(t) {
-  t?.querySelectorAll('.project-hero__meta-cell,.case_details_row').forEach(row=>{
+  t?.querySelectorAll('.case_details_row').forEach(row=>{
     const value=row.querySelector('.case_meta_value');
     row.style.display=value && !value.textContent.trim() ? 'none' : '';
   });
-  nextPage = t || document, has(".work") && initWorkSlider(nextPage);
+  const page = t || document;
+  if (page.querySelector(".projects_wrap")) initWorkSlider(page);
 }
 
 function initAfterEnterFunctions(t) {
-  nextPage = t || document, initServices(nextPage), lenis && lenis.resize(),
-  hasScrollTrigger && ScrollTrigger.refresh();
+  initServices(t || document);
+  lenis?.resize();
+  if (hasScrollTrigger) ScrollTrigger.refresh();
 }
 
 // Shared with the page stack: one parallax curve, duration and grey wash.
@@ -191,7 +191,7 @@ function runPageOnceAnimation(page) {
   content.replaceChildren();bar.replaceChildren();
   const logoWrap=document.createElement('div');logoWrap.className='loader_logo';
   const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='sitenav_wordmark loader_logo_wordmark loader_logo_base';fill.className='sitenav_wordmark loader_logo_wordmark loader_logo_fill';fill.dataset.loadLogo='';
+  base.className='nav_wordmark loader_logo_wordmark loader_logo_base';fill.className='nav_wordmark loader_logo_wordmark loader_logo_fill';fill.dataset.loadLogo='';
   base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
   const texts=document.createElement('div');texts.className='loader_messages';
   ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader_messages_message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
@@ -261,7 +261,7 @@ function runPageLeaveAnimation(t) {
   const e = document.querySelector("[data-transition-wrap]"), n = e.querySelector("[data-transition-dark]"), r = gsap.timeline({
     onComplete: () => t.remove()
   });
-  return closeMenuIfOpen(), reducedMotion || skipPageTransition ? r.set(t, {
+  return closeMenuIfOpen(), reducedMotion ? r.set(t, {
     autoAlpha: 0
   }) : (r.set(e, {
     zIndex: 2
@@ -287,7 +287,7 @@ function runPageEnterAnimation(t, restoreY) {
   if (restoreY != null || isPopstate) gsap.set(t, {
     top: -n
   });
-  return reducedMotion || skipPageTransition ? (skipPageTransition = !1, e.set(t, {
+  return reducedMotion ? (e.set(t, {
     autoAlpha: 1
   }), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady")))) : (e.set(t, {
     zIndex: 3
@@ -299,48 +299,6 @@ function runPageEnterAnimation(t, restoreY) {
     clearProps: "transform,opacity,visibility,zIndex",
     ease: "parallax"
   }, 0), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady"))));
-}
-
-function runWorkLeaveAnimation(t, e, n) {
-  const r = n.closest("[data-case-link]").querySelector("[data-case-thumbnail]"), o = e.querySelector(".section_wrap");
-  flipState = Flip.getState(r), flippedThumbnail = r;
-  const a = gsap.timeline({
-    onComplete: () => t.remove()
-  });
-  return closeMenuIfOpen(), reducedMotion ? a.set(t, {
-    autoAlpha: 0
-  }) : (a.to(t, {
-    autoAlpha: 0,
-    duration: .6
-  }, 0), a.set(o, {
-    backgroundColor: "transparent"
-  }, 0), a);
-}
-
-function runCaseEnterAnimation(t) {
-  const e = t.querySelector(".section_wrap"), n = e.querySelectorAll("[data-case-reveal]"), r = isPopstate ? getSavedScroll(window.location.href) : 0, o = gsap.timeline();
-  if (reducedMotion) return flippedThumbnail = null, flipState = null, o.set(t, {
-    autoAlpha: 1
-  }), o.add("pageReady"), o.call(resetPage, [ t, r ], "pageReady"), new Promise((t => o.call(t, null, "pageReady")));
-  const a = t.querySelector("[data-case-thumbnail]");
-  return a.parentNode.insertBefore(flippedThumbnail, a), a.remove(), o.add(Flip.from(flipState, {
-    duration: .8
-  }), 0), o.add("startEnter", .6), o.fromTo(e, {
-    backgroundColor: "transparent"
-  }, {
-    backgroundColor: "#FFF",
-    duration: .5
-  }, "startEnter"), o.fromTo(n, {
-    autoAlpha: 0,
-    yPercent: 25
-  }, {
-    autoAlpha: 1,
-    yPercent: 0,
-    stagger: .1
-  }, "startEnter+=0.1"), o.add("pageReady"), o.call(resetPage, [ t, r ], "pageReady"), 
-  o.call((() => {
-    flippedThumbnail = null, flipState = null;
-  })), new Promise((t => o.call(t, null, "pageReady")));
 }
 
 barba.hooks.before((t => {
@@ -357,15 +315,17 @@ barba.hooks.before((t => {
   }), initBeforeEnterFunctions(t.next.container), applyThemeFrom(t.next.container);
 })), barba.hooks.afterLeave((() => {
   hasScrollTrigger && ScrollTrigger.getAll().forEach((t => t.kill()));
-})), barba.hooks.enter((t => syncNavState(t))), barba.hooks.afterEnter((t => {
+})), barba.hooks.enter(t => syncNavState(t.next.url.path)), barba.hooks.afterEnter((t => {
   initAfterEnterFunctions(t.next.container), lenis && (lenis.resize(), lenis.start()), 
   hasScrollTrigger && ScrollTrigger.refresh();
 })), barba.hooks.after((() => {
-  isPopstate = !1, skipPageTransition = !1, document.documentElement.removeAttribute("data-transitioning");
+  isPopstate = false;
+  document.documentElement.removeAttribute("data-transitioning");
   document.documentElement.classList.remove("page_shell_transitioning");
 }));
 
 function startPortfolio() {
+  syncNavState();
   // Utility pages such as the Style Guide are outside the transition shell.
   if (!document.querySelector('[data-barba="wrapper"]')) {finishLoaderCover();return;}
   barba.init({
@@ -373,18 +333,6 @@ function startPortfolio() {
     timeout: 7e3,
     preventRunning: !0,
     transitions: [ {
-      name: "work-to-case",
-      sync: !0,
-      from: {
-        namespace: [ "work" ]
-      },
-      to: {
-        namespace: [ "case" ]
-      },
-      custom: ({trigger: t}) => desktopScroll.matches && !reducedMotion && t instanceof Element && t.hasAttribute("data-case-link"),
-      leave: async t => runWorkLeaveAnimation(t.current.container, t.next.container, t.trigger),
-      enter: async t => runCaseEnterAnimation(t.next.container)
-    }, {
       name: "default",
       sync: !0,
       once: async t => (initOnceFunctions(), runPageOnceAnimation(t.next.container)),

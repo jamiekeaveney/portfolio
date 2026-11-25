@@ -22,7 +22,7 @@
   --loader-display: block;
 }
 
-.loader-wrap {
+.loader_wrap {
   display: var(--loader-display, none);
   visibility: visible;
   opacity: 1;
@@ -41,7 +41,7 @@
   --error-poster-display: none;
 }
 
-.error-game__poster {
+.error_game_poster {
   display: var(--error-poster-display, block);
 }
 
@@ -145,7 +145,7 @@
     syncLoader();
   }
   document.addEventListener("DOMContentLoaded", () => {
-    if (!document.querySelector(".loader-wrap")) clearLoader();
+    if (!document.querySelector(".loader_wrap")) clearLoader();
   }, { once: true });
   setTimeout(() => {
     if (root.hasAttribute("data-loader-pending")) clearLoader();

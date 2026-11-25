@@ -1,13 +1,3 @@
-document.documentElement.dataset.portfolioBuild = "2026-11-18.14";
-
-function initBunnyPlayer() {
-  window.JKLightbox?.mount();
-}
-
-function initMiniShowreelPlayer() {
-  window.JKLightbox?.mount();
-}
-
 (function(c, l, a, r, i) {
   c[a] = c[a] || function() {
     (c[a].q = c[a].q || []).push(arguments);

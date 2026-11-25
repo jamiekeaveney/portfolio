@@ -40,12 +40,11 @@ const initWorkSlider = (() => {
   }); else connectHooks();
   function create(container) {
     var scope = container || document;
-    var root = scope.querySelector(".work");
+    var root = scope.querySelector(".projects_wrap");
     if (!root || !window.gsap) return;
     if (instance?.root === root) return window.JKWork;
     destroy();
     connectHooks();
-    root.dataset.workRuntime = "2026-11-17.9";
     let frozen = transitioning || document.documentElement.hasAttribute("data-transitioning");
     let modeTween = null, modeGhost = null, modeContentTween = null, modeTarget = null;
     const visualLayers = el => el ? [ ...el.children ].filter((n => !n.matches(".work_card_meta"))) : [];
@@ -242,11 +241,11 @@ const initWorkSlider = (() => {
     function markCurrentSlide(index) {
       if (index === markedSlideIdx) return;
       markedSlideIdx = index;
-      $$(".work-card[data-work-current]", track).forEach((function(card) {
+      $$(".work_card_wrap[data-work-current]", track).forEach((function(card) {
         card.removeAttribute("data-work-current");
       }));
       const edge = parseFloat(getComputedStyle(track).paddingLeft) || 0;
-      const focused = $$('.work-card[data-work-index="' + index + '"]', track).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - edge) - Math.abs(b.getBoundingClientRect().left - edge)))[0];
+      const focused = $$('.work_card_wrap[data-work-index="' + index + '"]', track).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - edge) - Math.abs(b.getBoundingClientRect().left - edge)))[0];
       focused?.setAttribute("data-work-current", "true");
       if (counterEl) {
         counterEl.querySelector("[data-work-counter-current]").textContent = pad(index + 1);
@@ -277,7 +276,7 @@ const initWorkSlider = (() => {
     function setupSlide() {
       killSlide();
       if (dead || isMobile()) return;
-      var cards = $$(".work-card", track);
+      var cards = $$(".work_card_wrap", track);
       if (cards.length < 2) return;
       S.pitch = cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left;
       if (!S.pitch) return;
@@ -416,7 +415,6 @@ const initWorkSlider = (() => {
       return out;
     }
     function buildList() {
-      listCenter.classList.add("trigger--focus");
       [ listLeft, listRight, numLeft, numRight, listCenter ].forEach((function(el) {
         el.innerHTML = "";
       }));
@@ -434,8 +432,6 @@ const initWorkSlider = (() => {
         thumb.setAttribute("data-work-list-media", index);
         // Preserve the same inset 16:9 media frame as the gallery. The shared
         // inline-video owner plays only the active, hovered/focused list item.
-        thumb.classList.remove("trigger--focused");
-        thumb.classList.add("trigger--hover");
         thumb.querySelector(".project_preview_poster")?.classList.add("work_list_thumbnail");
         thumb.querySelectorAll("video").forEach(video => {
           video.pause();
@@ -652,7 +648,7 @@ const initWorkSlider = (() => {
       setViewLayout(next);
       root.setAttribute("data-work-initialized", "");
       viewBtns.forEach((function(button) {
-        button.setAttribute("data-work-active", button.getAttribute("data-work-view") === next ? "true" : "false");
+        button.setAttribute("aria-pressed", String(button.dataset.workView === next));
       }));
       killSlide();
       killList();
@@ -672,7 +668,7 @@ const initWorkSlider = (() => {
     function alignListFrame() {
       // Measure the real gallery layout even when landing directly in list mode.
       // Visibility keeps this synchronous measurement out of the painted frame.
-      const gallery=track.closest('.work_slide'),saved=gallery.getAttribute('style');
+      const gallery=track.closest('.work_gallery_wrap'),saved=gallery.getAttribute('style');
       const host=listEl.getBoundingClientRect(),savedMode=root.getAttribute('data-work-mode');
       setViewLayout('slide');
       gallery.style.visibility='hidden';gallery.style.pointerEvents='none';
@@ -690,11 +686,11 @@ const initWorkSlider = (() => {
     }
     function currentMedia(index = activeIdx) {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
-      return $$(".work-card", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work_card_thumb");
+      return $$(".work_card_wrap", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work_card_thumb");
     }
     function setGalleryInteractionLocked(locked) {
       listEl.classList.toggle("work_list_switching", locked);
-      for (const item of $$(".work-card", track)) {
+      for (const item of $$(".work_card_wrap", track)) {
         item.classList.toggle("work_card_switching", locked);
         for (const part of item.querySelectorAll(".work_card_thumb,.work_card_link,.work_card_poster,.work_card_meta")) {
           part.classList.toggle("work_card_part_switching", locked);
@@ -777,7 +773,7 @@ const initWorkSlider = (() => {
         borderRadius: getComputedStyle(source).borderRadius,
         pointerEvents: "none"
       });
-      const outgoing = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : $$(".work-card", track);
+      const outgoing = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : $$(".work_card_wrap", track);
       gsap.set(visualLayers(source), {
         visibility: "hidden"
       });
@@ -804,7 +800,7 @@ const initWorkSlider = (() => {
         gsap.set(visualLayers(target), {
           visibility: "hidden"
         });
-        const content = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : [ ...$$(".work-card", track).filter((el => !el.contains(target))), ...$$(".work_card_meta", target.closest(".work-card")) ];
+        const content = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : [ ...$$(".work_card_wrap", track).filter((el => !el.contains(target))), ...$$(".work_card_meta", target.closest(".work_card_wrap")) ];
         gsap.set(content, {
           autoAlpha: 0
         });

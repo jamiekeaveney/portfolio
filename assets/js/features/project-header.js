@@ -10,7 +10,7 @@ JKProject.register((s => {
   const {page: page, root: root, rail: rail, details: details, first: first, toggle: toggle, abort: abort} = s;
   if (!first || innerWidth < SETTINGS.minimumWidth || matchMedia("(pointer:coarse)").matches) return;
   let flip, busy = false, unlock = () => {};
-  const media = [ ...rail.querySelectorAll(".case_media") ];
+  const media = [ ...rail.querySelectorAll(".case_media_wrap") ];
   const label = () => s.expanded ? SETTINGS.expandedLabel : SETTINGS.compactLabel;
   s.cursorLabel = label;
   const change = () => {
@@ -87,7 +87,6 @@ JKProject.register((s => {
   };
   s.toggleMedia = change;
   media.forEach((el => {
-    el.setAttribute("data-cursor-marquee-text", "View full width");
     el.addEventListener("click", (e => {
       if (e.target.closest("a,button") || e.target.controls) return;
       change();

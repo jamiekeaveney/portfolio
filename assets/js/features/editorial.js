@@ -262,7 +262,7 @@
         const height = card.getBoundingClientRect().height;
         total += height - (i ? 1 : 0);
         layers[i].style.height = total + "px";
-        card.style.top = "calc(100svh - var(--grid--padding) - " + height + "px)";
+        card.style.top = "calc(100svh - var(--site--margin) - " + height + "px)";
       }));
       list.style.height = total + "px";
     };

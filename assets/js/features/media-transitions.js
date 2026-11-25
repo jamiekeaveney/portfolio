@@ -40,7 +40,7 @@
   const desktopMedia = matchMedia('(min-width:62rem) and (hover:hover) and (pointer:fine)');
   let pair = null, active = null, pending = null;
   function videoFrame(card) {
-    const v = card?.querySelector(".mini_showreel_cover_image") || card?.querySelector("video"), poster = card?.querySelector(".project_preview_poster");
+    const v = card?.querySelector(".showreel_poster") || card?.querySelector("video"), poster = card?.querySelector(".project_preview_poster");
     if (!v || v.readyState < 2 || poster && parseFloat(getComputedStyle(poster).opacity) > .1) return null;
     const canvas = document.createElement("canvas");
     canvas.width = v.videoWidth;
@@ -60,7 +60,7 @@
     return getComputedStyle(document.documentElement).getPropertyValue("--radius--radius").trim() || ".75rem";
   }
   function capture(page, clicked) {
-    const footer = clicked || pair?.mediaSource || JKProject.states.get(page)?.handoffCard || page.querySelector("[data-case-suggested]") || page.querySelector('.case_next_item[style*="block"] .case-next__link');
+    const footer = clicked || pair?.mediaSource || JKProject.states.get(page)?.handoffCard || page.querySelector("[data-case-suggested]");
     frozen.set(page, {
       footer: footer ? {
         frame: videoFrame(footer),
@@ -95,7 +95,7 @@
     layer.className = "case_navigation_transition";
     document.body.append(layer);
     const records = [ current, next ].map((page => {
-      const el = page.querySelector(".case_nav");
+      const el = page.querySelector(".case_nav_wrap");
       if (!el) return null;
       const marker = document.createComment("case navigation");
       el.before(marker);
@@ -310,9 +310,6 @@
       xPercent: 0,
       yPercent: 0
     });
-    const touchOrigin = matchMedia("(max-width:61.9375rem)").matches ? current.querySelector("[data-case-origin]") : null;
-    const originLayers = touchOrigin ? [...touchOrigin.children].filter(layer => !layer.matches(".work_card_meta")) : [];
-    for (const layer of originLayers) layer.classList.add("case_transition_concealed");
     const image = oldMedia.querySelector(".project_preview_poster") || oldMedia.querySelector("img");
     if (image) image.classList.add("case_transition_poster");
     if (image) gsap.set(image, {
@@ -344,9 +341,8 @@
       width: "100%",
       autoAlpha: 0
     });
-    const media = next.querySelector(".case_featured .case_media"), hero = next.querySelector(".project_hero");
+    const media = next.querySelector(".case_featured .case_media_wrap"), hero = next.querySelector(".project_hero_wrap");
     if (!media) {
-      for (const layer of originLayers) layer.classList.remove("case_transition_concealed");
       stage.remove();
       gsap.set(next, {
         clearProps: "all"
@@ -354,8 +350,6 @@
       JKProject.transitioning = false;
       return swap(current, next, null);
     }
-    const landing = next.querySelector("[data-case-landing]");
-    landing?.classList.add("case_transition_concealed");
     gsap.set(next.querySelector(".case_featured"), {
       clearProps: "transform,clipPath,opacity,visibility"
     });
@@ -363,7 +357,7 @@
     // This avoids exposing its fixed-container layout during the mobile handoff.
     const deferredSections = !matchMedia("(min-width:62rem)").matches ? [...next.querySelectorAll('.case_section')] : [];
     if (deferredSections.length) gsap.set(deferredSections, {autoAlpha:0});
-    const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".mini_showreel_cover_image") || media.querySelector("video");
+    const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".showreel_poster") || media.querySelector("video");
     let video, videoParent, videoSibling, videoStyle, videoClass, ready = false;
     if (actualVideo) {
       video = actualVideo;
@@ -443,7 +437,6 @@
         }
         parent.append(next);
         current.remove();
-        landing?.classList.remove("case_transition_concealed");
         stage.remove();
         gsap.set([ media, hero ], {
           clearProps: "opacity,visibility"
@@ -464,7 +457,7 @@
         resolve();
       }
     });
-    const work = current.querySelector(".work");
+    const work = current.querySelector(".projects_wrap");
     if (work) {
       const chosen = source.rect.left + source.rect.width / 2;
       const others = [ ...work.querySelectorAll("[data-work-item]") ].filter((el => {
@@ -516,7 +509,7 @@
   }
   function returnToWork(current, next, href) {
     if (active) return active;
-    const work = next.querySelector(".work"), savedOrigin = origin();
+    const work = next.querySelector(".projects_wrap"), savedOrigin = origin();
     let returnY = work ? innerWidth >= 992 || savedOrigin?.path !== "/projects" ? 0 : savedOrigin?.y || 0 : savedOrigin?.y || 0;
     gsap.set(next, {
       position: "fixed",
@@ -541,12 +534,12 @@
       target = contextPreview?.media;
     } else if (!work && !contextPreview) {
       const path = savedOrigin?.href || href;
-      target = [ ...next.querySelectorAll(".home_slide a[href]") ].find((a => new URL(a.href).pathname === path))?.closest(".home_slide");
+      target = [ ...next.querySelectorAll(".home_card_wrap a[href]") ].find((a => new URL(a.href).pathname === path))?.closest(".home_card_wrap");
     }
-    const card = target?.closest(".work-card,.home_slide") || target?.closest("[data-work-list-center]") || target;
+    const card = target?.closest(".work_card_wrap,.home_card_wrap") || target?.closest("[data-work-list-center]") || target;
     const touch = matchMedia("(max-width:61.9375rem),(hover:none)").matches;
-    const targetMedia = (touch ? target?.matches(".work_card_thumb,.home_slide_image") ? target : target?.querySelector(".work_card_thumb,.home_slide_image") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work_card_poster,.slide_thumbnail") || target;
-    const sources = [ ...current.querySelectorAll(".case_media,.case_index_media") ].filter((el => {
+    const targetMedia = (touch ? target?.matches(".work_card_thumb,.home_card_visual") ? target : target?.querySelector(".work_card_thumb,.home_card_visual") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work_card_poster,.home_card_thumbnail") || target;
+    const sources = [ ...current.querySelectorAll(".case_media_wrap,.case_index_media") ].filter((el => {
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
     }));
@@ -554,7 +547,7 @@
       const r = el.getBoundingClientRect(), visible = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) * Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0));
       return visible / (1 + Math.abs((Math.max(0, r.top) + Math.min(innerHeight, r.bottom)) / 2 - innerHeight / 2) / innerHeight);
     };
-    const source = sources.sort(((a, b) => score(b) - score(a)))[0] || current.querySelector(".case_media");
+    const source = sources.sort(((a, b) => score(b) - score(a)))[0] || current.querySelector(".case_media_wrap");
     if (!targetMedia || !source) {
       // If media is unavailable, retain the normal page transition; never a case-to-case slide to an index.
       gsap.set(next, {
@@ -569,7 +562,7 @@
         if (!touch && !contextPreview) card?.setAttribute("data-jk-return-hover", "");
     card?.setAttribute("data-jk-return-measure", "");
     if (work && touch) {
-      const r = targetMedia.getBoundingClientRect(), navBottom = document.querySelector(".sitenav_bar")?.getBoundingClientRect().bottom || 80;
+      const r = targetMedia.getBoundingClientRect(), navBottom = document.querySelector(".nav_bar")?.getBoundingClientRect().bottom || 80;
       if (r.top < navBottom || r.bottom > innerHeight) {
         returnY = Math.max(0, returnY + r.top - navBottom - 24);
         gsap.set(next, {
@@ -579,7 +572,7 @@
     }
     const from = source.getBoundingClientRect(), to = targetMedia.getBoundingClientRect();
     card?.removeAttribute("data-jk-return-measure");
-    const v = source.querySelector(".mini_showreel_cover_image") || source.querySelector("video");
+    const v = source.querySelector(".showreel_poster") || source.querySelector("video");
     const frame = videoFrame(source) || source.querySelector("img")?.cloneNode(true) || document.createElement("img");
     if (frame.tagName === "IMG" && !frame.getAttribute("src") && v?.poster) frame.src = v.poster;
     const stage = document.createElement("div");
@@ -620,8 +613,8 @@
         opacity: 0
       });
     }
-    const others = work && work.dataset.workMode !== "list" ? [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !el.contains(targetMedia) && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth)) : !work ? [ ...next.querySelectorAll(".home_slide") ].filter((el => el !== card)) : [];
-    const controls = work ? work.querySelectorAll(".work_controls,.work_nav_wrap,.work_list_col,.work_list_num_clip") : next.querySelectorAll(".home_slide_info");
+    const others = work && work.dataset.workMode !== "list" ? [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !el.contains(targetMedia) && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth)) : !work ? [ ...next.querySelectorAll(".home_card_wrap") ].filter((el => el !== card)) : [];
+    const controls = work ? work.querySelectorAll(".work_controls,.work_nav_wrap,.work_list_col,.work_list_num_clip") : next.querySelectorAll(".home_card_caption");
     const offset = peerOffsets(others, to.left + to.width / 2);
     if (others.length) gsap.set(others, {
       ...work ? {
@@ -737,16 +730,16 @@
       if (!link) return;
       const preview = link.matches(".clients_credit") ? link.closest(".clients_credits")?.querySelector('.client_preview_visual[data-preview-position="current"]') : null;
       if (preview) preview.setAttribute("data-next-media", "");
-      const source = (preview ? preview.parentElement : null) || link.closest(".home_slide") || (link.matches(".work_list_center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work_card_link") ? link : null);
+      const source = (preview ? preview.parentElement : null) || link.closest(".home_card_wrap") || (link.matches(".work_list_center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work_card_link") ? link : null);
       const page = link.closest('[data-barba="container"]');
-      if (link.closest(".case_nav") && page && !document.documentElement.hasAttribute("data-transitioning")) gsap.to(page.querySelector(".case_nav"), {
+      if (link.closest(".case_nav_wrap") && page && !document.documentElement.hasAttribute("data-transitioning")) gsap.to(page.querySelector(".case_nav_wrap"), {
         autoAlpha: 0,
         duration: .3,
         ease: "power1.out",
         overwrite: true
       });
       if (source && page && source.querySelector("[data-next-media]")) {
-        const home = !!source.closest(".home_slide");
+        const home = !!source.closest(".home_card_wrap");
         // Compact/touch layouts use the ordinary page transition. Preserve the
         // breadcrumb origin without making media clones or a FLIP handoff.
         if (desktopMedia.matches && !JKProject.reduced()) {
@@ -779,7 +772,7 @@
     barba.hooks.before((d => {
       const trigger = d.trigger instanceof Element ? d.trigger.closest("a") : null;
       const captured = pending?.page === d.current.container && pending.href === d.next.url.href ? pending : null;
-      const mediaSource = captured?.source || (trigger?.matches(".home_slide_image,.slide_caption,.work_card_link,.work_list_media") ? trigger.closest(".home_slide") || trigger : null);
+      const mediaSource = captured?.source || (trigger?.matches(".home_card_visual,.home_card_caption,.work_card_link,.work_list_media") ? trigger.closest(".home_card_wrap") || trigger : null);
       const nextCase = d.next.container?.matches("[data-case-page]");
       if (nextCase && !d.current.container?.matches("[data-case-page]")) {
         try {
@@ -802,7 +795,7 @@
         mediaSource: mediaSource,
         continuation: !!mediaSource || trigger?.dataset.caseTransition === "continuation"
       } : null;
-      if (d.current.container?.matches("[data-case-page]") && (d.next.container?.querySelector(".work") || d.next.url.path === "/" && origin()?.path === "/")) pair = {
+      if (d.current.container?.matches("[data-case-page]") && (d.next.container?.querySelector(".projects_wrap") || d.next.url.path === "/" && origin()?.path === "/")) pair = {
         next: d.next.container,
         returning: true,
         href: d.current.url.path

@@ -16,6 +16,6 @@
 .loader_bar{z-index:3}
 .loader_brand{z-index:2}
 
-@media(max-width:47.9375rem){.loader_logo{max-width:calc(100vw - 2 * var(--grid--padding,1.5rem))}.loader_logo_wordmark{color:var(--loader-ink,#fff);font-size:clamp(1.5rem,6vw,2rem)}}
+@media(max-width:47.9375rem){.loader_logo{max-width:calc(100vw - 2 * var(--site--margin,1.5rem))}.loader_logo_wordmark{color:var(--loader-ink,#fff);font-size:clamp(1.5rem,6vw,2rem)}}
 
 .page_shell[data-theme-status="light"] .loader_reveal_overlay { background: #dadad7; }

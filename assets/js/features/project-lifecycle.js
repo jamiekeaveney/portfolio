@@ -40,7 +40,7 @@
       ready: false
     };
     states.set(page, s);
-    page.querySelectorAll(".project-hero__meta-cell,.case_details_row").forEach((row => {
+    page.querySelectorAll(".case_details_row").forEach((row => {
       const v = row.querySelector(".case_meta_value");
       row.style.display = v && !v.textContent.trim() ? "none" : "";
     }));
@@ -50,7 +50,7 @@
       link: item.querySelector("[data-scroll-next-link]")
     }))).filter((r => r.link));
     const title = page.querySelector("h1")?.textContent.trim();
-    const index = records.findIndex((r => r.link.querySelector(".case_index_title,.case-next__title,[data-next-title]")?.textContent.trim() === title));
+    const index = records.findIndex((r => r.link.querySelector(".case_index_title")?.textContent.trim() === title));
     s.next = records.length > 1 ? records[(index + 1 + records.length) % records.length] : null;
     s.prev = records.length > 1 ? records[(index - 1 + records.length) % records.length] : null;
     records.forEach((r => r.item.style.display = ""));

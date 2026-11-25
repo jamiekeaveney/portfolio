@@ -80,7 +80,7 @@
         if (window.JKProject) JKProject.pointer = pointer;
       }
       const button = targetAt();
-      if (button && !e.target.closest("[data-mini-showreel-close],button,input,[data-player-control],.bunny-player__interface-bottom")) {
+      if (button && !e.target.closest("[data-mini-showreel-close],button,input,[data-player-control],.player_controls_bottom")) {
         e.preventDefault();
         e.stopImmediatePropagation();
         close = null;

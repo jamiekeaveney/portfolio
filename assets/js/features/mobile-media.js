@@ -16,7 +16,7 @@
     const dialog=document.createElement('dialog'),video=document.createElement('video'),exit=document.createElement('button'),label=document.createElement('span');
     dialog.className='mobile_media';video.className='mobile_media_video';dialog.setAttribute('aria-label','Video player');
     exit.type='button';exit.className='lightbox_close mobile_media_close';label.textContent='Close';exit.append(label);
-    const menu=document.querySelector('.sitenav_menu');
+    const menu=document.querySelector('.nav_menu');
     if(menu){const r=menu.getBoundingClientRect();exit.style.top=r.top+'px';exit.style.right=(innerWidth-r.right)+'px';exit.style.height=r.height+'px';}
     video.controls=true;video.playsInline=true;video.poster=source.poster||'';video.preload='metadata';
     video.style.aspectRatio=(source.videoWidth||16)+' / '+(source.videoHeight||9);
@@ -27,7 +27,7 @@
       hls=new Hls({maxBufferLength:10});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));
     }else{video.src=url;video.play().catch(()=>{});}
     const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const shell=source.closest?.('.mini_showreel_card,.services_video_wrap')||source;
+    const shell=source.closest?.('.showreel_card,.services_video_wrap')||source;
     const sourceRadius=()=>parseFloat(getComputedStyle(shell).borderTopLeftRadius)||parseFloat(getComputedStyle(source).borderTopLeftRadius)||12;
     const finish=()=>{events.abort();video.pause();hls?.destroy();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
     close=(immediate=false)=>{

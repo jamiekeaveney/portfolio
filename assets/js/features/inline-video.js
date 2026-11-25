@@ -53,7 +53,7 @@
         v.play().then((() => {
           const reveal = () => {
             if (e.playing && !abort.signal.aborted) {
-              const frame = v.closest(".slide_thumbnail,.work_card_poster");
+              const frame = v.closest(".home_card_thumbnail,.work_card_poster");
               frame?.style.setProperty("--project-video-ready", "1");
             }
             if (e.playing && !abort.signal.aborted && e.image) gsap.to(e.image, {
@@ -93,9 +93,9 @@
         }
       }));
       page.querySelectorAll("video").forEach((v => {
-        if (entries.has(v) || v.controls || v.closest('.case_index_card,[data-video-ignore],[data-bunny-player-init],.lightbox,[role="dialog"]') || !(v.muted || v.hasAttribute("muted") || v.closest('[data-video="playpause"]'))) return;
-        const host = v.closest(".work_list_center") || v.closest(".work_card_thumb,.home_slide_image") || v.parentElement;
-        const media = v.closest(".work_card_thumb,.home_slide_image");
+        if (entries.has(v) || v.controls || v.closest('.case_index_card,[data-video-ignore],[data-bunny-player-init],[role="dialog"]') || !(v.muted || v.hasAttribute("muted") || v.closest('[data-video="playpause"]'))) return;
+        const host = v.closest(".work_list_center") || v.closest(".work_card_thumb,.home_card_visual") || v.parentElement;
+        const media = v.closest(".work_card_thumb,.home_card_visual");
         const image = null;
  // Home/Work retain their own thumbnail hover presentation.
                 const e = {

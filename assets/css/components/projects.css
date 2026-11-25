@@ -1,4 +1,4 @@
-.work {
+.projects_wrap {
   --work-mask-half: min(30svh, 24rem);
   --work-gallery-display: flex;
   --work-list-display: none;
@@ -9,11 +9,11 @@
   --work-list-display: block;
 }
 
-.work_slide {
+.work_gallery_wrap {
   display: var(--work-gallery-display);
 }
 
-.work_list {
+.work_list_wrap {
   display: var(--work-list-display);
 }
 
@@ -22,51 +22,23 @@
   cursor: grabbing !important;
 }
 
-.work-card,
-.work-card * {
+.work_card_wrap,
+.work_card_wrap * {
   cursor: inherit;
 }
 
-.work_controls {
-  --work-active-on: 1;
-  --work-active-off: 0;
+/* The current view stays bright until another control takes focus or hover. */
+[data-work-view] { color: var(--_theme---text-link--text); }
+[data-work-view][aria-pressed="true"] {
+  color: color-mix(in hsl,
+    var(--_theme---text-link--text) calc(100% * var(--_trigger---off, 0)),
+    var(--_theme---text-link--text-active) calc(100% * var(--_trigger---on, 1)));
 }
+[data-work-view]:focus-visible { color: var(--_theme---text-link--text-active); }
 
-/* View controls have one label; keep its ink inside the clickable control. */
-@scope (.work_controls) {
-  .nav_link_text {
-    transform: none;
-    translate: none;
-    text-shadow: none;
-    transition: none;
-    will-change: auto;
-  }
-}
-
-[data-work-view] {
-  --_trigger---on: 0;
-  --_trigger---off: 1;
-}
-
-[data-work-view][data-work-active="true"] {
-  --_trigger---on: var(--work-active-on);
-  --_trigger---off: var(--work-active-off);
-}
-
-@media (hover: hover) {
-  .work_controls:has([data-work-view]:hover) {
-    --work-active-on: 0;
-    --work-active-off: 1;
-  }
-
-  [data-work-view][data-trigger~="hover-other"]:hover {
-    --_trigger---on: 1;
-    --_trigger---off: 0;
-    --_transform---on: 1;
-    --_transform---off: 0;
-  }
-
-  .work[data-work-mode="slide"]:has([data-work-arrow]:hover) .work-card:not([data-work-current="true"]) {
+@media (hover: hover) and (pointer: fine) {
+  [data-work-view]:hover { color: var(--_theme---text-link--text-active); }
+  .projects_wrap[data-work-mode="slide"]:has([data-work-arrow]:hover) .work_card_wrap:not([data-work-current="true"]) {
     opacity: var(--project-peer-opacity, .25);
   }
 }
@@ -91,7 +63,7 @@
 }
 
 .work_list_label {
-  color: var(--work-label-color, var(--_theme---color--dark-grey-text, #8a8a8a));
+  color: var(--work-label-color, var(--_theme---neutral--500, #8a8a8a));
   font-size: inherit;
   font-weight: 500;
   line-height: inherit;
@@ -116,11 +88,6 @@
   font-weight: 400;
   letter-spacing: var(--spacing--spacing);
   font-variant-numeric: tabular-nums;
-}
-
-.work_list_center {
-  --_trigger---on: 1;
-  --_trigger---off: 0;
 }
 
 .work_list_media {
@@ -160,15 +127,15 @@
     pointer-events: none;
   }
 
-  .work-list__col--left {
-    left: var(--grid--padding, 2.5rem);
+  .work_list_col.is-left-column {
+    left: var(--site--margin, 2.5rem);
     right: auto;
     width: 44%;
     text-align: left;
   }
 
-  .work-list__col--right {
-    right: var(--grid--padding, 2.5rem);
+  .work_list_col.is-right-column {
+    right: var(--site--margin, 2.5rem);
     left: auto;
     width: 27%;
     text-align: right;
@@ -218,7 +185,7 @@
 }
 
 @media (max-width: 61.9375rem) {
-  .work {
+  .projects_wrap {
     --work-gallery-display: block;
     --work-list-display: none;
   }
@@ -227,11 +194,11 @@
     --work-gallery-position: static;
   }
 
-  .work_slide {
+  .work_gallery_wrap {
     position: var(--work-gallery-position, relative);
   }
 
-  .work-slide__track {
+  .work_gallery_track {
     transform: none !important;
   }
 }
