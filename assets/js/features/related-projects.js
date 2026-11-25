@@ -12,8 +12,7 @@ JKProject.register((s => {
     previewPreloadMargin: "400px",
     minimumAutoNextWidth: 992,
     navFadeDuration: .3,
-    navHideStart: "top 85%",
-    progressLabel: "Scroll to next project · "
+    navHideStart: "top 85%"
   };
   const wrap = s.page.querySelector("[data-scroll-next-wrap]"), source = s.page.querySelector("[data-case-next-source]");
   if (!wrap || !source || !s.next) return;
@@ -30,7 +29,6 @@ JKProject.register((s => {
     cards.forEach((card => {
       card.dataset.caseTransition = "continuation";
       card.querySelector(".case_index_media").dataset.nextMedia = "";
-      card.querySelector(".case_index_title").dataset.nextTitle = "";
       gsap.set(card, {
         clearProps: "opacity"
       });
@@ -41,9 +39,8 @@ JKProject.register((s => {
     return;
   }
   const fill = wrap.querySelector(".case_index_fill"), hint = wrap.querySelector(".case_index_hint"), nav = s.page.querySelector("[data-case-nav]");
-  let fired = false, armed = false, progress = 0, idleTimer, messageActive = false, messageWanted = false, messageBusy = false, messageTween;
+  let fired = false, armed = false, progress = 0, idleTimer, messageActive = false, messageTween;
   const hovered = new Set, cache = JKProject.previewCache || (JKProject.previewCache = new Map);
-  const opacity = () => 1;
   const idle = wrap.querySelector(".case_index_meta");
   const status = idle.closest(".case_index_status"), statusParent = status.parentNode, statusSibling = status.nextSibling, idleText = idle.textContent;
   function label(el, prompt, value) {
@@ -113,7 +110,6 @@ JKProject.register((s => {
   }), {
     signal: s.abort.signal
   });
-  const paint = () => {};
   function go(card, e) {
     if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0)) return;
     e?.preventDefault();
@@ -164,7 +160,6 @@ JKProject.register((s => {
     card.dataset.caseTransition = "continuation";
     if (!i) card.dataset.caseSuggested = "";
     card.querySelector(".case_index_media").dataset.nextMedia = "";
-    card.querySelector(".case_index_title").dataset.nextTitle = "";
     card.addEventListener("click", (e => go(card, e)), {
       signal: s.abort.signal
     });
@@ -234,7 +229,6 @@ JKProject.register((s => {
         scaleX: progress,
         transformOrigin: "0 50%"
       });
-      paint();
       percent.textContent = "(" + Math.round(progress * 100) + "%)";
       if (innerWidth >= SETTINGS.minimumAutoNextWidth && !JKProject.reduced() && armed && progress >= .999) go(cards[0]);
     }
