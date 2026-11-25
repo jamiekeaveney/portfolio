@@ -339,7 +339,6 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 }
 [data-transitioning] .jk_close_cursor{opacity:0!important;}
 /* Structural layout and breakpoint sizing are native Designer styles. */
-.work_list_wrap{--work-grid-step:calc((100vw - 2 * var(--site--margin,2.5rem) + var(--site--gutter,1.5rem)) / var(--site--column-count, 12));}
 .clients_name{display:inline-block;width:fit-content;position:relative;}
 .clients_name::before,.clients_name::after{content:"";position:absolute;bottom:-.0625em;left:0;width:100%;height:.0625em;background:currentColor;transition:transform calc(.735s * var(--_trigger---off,0)) cubic-bezier(.625,.05,0,1);}
 .clients_name::before{transform-origin:right;transform:scaleX(var(--_trigger---on,1));transition-delay:0s;}
@@ -408,14 +407,11 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 
 /* Lightbox UI is generated per instance and disposed on navigation. */
 
-.lightbox_close{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:var(--site--margin,2.5rem);z-index:10020;display:block;min-height:2.75rem;padding:.5rem .85rem;border:0;border-radius:var(--radius--radius,.75rem);background:#000;color:#fff;font:inherit;letter-spacing:var(--_typography---letter-spacing--main);cursor:pointer;}
-.lightbox_close:focus-visible{outline:0.125rem solid white;outline-offset:0.25rem;}
 [data-bunny-player-init]:fullscreen{width:100vw!important;height:100dvh!important;max-height:none!important;background:#000;}
 [data-bunny-player-init]:fullscreen video{width:100%;height:100%;object-fit:contain;}
 
 /* Shared interaction states. Layout is stored in the native Webflow classes/variants. */
 html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
-@media(min-width:62rem) and (pointer:fine){.lightbox_close{display:none;}}
 @media(max-width:61.9375rem),(hover:none),(pointer:coarse){
  .home_card_caption,.work_card_meta{transform:none!important;translate:none!important;}
 }

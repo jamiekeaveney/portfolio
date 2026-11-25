@@ -21,7 +21,7 @@
     };
     const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
     function targetAt() {
-      if (!desktop.matches || document.querySelector(".lightbox_close")) return null;
+      if (!desktop.matches) return null;
       const active = document.querySelector('[data-mini-showreel-player][data-mini-showreel-status="active"]');
       const player = active?.querySelector("[data-bunny-player-init]");
       if (!player || !pointer.known || active.dataset.lightboxPhase !== "open") return null;

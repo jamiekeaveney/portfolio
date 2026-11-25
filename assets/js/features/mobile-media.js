@@ -13,14 +13,11 @@
     close(true);
     const url=overrideURL||source.currentSrc||source.getAttribute('data-src')||source.src;
     if(!url)return;
-    const dialog=document.createElement('dialog'),video=document.createElement('video'),exit=document.createElement('button'),label=document.createElement('span');
+    const dialog=document.createElement('dialog'),video=document.createElement('video');
     dialog.className='mobile_media';video.className='mobile_media_video';dialog.setAttribute('aria-label','Video player');
-    exit.type='button';exit.className='lightbox_close mobile_media_close';label.textContent='Close';exit.append(label);
-    const menu=document.querySelector('.nav_menu');
-    if(menu){const r=menu.getBoundingClientRect();exit.style.top=r.top+'px';exit.style.right=(innerWidth-r.right)+'px';exit.style.height=r.height+'px';}
     video.controls=true;video.playsInline=true;video.poster=source.poster||'';video.preload='metadata';
     video.style.aspectRatio=(source.videoWidth||16)+' / '+(source.videoHeight||9);
-    dialog.append(video,exit);document.body.append(dialog);
+    dialog.append(video);document.body.append(dialog);
     let hls,closing=false,gesture=null,suppressClick=false;
     const events=new AbortController();
     if(/\.m3u8(?:[?#]|$)/i.test(url)&&!video.canPlayType('application/vnd.apple.mpegurl')&&window.Hls?.isSupported()){
@@ -31,7 +28,7 @@
     const sourceRadius=()=>parseFloat(getComputedStyle(shell).borderTopLeftRadius)||parseFloat(getComputedStyle(source).borderTopLeftRadius)||12;
     const finish=()=>{events.abort();video.pause();hls?.destroy();dialog.close();dialog.remove();document.documentElement.classList.remove('is-lightbox-open');trigger?.focus({preventScroll:true});close=()=>{};};
     close=(immediate=false)=>{
-      if(closing&&!immediate)return;closing=true;gsap.killTweensOf([dialog,video,label]);
+      if(closing&&!immediate)return;closing=true;gsap.killTweensOf([dialog,video]);
       if(immediate||reduced){finish();return;}
       const dest=source.getBoundingClientRect(),base=video.getBoundingClientRect();
       const visible=dest.width>0&&dest.height>0&&dest.bottom>0&&dest.top<innerHeight;
@@ -40,7 +37,6 @@
         .to(dialog,{'--media-backdrop':0,duration:.4},0);
 
     };
-    exit.addEventListener('click',()=>close());
     dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
     dialog.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopPropagation();return;}if(e.target===dialog)close();},true);
     video.addEventListener('pointerdown',e=>{
