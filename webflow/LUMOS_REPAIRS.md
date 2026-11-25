@@ -62,3 +62,13 @@ All ten native page trees and 35 shared component definitions were inspected. Th
 After future native track changes, reload Designer before measuring its generated rules. Validate the first/later heading patterns at desktop and compact widths. Do not add published-only geometry fixes that leave the native canvas inconsistent.
 
 The full native change record and before/after style data are retained privately with the project owner. The browser observations, automated checks and release runtime are recorded in [VALIDATION.md](../VALIDATION.md).
+
+## 25 November 2026 migration
+
+The native portfolio now uses underscore-separated component classes, shared `u-` utilities and scoped `is-` variants. Earlier sections record the class names used on 23 November. For example, the former `home-hero__layout`, `layout__grid` and `case-index__grid` are now `home_hero_layout`, `layout_grid` and `case_index_grid` respectively.
+
+Use the draft **Style Guide** in Designer to inspect the portfolio’s type, spacing, theme and grid examples. The shared **Global Styles** component supplies the responsive container rules on the populated page templates. Fixed editorial compositions retain explicit native tracks because a variable repeat previously produced extra tracks on the Designer canvas. The About client grid uses `auto-fill` with a 7.5rem minimum. The related-project grid uses its container’s responsive column settings and stacks on compact screens.
+
+The runtime keeps the 24 November motion settings, including the homepage text exit over 40vh of scroll. When changing the generated CSS or JavaScript, run `npm run check` and `npm run build`, fetch the immutable CDN assets, then update both complete Webflow site-level custom-code blocks from `webflow/head.html` and `webflow/footer.html` in the same staging release. The head owns first-paint loader classes that the shared runtime also uses.
+
+Staging was checked on Home, Projects, Approach, About, all three published project pages, Password and 404 at 1366px and 390px. The release bundle is `ac8435cc9e1dfcc5325957efe6d9537a678bb7a8`.
