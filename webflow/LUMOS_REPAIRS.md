@@ -72,3 +72,11 @@ Use the draft **Style Guide** in Designer to inspect the portfolio’s type, spa
 The runtime keeps the 24 November motion settings, including the homepage text exit over 40vh of scroll. When changing the generated CSS or JavaScript, run `npm run check` and `npm run build`, fetch the immutable CDN assets, then update both complete Webflow site-level custom-code blocks from `webflow/head.html` and `webflow/footer.html` in the same staging release. The head owns first-paint loader classes that the shared runtime also uses.
 
 Staging was checked on Home, Projects, Approach, About, all three published project pages, Password and 404 at 1366px and 390px. The release bundle is `ac8435cc9e1dfcc5325957efe6d9537a678bb7a8`.
+
+### 25 November 2026 · Native button and interaction cleanup
+
+The Webflow Button component and the shared Global Styles component now own the rollover system. Set `data-trigger` on the interactive element. Its text and icon inherit that state. Desktop navigation uses `hover-other focus-other` within a group to dim peers while only the hovered or keyboard-focused item moves its own label. Set `data-state` for native current links, pressed controls or checked inputs as appropriate. Gallery and List are native buttons with `aria-pressed`.
+
+Footer email has three native label positions for the address, Copy Email and confirmation. The clipboard handler sets `data-copy-status="copied"` after a successful write. Back to Top uses the native up-arrow SVG and its own rollover. The footer invitation is a heading. The runtime no longer assigns generated trigger classes or repairs link semantics at startup.
+
+Use `--site--margin` and `--site--gutter` for layout. The Projects CMS gallery's native card and track are `work_card_wrap` and `work_gallery_track`. Earlier entries above record historical selector names.
