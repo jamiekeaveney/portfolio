@@ -86,7 +86,7 @@
 
 .error_game_status {
   left: calc(var(--error-gutter) + (100% - 2 * var(--error-gutter) + var(--site--gutter, 1.5rem)) / 3);
-  max-width: calc(3.5 * (100vw - 2 * var(--error-gutter)) / 12);
+  max-width: calc(3.5 * (100vw - 2 * var(--error-gutter)) / var(--site--column-count, 12));
   min-height: 1.5em;
   transform: none;
   pointer-events: none;

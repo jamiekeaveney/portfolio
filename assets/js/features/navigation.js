@@ -248,7 +248,6 @@
     });
     window.addEventListener("pageshow", (() => {
       applyTheme(root.dataset.themeStatus);
-      syncMenu();
       update(true);
     }));
     document.addEventListener("jk:page-intro", (() => {

@@ -29,11 +29,6 @@ if(hero){
    if(preview.getAttribute('src')!==url){preview.src=url;preview.load();}
    preview.play().catch(()=>{});
   }
-  root.querySelectorAll('.player_poster').forEach(el=>{
-   if(el===preview)return;
-   if(el.tagName==='VIDEO'){if(poster)el.poster=poster;else el.removeAttribute('poster');}
-   else if(el.tagName==='IMG'){if(poster)el.src=poster;else el.removeAttribute('src');el.removeAttribute('srcset');}
-  });
   source.setAttribute('data-video-ignore','');source.pause();source.closest('.case_media_inner').style.visibility='hidden';
  }
 }

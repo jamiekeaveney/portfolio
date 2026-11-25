@@ -58,11 +58,11 @@
   --showreel-interface-transform: translateY(1em) rotate(.001deg);
 }
 
-.player_poster,
+.showreel_poster,
 .player_shade,
 .player_play_indicator,
 .player_loading { transition: opacity .3s linear, visibility .3s linear; }
-.player_poster {
+.showreel_poster {
   opacity: var(--showreel-poster-opacity, var(--player-poster-opacity, 1));
   visibility: var(--showreel-poster-visibility, var(--player-poster-visibility, inherit));
 }
