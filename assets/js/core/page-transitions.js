@@ -158,8 +158,8 @@ function initOnceFunctions() {
 }
 
 function initBeforeEnterFunctions(t) {
-  t?.querySelectorAll('.project-hero__meta-cell,.case-details__row').forEach(row=>{
-    const value=row.querySelector('.case__meta-value');
+  t?.querySelectorAll('.project-hero__meta-cell,.case_details_row').forEach(row=>{
+    const value=row.querySelector('.case_meta_value');
     row.style.display=value && !value.textContent.trim() ? 'none' : '';
   });
   nextPage = t || document, has(".work") && initWorkSlider(nextPage);
@@ -185,13 +185,13 @@ function runPageOnceAnimation(page) {
     if(wrap)gsap.set(wrap,{display:'none'});
     finishLoaderCover();return gsap.timeline().call(()=>resetPage(page,y));
   }
-  const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader-panel');
+  const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader_panel');
   if(!bar||!content||!bg){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
   CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
   content.replaceChildren();bar.replaceChildren();
   const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
   const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='sitenav__wordmark loader-logo__wordmark loader-logo__base';fill.className='sitenav__wordmark loader-logo__wordmark loader-logo__fill';fill.dataset.loadLogo='';
+  base.className='sitenav_wordmark loader-logo__wordmark loader-logo__base';fill.className='sitenav_wordmark loader-logo__wordmark loader-logo__fill';fill.dataset.loadLogo='';
   base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
   const texts=document.createElement('div');texts.className='loader-messages';
   ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader-messages__message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
@@ -302,7 +302,7 @@ function runPageEnterAnimation(t, restoreY) {
 }
 
 function runWorkLeaveAnimation(t, e, n) {
-  const r = n.closest("[data-case-link]").querySelector("[data-case-thumbnail]"), o = e.querySelector(".section");
+  const r = n.closest("[data-case-link]").querySelector("[data-case-thumbnail]"), o = e.querySelector(".section_wrap");
   flipState = Flip.getState(r), flippedThumbnail = r;
   const a = gsap.timeline({
     onComplete: () => t.remove()
@@ -318,7 +318,7 @@ function runWorkLeaveAnimation(t, e, n) {
 }
 
 function runCaseEnterAnimation(t) {
-  const e = t.querySelector(".section"), n = e.querySelectorAll("[data-case-reveal]"), r = isPopstate ? getSavedScroll(window.location.href) : 0, o = gsap.timeline();
+  const e = t.querySelector(".section_wrap"), n = e.querySelectorAll("[data-case-reveal]"), r = isPopstate ? getSavedScroll(window.location.href) : 0, o = gsap.timeline();
   if (reducedMotion) return flippedThumbnail = null, flipState = null, o.set(t, {
     autoAlpha: 1
   }), o.add("pageReady"), o.call(resetPage, [ t, r ], "pageReady"), new Promise((t => o.call(t, null, "pageReady")));

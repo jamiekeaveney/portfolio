@@ -48,7 +48,7 @@ const initWorkSlider = (() => {
     root.dataset.workRuntime = "2026-11-17.9";
     let frozen = transitioning || document.documentElement.hasAttribute("data-transitioning");
     let modeTween = null, modeGhost = null, modeContentTween = null, modeTarget = null;
-    const visualLayers = el => el ? [ ...el.children ].filter((n => !n.matches(".work-card__meta"))) : [];
+    const visualLayers = el => el ? [ ...el.children ].filter((n => !n.matches(".work_card_meta"))) : [];
     var abort = new AbortController;
     var sig = {
       signal: abort.signal
@@ -166,7 +166,7 @@ const initWorkSlider = (() => {
         if (sMoved) return null;
         freeze();
         const href = new URL(link.href, location.href).pathname;
-        const thumb = link.querySelector(".work-card__thumb") || link.querySelector('[data-work-state="active"]') || link;
+        const thumb = link.querySelector(".work_card_thumb") || link.querySelector('[data-work-state="active"]') || link;
         const saved = {
           href: href,
           mode: mode,
@@ -202,7 +202,7 @@ const initWorkSlider = (() => {
         if (saved?.href === href && saved.mode === "slide" && Number.isFinite(saved.phase)) S.cur = S.tgt = saved.phase * S.pitch;
         renderSlide();
         const desired = saved?.href === href ? saved.left * innerWidth : parseFloat(getComputedStyle(track).paddingLeft) || 0;
-        return $$(".work-card__link", track).filter((a => new URL(a.href).pathname === href)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - desired) - Math.abs(b.getBoundingClientRect().left - desired)))[0];
+        return $$(".work_card_link", track).filter((a => new URL(a.href).pathname === href)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - desired) - Math.abs(b.getBoundingClientRect().left - desired)))[0];
       }
     };
     var dead = false;
@@ -408,7 +408,7 @@ const initWorkSlider = (() => {
       return text.innerHTML;
     }
     function row(side, index, label) {
-      return '<div class="work-list__row work-list__row--' + side + '" data-work-row-' + side + '="' + index + '">' + '<span class="work-list__label">' + escapeText(label) + "</span>" + "</div>";
+      return '<div class="work_list_row work-list__row--' + side + '" data-work-row-' + side + '="' + index + '">' + '<span class="work-list__label">' + escapeText(label) + "</span>" + "</div>";
     }
     function repeat(string, amount) {
       var out = "";
@@ -422,10 +422,10 @@ const initWorkSlider = (() => {
       }));
       var mediaFrag = document.createDocumentFragment();
       originals.forEach((function(item, index) {
-        var sourceThumb = $(".work-card__thumb", item);
+        var sourceThumb = $(".work_card_thumb", item);
         if (!sourceThumb) return;
         var thumb = sourceThumb.cloneNode(true);
-        thumb.querySelectorAll(".work-card__meta").forEach((el => el.remove()));
+        thumb.querySelectorAll(".work_card_meta").forEach((el => el.remove()));
         thumb.classList.remove("work-card__part--switching");
         thumb.querySelectorAll(".work-card__part--switching").forEach(part => part.classList.remove("work-card__part--switching"));
         thumb.classList.add("work-list__media");
@@ -436,7 +436,7 @@ const initWorkSlider = (() => {
         // inline-video owner plays only the active, hovered/focused list item.
         thumb.classList.remove("trigger--focused");
         thumb.classList.add("trigger--hover");
-        thumb.querySelector(".project-preview__poster")?.classList.add("work-list__thumbnail");
+        thumb.querySelector(".project_preview_poster")?.classList.add("work-list__thumbnail");
         thumb.querySelectorAll("video").forEach(video => {
           video.pause();
           video.removeAttribute("autoplay");
@@ -462,15 +462,15 @@ const initWorkSlider = (() => {
       listRight.innerHTML = repeat(rightMarkup, repetitions);
       numLeft.innerHTML = repeat(numberMarkup, repetitions);
       numRight.innerHTML = repeat(numberMarkup, repetitions);
-      leftRows = $$(".work-list__row", listLeft);
-      rightRows = $$(".work-list__row", listRight);
+      leftRows = $$(".work_list_row", listLeft);
+      rightRows = $$(".work_list_row", listRight);
     }
     function setupList() {
       killList();
       if (dead || isMobile() || !leftRows || !leftRows.length) return;
       L.rowH = leftRows[0].offsetHeight;
       if (!L.rowH) return;
-      leftRows.concat(rightRows, $$(".work-list__num-item"), $$(".work-list__num-clip")).forEach((function(el) {
+      leftRows.concat(rightRows, $$(".work-list__num-item"), $$(".work_list_num_clip")).forEach((function(el) {
         el.style.height = L.rowH + "px";
       }));
       L.span = L.rowH * N;
@@ -565,7 +565,7 @@ const initWorkSlider = (() => {
     }
     listEl.addEventListener("pointerdown", function(event) {
       if (mode !== "list" || isMobile() || locked() || event.button!==0) return;
-      if (event.target.closest(".work-list__arrow")) return;
+      if (event.target.closest(".work_list_arrow")) return;
       killSnap(L.snap);clearTimeout(L.snapTimer);
       lDrag=true;lMoved=false;lLastY=lStartY=event.clientY;lStartX=event.clientX;
     },sig);
@@ -672,11 +672,11 @@ const initWorkSlider = (() => {
     function alignListFrame() {
       // Measure the real gallery layout even when landing directly in list mode.
       // Visibility keeps this synchronous measurement out of the painted frame.
-      const gallery=track.closest('.work-slide'),saved=gallery.getAttribute('style');
+      const gallery=track.closest('.work_slide'),saved=gallery.getAttribute('style');
       const host=listEl.getBoundingClientRect(),savedMode=root.getAttribute('data-work-mode');
       setViewLayout('slide');
       gallery.style.visibility='hidden';gallery.style.pointerEvents='none';
-      const card=track.querySelector('.work-card__thumb'),r=card?.getBoundingClientRect();
+      const card=track.querySelector('.work_card_thumb'),r=card?.getBoundingClientRect();
       if(r?.width&&r.height){
         listCenter.style.width=r.width+'px';listCenter.style.height=r.height+'px';
         const midpoint=r.top-host.top+r.height/2;
@@ -690,13 +690,13 @@ const initWorkSlider = (() => {
     }
     function currentMedia(index = activeIdx) {
       if (mode === "list") return $('[data-work-state="active"]', listCenter);
-      return $$(".work-card", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work-card__thumb");
+      return $$(".work-card", track).filter((el => +el.dataset.workIndex === index)).sort(((a, b) => Math.abs(a.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft)) - Math.abs(b.getBoundingClientRect().left - parseFloat(getComputedStyle(track).paddingLeft))))[0]?.querySelector(".work_card_thumb");
     }
     function setGalleryInteractionLocked(locked) {
       listEl.classList.toggle("work-list--switching", locked);
       for (const item of $$(".work-card", track)) {
         item.classList.toggle("work-card--switching", locked);
-        for (const part of item.querySelectorAll(".work-card__thumb,.work-card__link,.work-card__poster,.work-card__meta")) {
+        for (const part of item.querySelectorAll(".work_card_thumb,.work_card_link,.work_card_poster,.work_card_meta")) {
           part.classList.toggle("work-card__part--switching", locked);
         }
       }
@@ -746,7 +746,7 @@ const initWorkSlider = (() => {
         applyMode(next);
         return;
       }
-      const image = source.querySelector(".work-card__image,.project-preview__poster");
+      const image = source.querySelector(".work_card_image,.project_preview_poster");
       if (!image) {
         applyMode(next);
         return;
@@ -804,7 +804,7 @@ const initWorkSlider = (() => {
         gsap.set(visualLayers(target), {
           visibility: "hidden"
         });
-        const content = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : [ ...$$(".work-card", track).filter((el => !el.contains(target))), ...$$(".work-card__meta", target.closest(".work-card")) ];
+        const content = mode === "list" ? [ listLeft, listRight, numLeft, numRight ] : [ ...$$(".work-card", track).filter((el => !el.contains(target))), ...$$(".work_card_meta", target.closest(".work-card")) ];
         gsap.set(content, {
           autoAlpha: 0
         });

@@ -4,15 +4,15 @@
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
-    const home = page?.querySelector(".scaling-video__wrapper");
+    const home = page?.querySelector(".scaling_video_wrapper");
     if (!home || instances.has(home) || !window.Flip || !window.ScrollTrigger) return;
     window.JKLightbox?.mount(page);
-    const target = home.querySelector(".mini-showreel");
-    const destination = page.querySelector('.scaling-element__big-box[data-flip-element="wrapper"]');
+    const target = home.querySelector(".showreel_wrap");
+    const destination = page.querySelector('.scaling_element_big_box[data-flip-element="wrapper"]');
     const end = page.querySelector('[data-flip-element="end"]');
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
-    const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask")));
+    const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask")));
     let timeline, render, timer, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
     function build() {

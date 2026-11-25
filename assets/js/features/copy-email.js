@@ -5,9 +5,9 @@
     clean();
     const abort = new AbortController;
     clean = () => abort.abort();
-    const buttons = new Set([ ...document.querySelectorAll('.nav-root [data-wf--super-button--variant^="copy-email"]'), ...(page || document).querySelectorAll('[data-wf--super-button--variant^="copy-email"]') ]);
+    const buttons = new Set([ ...document.querySelectorAll('.nav_wrap [data-wf--super-button--variant^="copy-email"]'), ...(page || document).querySelectorAll('[data-wf--super-button--variant^="copy-email"]') ]);
     buttons.forEach((button => {
-      const email = button.querySelector(".btn__text")?.textContent.trim();
+      const email = button.querySelector(".btn_text")?.textContent.trim();
       if (!email) return;
       button.classList.remove("btn--copied");
       button.setAttribute("role", "button");

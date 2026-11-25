@@ -17,20 +17,20 @@ JKProject.register((s => {
   };
   const wrap = s.page.querySelector("[data-scroll-next-wrap]"), source = s.page.querySelector("[data-case-next-source]");
   if (!wrap || !source || !s.next) return;
-  const grid = source.querySelector(".case-index__grid"), items = [ ...grid.children ], preferred = new URL(s.next.link.href).pathname, current = new URL(s.page.baseURI).pathname;
+  const grid = source.querySelector(".case_index_grid"), items = [ ...grid.children ], preferred = new URL(s.next.link.href).pathname, current = new URL(s.page.baseURI).pathname;
   const rank = item => {
     const path = new URL(item.querySelector("a").href).pathname;
     return path === preferred ? 0 : path === current ? 2 : 1;
   };
   const ordered = [ ...items ].sort(((a, b) => rank(a) - rank(b)));
   ordered.forEach((item => grid.append(item)));
-  let cards = ordered.map((item => item.querySelector(".case-index__card"))).filter(Boolean);
+  let cards = ordered.map((item => item.querySelector(".case_index_card"))).filter(Boolean);
   // Touch layouts use ordinary named links. No scroll progress, dimming or auto-navigation.
     if (!matchMedia("(min-width:62rem)").matches || matchMedia("(pointer:coarse)").matches) {
     cards.forEach((card => {
       card.dataset.caseTransition = "continuation";
-      card.querySelector(".case-index__media").dataset.nextMedia = "";
-      card.querySelector(".case-index__title").dataset.nextTitle = "";
+      card.querySelector(".case_index_media").dataset.nextMedia = "";
+      card.querySelector(".case_index_title").dataset.nextTitle = "";
       gsap.set(card, {
         clearProps: "opacity"
       });
@@ -40,12 +40,12 @@ JKProject.register((s => {
     }));
     return;
   }
-  const fill = wrap.querySelector(".case-index__fill"), hint = wrap.querySelector(".case-index__hint"), nav = s.page.querySelector("[data-case-nav]");
+  const fill = wrap.querySelector(".case_index_fill"), hint = wrap.querySelector(".case_index_hint"), nav = s.page.querySelector("[data-case-nav]");
   let fired = false, armed = false, progress = 0, idleTimer, messageActive = false, messageWanted = false, messageBusy = false, messageTween;
   const hovered = new Set, cache = JKProject.previewCache || (JKProject.previewCache = new Map);
   const opacity = () => 1;
-  const idle = wrap.querySelector(".case-index__meta");
-  const status = idle.closest(".case-index__status"), statusParent = status.parentNode, statusSibling = status.nextSibling, idleText = idle.textContent;
+  const idle = wrap.querySelector(".case_index_meta");
+  const status = idle.closest(".case_index_status"), statusParent = status.parentNode, statusSibling = status.nextSibling, idleText = idle.textContent;
   function label(el, prompt, value) {
     el.replaceChildren();
     const lead = document.createElement("span"), detail = document.createElement("span");
@@ -56,9 +56,9 @@ JKProject.register((s => {
     el.append(lead, detail);
     return detail;
   }
-  label(idle, "Up next", cards[0].querySelector(".case-index__title").textContent.trim());
+  label(idle, "Up next", cards[0].querySelector(".case_index_title").textContent.trim());
   const percent = label(hint, "Scroll to next project", "(0%)");
-  const suggestedTitle = cards[0].querySelector(".case-index__title");
+  const suggestedTitle = cards[0].querySelector(".case_index_title");
   suggestedTitle.classList.add("case-index__title--suggested");
   status.classList.add("case-index__status--attached");
   cards[0].append(status);
@@ -138,7 +138,7 @@ JKProject.register((s => {
       if (!r.ok) throw Error(r.status);
       return r.text();
     })).then((html => {
-      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case-featured video") || doc.querySelector(".case-media video");
+      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured video") || doc.querySelector(".case_media video");
       return v ? {
         src: v.getAttribute("data-src") || v.getAttribute("src"),
         poster: v.getAttribute("poster")
@@ -156,15 +156,15 @@ JKProject.register((s => {
       video.preload = "none";
       video.src = data.src;
       if (data.poster) video.poster = data.poster;
-      card.querySelector(".case-index__media").prepend(video);
+      card.querySelector(".case_index_media").prepend(video);
       return video;
     }));
   }
   cards.forEach(((card, i) => {
     card.dataset.caseTransition = "continuation";
     if (!i) card.dataset.caseSuggested = "";
-    card.querySelector(".case-index__media").dataset.nextMedia = "";
-    card.querySelector(".case-index__title").dataset.nextTitle = "";
+    card.querySelector(".case_index_media").dataset.nextMedia = "";
+    card.querySelector(".case_index_title").dataset.nextTitle = "";
     card.addEventListener("click", (e => go(card, e)), {
       signal: s.abort.signal
     });
@@ -240,7 +240,7 @@ JKProject.register((s => {
     }
   });
   // Entry easing ends well before the progress window reaches its final fifth.
-    const sticky = source.closest(".case-next__sticky") || wrap.querySelector("[data-scroll-next-sticky]") || source;
+    const sticky = source.closest(".case_next_sticky") || wrap.querySelector("[data-scroll-next-sticky]") || source;
   const entry = ScrollTrigger.create({
     trigger: wrap,
     start: "top bottom",

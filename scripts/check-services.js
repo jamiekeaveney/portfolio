@@ -27,8 +27,8 @@ const headings = positions.map((_, index) => ({
 const panels = positions.map(element);
 const browser = {
   querySelectorAll: selector => ({
-    ".services__heading": headings,
-    ".services__media-panel": panels
+    ".services_heading": headings,
+    ".services_media_panel": panels
   })[selector]
 };
 const context = {
@@ -38,7 +38,7 @@ const context = {
   ScrollTrigger: {create: trigger => triggers.push(trigger)}
 };
 vm.runInNewContext(fs.readFileSync("assets/js/features/services.js", "utf8"), context);
-const page = {querySelectorAll: selector => selector === ".services__browser" ? [browser] : []};
+const page = {querySelectorAll: selector => selector === ".services_browser" ? [browser] : []};
 context.initServices(page);
 context.initServices(page);
 assert.equal(triggers.length, 1);

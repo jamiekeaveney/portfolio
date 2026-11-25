@@ -4,7 +4,7 @@ function el(){return {style:{},events:{},setAttribute(){},addEventListener(k,f){
 const ctx={clearRect(){},setTransform(){},fillRect(){},beginPath(){},arc(x,y,r){lastBall={x,y,r}},fill(){},measureText:()=>({actualBoundingBoxLeft:0,actualBoundingBoxRight:720,actualBoundingBoxAscent:300,actualBoundingBoxDescent:0,width:720}),fillText(t,x,y){lastText={t,x,y};texts.push(t);fonts.push(this.font)}};
 const canvas=Object.assign(el(),{getContext:()=>ctx}),button=Object.assign(el(),{tagName:'A'}),status=el(),court=Object.assign(el(),{clientWidth:1440,clientHeight:900});
 court.classList={toggle(){}};
-const root=Object.assign(el(),{isConnected:true,dataset:{},querySelector:s=>s==='.error-game__court'?court:button});
+const root=Object.assign(el(),{isConnected:true,dataset:{},querySelector:s=>s==='.error_game_court'?court:button});
 const rootClasses=new Set();
 root.classList={
   add: name=>rootClasses.add(name),

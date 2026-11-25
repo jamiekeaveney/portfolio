@@ -9,11 +9,11 @@
   }
   const flights=new WeakMap();
   function bindTitle(page, title, slash) {
-    const hero = page.querySelector('.project-hero__title');
+    const hero = page.querySelector('.project_hero_title');
     if (!hero) return;
     const desktop = matchMedia('(min-width:62rem)');
     const nav = title.closest('[data-case-nav]');
-    let compact = document.querySelector('.nav-root')?.dataset.navCompact === 'true';
+    let compact = document.querySelector('.nav_wrap')?.dataset.navCompact === 'true';
     let motion, pieces = [];
 
     function syncVisibility() {
@@ -112,7 +112,7 @@
     const nav = page.querySelector("[data-case-nav]");
     if (nav && !nav.hasAttribute("data-jk-nav")) {
       nav.dataset.jkNav = "";
-      const row = nav.querySelector(".case-nav__row"), prev = row.querySelector('[data-case-direction="prev"]'), next = row.querySelector('[data-case-direction="next"]');
+      const row = nav.querySelector(".case_nav_row"), prev = row.querySelector('[data-case-direction="prev"]'), next = row.querySelector('[data-case-direction="next"]');
       const context = document.createElement("div");
       context.className = "case-nav__context";
       const back = document.createElement("a");

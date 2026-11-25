@@ -1,20 +1,20 @@
-.sg-section :is(.home-intro__heading,.edit-heading,.clients__heading){max-width:100%;grid-column:auto;grid-row:auto}
-.sg-type .sitenav__wordmark{position:static}
+.sg-section :is(.home_intro_heading,.edit_heading,.clients_heading){max-width:100%;grid-column:auto;grid-row:auto}
+.sg-type .sitenav_wordmark{position:static}
 .sg-swatch{min-width:0}
 .utility-page .sg-grid .btn{justify-self:start;align-self:start}
-.utility-page .sg-grid .btn__aside{flex-shrink:0}
+.utility-page .sg-grid .btn_aside{flex-shrink:0}
 @media(max-width:47.9375rem){.utility-page{padding-top:7rem}.sg-section{padding-block:3rem}}
 [data-style-guide] .swatch{position:relative;min-height:8rem;border-radius:var(--radius--radius,.75rem);border:0.0625rem solid #666}
 [data-style-guide] .swatch p{position:absolute;bottom:1rem;left:1rem;color:#fff;mix-blend-mode:difference;margin:0}
 [data-style-guide] .work{position:relative;height:auto;min-height:0;overflow:visible;width:100%;grid-column:1/-1}
-[data-style-guide] .work-slide{position:relative;inset:auto;height:auto;overflow:visible}
+[data-style-guide] .work_slide{position:relative;inset:auto;height:auto;overflow:visible}
 [data-style-guide] .work-slide__track{position:relative;inset:auto;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;transform:none!important;padding:0;height:auto}
 [data-style-guide] .work-card{width:100%;height:auto;opacity:1!important;flex:none}
-[data-style-guide] .work-card__thumb{width:100%;height:auto;aspect-ratio:9/10}
-[data-style-guide] :is(.work-list,.work__controls,.work-slide__nav,.work-nav,.projects-mobile-intro){display:none!important}
+[data-style-guide] .work_card_thumb{width:100%;height:auto;aspect-ratio:9/10}
+[data-style-guide] :is(.work_list,.work_controls,.work-slide__nav,.work_nav_wrap,.projects_mobile_intro){display:none!important}
 @media(max-width:47.9375rem){[data-style-guide] .work-slide__track{grid-template-columns:1fr}}
 
-.error-game {
+.error_game_wrap {
   --error-gutter: var(--grid--padding, 2.5rem);
   position: relative;
   display: block;
@@ -28,7 +28,7 @@
   letter-spacing: var(--spacing--spacing);
 }
 
-.error-game__court {
+.error_game_court {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -44,14 +44,14 @@
   outline-offset: -.25rem;
 }
 
-.error-game__court:has(.error-game__canvas:focus-visible) {
+.error_game_court:has(.error-game__canvas:focus-visible) {
   outline: .125rem solid currentColor;
   outline-offset: .25rem;
 }
 
-.error-game__heading,
+.error_game_heading,
 .error-game__status,
-.error-game__control {
+.error_game_control {
   position: absolute;
   z-index: 2;
   margin: 0;
@@ -59,7 +59,7 @@
   mix-blend-mode: difference;
 }
 
-.error-game__heading {
+.error_game_heading {
   left: var(--error-gutter);
   top: 9rem;
   font-size: var(--font-size--2xl, 2.5rem);
@@ -70,13 +70,13 @@
 }
 
 .error-game__status,
-.error-game__control {
+.error_game_control {
   bottom: max(var(--error-gutter), env(safe-area-inset-bottom));
   font-size: var(--font-size--base, 1rem);
   line-height: 1.3;
 }
 
-@scope (.error-game) {
+@scope (.error_game_wrap) {
   .btn {
     position: absolute;
     z-index: 2;
@@ -90,14 +90,14 @@
     line-height: 1.3;
   }
 
-  .btn__main {
+  .btn_main {
     color: inherit;
     padding: 0;
     border: 0;
     background: transparent;
   }
 
-  .btn__aside { display: none; }
+  .btn_aside { display: none; }
 }
 
 .error-game__status {
@@ -109,7 +109,7 @@
   text-align: left;
 }
 
-.error-game__control {
+.error_game_control {
   --pong-label-offset: 0%;
   right: var(--error-gutter);
   left: auto;
@@ -125,7 +125,7 @@
   border-radius: 0;
 }
 
-.error-game__control:is(:hover, :focus-visible) { --pong-label-offset: -100%; }
+.error_game_control:is(:hover, :focus-visible) { --pong-label-offset: -100%; }
 .error-game__control-label { display: block; translate: 0 var(--pong-label-offset); }
 .error-game__control-label--duplicate { position: absolute; top: 100%; left: 0; }
 
@@ -142,6 +142,6 @@
 }
 
 @media (max-width: 47.9375rem) {
-  .error-game__heading { top: 7rem; font-size: 2rem; }
+  .error_game_heading { top: 7rem; font-size: 2rem; }
   .error-game__status { max-width: none; font-size: .875rem; }
 }

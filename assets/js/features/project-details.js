@@ -29,7 +29,7 @@ JKProject.register((s => {
     duration: SETTINGS.followDuration,
     ease: SETTINGS.ease
   });
-  const first = null, media = [ ...s.rail.querySelectorAll(".case-media") ];
+  const first = null, media = [ ...s.rail.querySelectorAll(".case_media") ];
   let pointer = JKProject.pointer || {
     x: innerWidth / 2,
     y: innerHeight / 2,
@@ -62,7 +62,7 @@ JKProject.register((s => {
     smoothedX += (pointer.x - smoothedX) * (1 - Math.exp(-dt * SETTINGS.pointerSmoothing));
     JKProject.pointerX = smoothedX;
     pointer = JKProject.pointer || pointer;
-    const hit = pointer.known ? document.elementFromPoint(pointer.x, pointer.y)?.closest(".case-media") : null;
+    const hit = pointer.known ? document.elementFromPoint(pointer.x, pointer.y)?.closest(".case_media") : null;
     const show = !!hit && s.rail.contains(hit) && s.ready && !!s.toggleMedia && !JKProject.transitioning && !document.querySelector('[data-mini-showreel-status="active"][data-mini-showreel-player]') && !document.documentElement.hasAttribute("data-transitioning");
     text.textContent = s.cursorLabel?.() || SETTINGS.label;
     x(pointer.x + 18);

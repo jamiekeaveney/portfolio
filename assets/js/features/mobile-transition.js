@@ -2,7 +2,7 @@
   if (!window.barba) return;
   const mobile = matchMedia('(max-width:61.9375rem)');
   function keepBlur() {
-    const blur = document.querySelector('.progressive-blur');
+    const blur = document.querySelector('.progressive_blur');
     if (!blur) return;
     const anchor = document.createComment('');
     blur.before(anchor);
@@ -25,13 +25,13 @@
     document.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse' || !mobile.matches) return;
       clearPressedPoster();
-      pressedPoster = event.target.closest('.home-slide-image,.work-card__thumb')?.querySelector('.project-preview__poster');
+      pressedPoster = event.target.closest('.home_slide_image,.work_card_thumb')?.querySelector('.project_preview_poster');
       pressedPoster?.classList.add('project-preview__poster--touching');
     }, {passive:true});
     document.addEventListener('pointercancel', clearPressedPoster);
     document.addEventListener('pointerup', clearPressedPoster);
     window.addEventListener('blur', clearPressedPoster);
-    const blur = document.querySelector('.progressive-blur');
+    const blur = document.querySelector('.progressive_blur');
     barba.hooks.before(() => blur?.classList.add('progressive-blur--transition'));
     barba.hooks.after(() => blur?.classList.remove('progressive-blur--transition'));
   }

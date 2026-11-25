@@ -14,7 +14,7 @@
         frames: ['6aff6c697439e11a3cca1966_composite-before.webp','6aff6c6a3e55f9821757b7e8_composite-after.webp']
       }
     };
-    page.querySelectorAll('.services__video-embed video[data-src]').forEach(video => {
+    page.querySelectorAll('.services_video_embed video[data-src]').forEach(video => {
       const service = /\/services\/(colour|composite)\.mp4(?:[?#]|$)/.exec(video.dataset.src)?.[1];
       if (!service) return;
       const comparison = comparisons[service];
@@ -50,7 +50,7 @@
       handle.className = 'media-comparison__divider';
       handle.setAttribute('aria-hidden','true');
       handle.innerHTML='<span class="media-comparison__grip"><svg class="media-comparison__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
-      const host=video.closest('.services__video-wrap')||box;
+      const host=video.closest('.services_video_wrap')||box;
       host.querySelector(':scope > [data-mobile-play]')?.remove();
       let pointer=null;
       function drag(e){const r=input.getBoundingClientRect();input.value=String(Math.round(100*Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))));move();}
@@ -113,7 +113,7 @@
     signal.addEventListener('abort',()=>{observer.disconnect();thumbnailObserver.disconnect();reset();});
   }
   function editorial(page,signal) {
-    const heading=page.querySelector('.folio-statement-heading[data-highlight-text]');
+    const heading=page.querySelector('.folio_statement_heading[data-highlight-text]');
     if(!heading || !motion.matches) return;
     let cleanup;
     function connect() {
@@ -167,10 +167,10 @@
     splits.observe(heading,{childList:true,subtree:true});
     signal.addEventListener('abort',()=>{splits.disconnect();cleanup?.();});
   }
-  const gridControl='.footer-legal a[href="#layout-grid"]';
+  const gridControl='.footer_legal a[href="#layout-grid"]';
   function prepareGridControls(page){
     if(!page)return;
-    for (const link of page.querySelectorAll('.footer-legal a[href="#back-to-top"]')) link.classList.add('footer__back-to-top');
+    for (const link of page.querySelectorAll('.footer_legal a[href="#back-to-top"]')) link.classList.add('footer__back-to-top');
     const pressed=document.querySelector('[data-animated-grid]')?.dataset.open==='true';
     for(const button of page.querySelectorAll(gridControl)){
       button.setAttribute('role','button');

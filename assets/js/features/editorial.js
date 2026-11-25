@@ -245,7 +245,7 @@
     return () => mm.revert();
   }
   function initBottomStack(wrap) {
-    const list = wrap.querySelector(".cv__list");
+    const list = wrap.querySelector(".cv_list");
     if (!list) return () => {};
     const cards = [ ...list.children ], layers = [];
     cards.forEach(((card, i) => {

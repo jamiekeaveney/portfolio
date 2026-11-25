@@ -65,8 +65,8 @@
     }));
     page.querySelectorAll('[data-reveal="load"],[data-reveal="scroll"]').forEach((el => {
       if (s.entries.some((e => e.el === el)) || responsive && !el.matches("[data-home-scroll],[data-home-intro-exit]")) return;
-      if (el.closest('[data-reveal="none"],.work-list,.case-index__card,.clients__credits') || el.closest(".work-card") && !(mobileCards && el.matches(".work-card")) || !el.getClientRects().length) return;
-      if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case-featured,.case-featured *")) return;
+      if (el.closest('[data-reveal="none"],.work_list,.case_index_card,.clients_credits') || el.closest(".work-card") && !(mobileCards && el.matches(".work-card")) || !el.getClientRects().length) return;
+      if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case_featured,.case_featured *")) return;
       const entry = {
         el: el,
         played: responsive || restoring && el.dataset.reveal === "load",
@@ -164,7 +164,7 @@
         entry.tween = t;
         s.tweens.push(t);
       } else {
-        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case-media,.mini-showreel__card") || el).borderTopLeftRadius : "0px";
+        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case_media,.mini_showreel_card") || el).borderTopLeftRadius : "0px";
         const round = radius === "0px" ? SETTINGS.radiusFallback : radius;
         const from = effect === "height" ? {
           clipPath: "inset(0% 0% 100% 0% round " + round + ")"
@@ -182,7 +182,7 @@
         } : {
           autoAlpha: 1
         };
-        const followers = effect === "height" && el.matches(".mini-showreel__media") ? [ ...el.parentElement.querySelectorAll(".mini-showreel__info") ] : [];
+        const followers = effect === "height" && el.matches(".mini_showreel_media") ? [ ...el.parentElement.querySelectorAll(".mini_showreel_info") ] : [];
         if (followers.length) gsap.set(followers, {
           y: -el.offsetHeight
         });

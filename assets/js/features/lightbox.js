@@ -6,21 +6,21 @@ if(!root||mounted.has(root))return;
 const abort=new AbortController();
 const page=root.closest('[data-barba="container"]')||nativeWindow.document;
 const owner=root.closest('[data-project-lightbox]');
-const home=root.closest('.scaling-video__wrapper');
+const home=root.closest('.scaling_video_wrapper');
 if(home){
-  const media=root.querySelector('.mini-showreel__media');
+  const media=root.querySelector('.mini_showreel_media');
   if(media){media.dataset.reveal='load';media.dataset.revealEffect='height';media.dataset.revealOrder='0';media.dataset.revealDelay='.1';}
   root.setAttribute('data-flip-element','target');
-  const info=home.querySelector(':scope > .mini-showreel__info');
-  if(info)root.querySelector('.mini-showreel__card').appendChild(info);
+  const info=home.querySelector(':scope > .mini_showreel_info');
+  if(info)root.querySelector('.mini_showreel_card').appendChild(info);
 }
-const hero=root.closest('.case-media');
+const hero=root.closest('.case_media');
 if(hero){
- const source=hero.querySelector(':scope > .case-media__inner video');
+ const source=hero.querySelector(':scope > .case_media_inner video');
  const url=source&&(source.getAttribute('data-src')||source.getAttribute('src')||source.querySelector('source')?.getAttribute('src'));
  if(url){
   root.querySelector('[data-bunny-player-init]').setAttribute('data-player-src',url);
-  const preview=root.querySelector('.mini-showreel__cover-image');
+  const preview=root.querySelector('.mini_showreel_cover_image');
   const poster=source.getAttribute('poster')||'';
   if(preview){
    if(poster)preview.setAttribute('poster',poster);else preview.removeAttribute('poster');
@@ -34,7 +34,7 @@ if(hero){
    if(el.tagName==='VIDEO'){if(poster)el.poster=poster;else el.removeAttribute('poster');}
    else if(el.tagName==='IMG'){if(poster)el.src=poster;else el.removeAttribute('src');el.removeAttribute('srcset');}
   });
-  source.setAttribute('data-video-ignore','');source.pause();source.closest('.case-media__inner').style.visibility='hidden';
+  source.setAttribute('data-video-ignore','');source.pause();source.closest('.case_media_inner').style.visibility='hidden';
  }
 }
 const oldName=root.getAttribute('data-mini-showreel-player');
@@ -43,7 +43,7 @@ if(!lb)return;
 const name='project-lightbox-'+(++mountOne.serial);
 root.setAttribute('data-mini-showreel-player',name);lb.setAttribute('data-mini-showreel-lightbox',name);
 root.querySelectorAll('[data-mini-showreel-open]').forEach(el=>{el.setAttribute('data-mini-showreel-open',name);el.setAttribute('aria-label',hero?'View full screen':'Play video');});
-if(!hero){const svg=root.querySelector('.bunny-player__play-svg');const trigger=root.querySelector('[data-mini-showreel-open]');if(svg&&trigger&&!trigger.querySelector('.jk-play-icon')){const icon=svg.cloneNode(true);icon.setAttribute('class','jk-play-icon');icon.setAttribute('aria-hidden','true');root.querySelector('.mini-showreel__card').append(icon);}}
+if(!hero){const svg=root.querySelector('.bunny-player__play-svg');const trigger=root.querySelector('[data-mini-showreel-open]');if(svg&&trigger&&!trigger.querySelector('.jk-play-icon')){const icon=svg.cloneNode(true);icon.setAttribute('class','jk-play-icon');icon.setAttribute('aria-hidden','true');root.querySelector('.mini_showreel_card').append(icon);}}
 root.querySelectorAll('[data-mini-showreel-close]').forEach(el=>{el.setAttribute('aria-label','Back');el.setAttribute('data-jk-back','');});
 root.querySelectorAll('[data-mini-showreel-open]').forEach(el=>{
  if(!el.matches('a,button')){el.setAttribute('role','button');el.tabIndex=0;}
@@ -563,7 +563,7 @@ function initMiniShowreelPlayer() {
     if (!name || isOpen) return;
     if (matchMedia('(max-width:61.9375rem), (pointer:coarse)').matches && nativeWindow.JKMobileMedia) {
       const player=root.querySelector('[data-bunny-player-init]');
-      nativeWindow.JKMobileMedia.open(root.querySelector('.mini-showreel__cover-image') || player?.querySelector('video'), openBtns[0], player?.getAttribute('data-player-src'));
+      nativeWindow.JKMobileMedia.open(root.querySelector('.mini_showreel_cover_image') || player?.querySelector('video'), openBtns[0], player?.getAttribute('data-player-src'));
       return;
     }
 

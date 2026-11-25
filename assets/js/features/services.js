@@ -2,10 +2,10 @@ const initializedServices = new WeakSet();
 
 function initServices(page) {
   if (!hasScrollTrigger) return;
-  page.querySelectorAll(".services__browser").forEach(browser => {
+  page.querySelectorAll(".services_browser").forEach(browser => {
     if (initializedServices.has(browser)) return;
-    const headings = [...browser.querySelectorAll(".services__heading")];
-    const panels = [...browser.querySelectorAll(".services__media-panel")];
+    const headings = [...browser.querySelectorAll(".services_heading")];
+    const panels = [...browser.querySelectorAll(".services_media_panel")];
     if (!headings.length || !panels.length) return;
     initializedServices.add(browser);
 

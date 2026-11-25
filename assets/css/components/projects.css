@@ -9,11 +9,11 @@
   --work-list-display: block;
 }
 
-.work-slide {
+.work_slide {
   display: var(--work-gallery-display);
 }
 
-.work-list {
+.work_list {
   display: var(--work-list-display);
 }
 
@@ -27,14 +27,14 @@
   cursor: inherit;
 }
 
-.work__controls {
+.work_controls {
   --work-active-on: 1;
   --work-active-off: 0;
 }
 
 /* View controls have one label; keep its ink inside the clickable control. */
-@scope (.work__controls) {
-  .nav__link-text {
+@scope (.work_controls) {
+  .nav_link_text {
     transform: none;
     translate: none;
     text-shadow: none;
@@ -54,7 +54,7 @@
 }
 
 @media (hover: hover) {
-  .work__controls:has([data-work-view]:hover) {
+  .work_controls:has([data-work-view]:hover) {
     --work-active-on: 0;
     --work-active-off: 1;
   }
@@ -71,7 +71,7 @@
   }
 }
 
-.work-list__col {
+.work_list_col {
   --work-list-mask: linear-gradient(
     to bottom,
     transparent calc(var(--list-midpoint, 50%) - var(--work-mask-half)),
@@ -82,7 +82,7 @@
   mask-image: var(--work-list-mask);
 }
 
-.work-list__row {
+.work_list_row {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -118,7 +118,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.work-list__center {
+.work_list_center {
   --_trigger---on: 1;
   --_trigger---off: 0;
 }
@@ -141,13 +141,13 @@
   animation: none;
 }
 
-.work-list__arrow > svg {
+.work_list_arrow > svg {
   width: .85rem;
   height: .85rem;
 }
 
 @media (min-width: 62rem) {
-  .work-list__col {
+  .work_list_col {
     --work-mask-half: min(39svh, 34rem);
     --work-label-color: var(--_theme---color--text-muted);
     --work-active-label-color: var(--_theme---color--foreground);
@@ -174,7 +174,7 @@
     text-align: right;
   }
 
-  .work-list__row {
+  .work_list_row {
     font-size: inherit;
     line-height: 1.3;
     height: 1lh;
@@ -190,7 +190,7 @@
     text-overflow: clip;
   }
 
-  .work-list__center {
+  .work_list_center {
     left: 50%;
     top: 50%;
     right: auto;
@@ -227,7 +227,7 @@
     --work-gallery-position: static;
   }
 
-  .work-slide {
+  .work_slide {
     position: var(--work-gallery-position, relative);
   }
 

@@ -3,18 +3,18 @@
   let stickies = null, sectionLabels = null, resizeTimer;
   const desktop = matchMedia("(min-width:62rem) and (hover:hover) and (pointer:fine)");
   const reduced = matchMedia("(prefers-reduced-motion:reduce)");
-  const bottomLabels = '.edit-label--bottom,.section-label--bottom,.clients__eyebrow,.services__eyebrow';
+  const bottomLabels = '.edit-label--bottom,.section_label_bottom,.clients_eyebrow,.services_eyebrow';
   function mountSectionLabels(page) {
     sectionLabels?.destroy();sectionLabels=null;
     if(!desktop.matches)return;
-    const labels=[...page.querySelectorAll('.section__header .grey-label,.edit-grid > .clients__eyebrow,.edit-overlap .edit-label--bottom')].map(el=>{
-      const section=el.closest('.edit-grid')||el.closest('.section');
-      const end=el.matches('.clients__eyebrow')?section?.querySelector('.clients__list'):el.closest('#about')?section?.querySelector('.section__action'):null;
+    const labels=[...page.querySelectorAll('.section_header .u-text-muted-label,.edit_grid > .clients_eyebrow,.edit_overlap .edit-label--bottom')].map(el=>{
+      const section=el.closest('.edit_grid')||el.closest('.section_wrap');
+      const end=el.matches('.clients_eyebrow')?section?.querySelector('.clients_list'):el.closest('#about')?section?.querySelector('.section_action'):null;
       return {el,section,end,offset:0,translate:el.style.translate};
-    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit-grid > .clients__eyebrow,.edit-overlap .edit-label--bottom"))&&!s.section.querySelector('.marquee-advanced__logo')&&!s.el.closest('#services'));
-    const serviceCandidate=page.querySelector('#services .section__header .grey-label');
+    }).filter(s=>s.section&&(!s.el.closest(bottomLabels)||s.el.matches(".edit_grid > .clients_eyebrow,.edit_overlap .edit-label--bottom"))&&!s.section.querySelector('.marquee_advanced_logo')&&!s.el.closest('#services'));
+    const serviceCandidate=page.querySelector('#services .section_header .u-text-muted-label');
     const serviceLabel=serviceCandidate?.closest(bottomLabels)?null:serviceCandidate;
-    const serviceMedia=page.querySelector('#services .services__sticky-media');
+    const serviceMedia=page.querySelector('#services .services_sticky_media');
     if(!labels.length&&!serviceLabel)return;
     let serviceNatural=0,serviceLabelStyle=serviceLabel?.style.translate||'';
     const measureService=()=>{if(serviceMedia){const box=serviceMedia.closest('.services__media-container');serviceNatural=(box||serviceMedia).getBoundingClientRect().top+scrollY;}};
@@ -27,7 +27,7 @@
         const r=s.el.getBoundingClientRect(),natural=r.top-s.offset;
         const boundary=labels.find(label=>label.el===s.end);
         const endBox=s.end?.getBoundingClientRect();
-        const clients=s.el.matches('.clients__eyebrow');
+        const clients=s.el.matches('.clients_eyebrow');
         const end=endBox?(clients?endBox.bottom:endBox.top-(boundary?.offset||0)):s.section.getBoundingClientRect().bottom;
         const travel=Math.max(0,end-natural-r.height-(clients?0:40));
         if(reduced.matches||!window.JKStickyLibrary)return Math.max(0,Math.min(top-natural,travel));
@@ -54,7 +54,7 @@
         // Later section labels share their heading's baseline; their native
         // placement must not gain an independent scroll displacement.
         if (el.closest(bottomLabels)) {el.removeAttribute("data-site-eased-sticky");return;}
-        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer-wrap,.sticky-footer") || el.hasAttribute("data-home-scroll")) return;
+        if (!page.contains(el) || el.closest(".pin-spacer,[data-footer-parallax],[data-scroll-next-wrap],[data-horizontal-section],.footer_wrap,.footer_sticky") || el.hasAttribute("data-home-scroll")) return;
         if (getComputedStyle(el).position === "sticky") el.setAttribute("data-site-eased-sticky", "");
       }));
       stickies = library.sticky.all("[data-site-eased-sticky]", {
@@ -71,7 +71,7 @@
     mountSectionLabels(page);
   }
   document.addEventListener("click", (event => {
-    const arrow = event.target.closest(".scroll-arrow__mask");
+    const arrow = event.target.closest(".scroll_arrow_mask");
     if (!arrow || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const page = arrow.closest('[data-barba="container"]');
     if (!page) return;
@@ -87,7 +87,7 @@
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    const nav = document.querySelector(".sitenav__bar"), offset = !matchMedia("(min-width:62rem)").matches ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
+    const nav = document.querySelector(".sitenav_bar"), offset = !matchMedia("(min-width:62rem)").matches ? -(nav?.getBoundingClientRect().bottom || 80) - 24 : 0;
     const smooth = window.JKProject?.lenis();
     if (smooth) smooth.scrollTo(target, {
       offset: offset,

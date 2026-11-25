@@ -2,7 +2,7 @@
 (() => {
   function init(){
     const root=document.querySelector('[data-error-game]');if(!root)return;
-    const court=root.querySelector('.error-game__court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
+    const court=root.querySelector('.error_game_court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
     const canvas=document.createElement('canvas'),status=document.createElement('p');
     const ctx=canvas.getContext('2d');
     if (!ctx) return;
@@ -15,8 +15,8 @@
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
     const label=document.createElement('span'),replacement=document.createElement('span');
-    label.className='btn__text error-game__control-label';
-    replacement.className='btn__text error-game__control-label error-game__control-label--duplicate';
+    label.className='btn_text error-game__control-label';
+    replacement.className='btn_text error-game__control-label error-game__control-label--duplicate';
     replacement.setAttribute('aria-hidden','true');
     start.textContent='';
     start.append(label,replacement);

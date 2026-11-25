@@ -28,7 +28,7 @@
   applyTheme(theme === "light" ? "light" : "dark");
   function init() {
     if (window.JKHeader) return;
-    const nav = document.querySelector(".nav-root");
+    const nav = document.querySelector(".nav_wrap");
     if (!nav) return;
     const toggle = nav.querySelector("#nav-toggle");
     function syncMenu() {
@@ -37,43 +37,43 @@
     toggle?.addEventListener("change", syncMenu);
     syncMenu();
     document.addEventListener("click", event => {
-      if (!toggle?.checked || event.target.closest('.sitenav__mobile-wrap,label[for="nav-toggle"],#nav-toggle')) return;
+      if (!toggle?.checked || event.target.closest('.sitenav_mobile_wrap,label[for="nav-toggle"],#nav-toggle')) return;
       toggle.checked = false;
       toggle.dispatchEvent(new Event("change", { bubbles: true }));
     }, true);
     nav.querySelector(".transition.mobile")?.classList.add("sitenav__overlay");
-    nav.querySelector(".transition__dark.mobile")?.classList.add("sitenav__overlay-shade");
-    nav.querySelectorAll(".sitenav__project-count").forEach(count => {
-      const button = count.closest(".sitenav__item")?.querySelector(".btn");
+    nav.querySelector(".transition_dark.mobile")?.classList.add("sitenav__overlay-shade");
+    nav.querySelectorAll(".sitenav_project_count").forEach(count => {
+      const button = count.closest(".sitenav_item")?.querySelector(".btn");
       if (button) {
         button.classList.add("sitenav__link--counted");
         button.append(count);
       }
     });
 
-    const contact = nav.querySelector(".sitenav__contact .btn");
+    const contact = nav.querySelector(".sitenav_contact .btn");
     contact?.classList.add("sitenav__contact-link", "sitenav__link-surface");
-    contact?.querySelectorAll(".btn__main, .btn__text-mask, .btn__text").forEach(part => {
+    contact?.querySelectorAll(".btn_main, .btn_text_mask, .btn_text").forEach(part => {
       part.classList.add("sitenav__contact-content");
     });
-    nav.querySelectorAll(".sitenav .btn__main").forEach(part => part.classList.add("sitenav__button-body"));
-    nav.querySelectorAll(".sitenav .btn__text-mask").forEach(part => part.classList.add("sitenav__button-mask"));
+    nav.querySelectorAll(".sitenav .btn_main").forEach(part => part.classList.add("sitenav__button-body"));
+    nav.querySelectorAll(".sitenav .btn_text_mask").forEach(part => part.classList.add("sitenav__button-mask"));
 
-    const groups = Array.from(nav.querySelectorAll(".sitenav__links, .sitenav__socials"), group => {
+    const groups = Array.from(nav.querySelectorAll(".sitenav_links, .sitenav_socials"), group => {
       const links = Array.from(group.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]'));
       for (const link of links) {
         link.classList.add("sitenav__link", "sitenav__link-surface");
         link.addEventListener("pointerenter", () => group.classList.add("sitenav__group--pointed"));
         link.addEventListener("pointerleave", () => group.classList.remove("sitenav__group--pointed"));
       }
-      return { group, links, primary: group.classList.contains("sitenav__links") };
+      return { group, links, primary: group.classList.contains("sitenav_links") };
     });
     const variants = ["77974df0-b189-fee1-a56a-288237d327e5", "e72fbfa9-7432-caad-d8b8-f691e4b91418", "0f7d95bf-3fe7-c346-459f-79ff0521e166"];
     const layoutNodes = [ nav, ...nav.querySelectorAll("*") ];
-    nav.querySelectorAll(".sitenav__project-count").forEach(el => el.removeAttribute("data-nav-fade"));
+    nav.querySelectorAll(".sitenav_project_count").forEach(el => el.removeAttribute("data-nav-fade"));
     const fading = [ ...nav.querySelectorAll("[data-nav-fade]") ];
     const moving = [ ...nav.querySelectorAll("[data-nav-flip]") ];
-    const wordmark = nav.querySelector(".sitenav__wordmark");
+    const wordmark = nav.querySelector(".sitenav_wordmark");
     if (wordmark) {
       const label = wordmark.textContent;
       wordmark.setAttribute("aria-label", label);
@@ -119,7 +119,7 @@
       seekHeroText(routeY ?? scrollY);
     }
     function moveHeroArrow(hidden, immediate = false) {
-      const arrows = heroPage?.querySelectorAll("[data-home-arrow-exit],.hero .scroll-arrow__mask");
+      const arrows = heroPage?.querySelectorAll("[data-home-arrow-exit],.hero .scroll_arrow_mask");
       if (!arrows?.length || !window.gsap) return;
       if (innerWidth < SETTINGS.desktopWidth) { hidden = false; immediate = true; }
       arrowTween?.kill();
@@ -135,7 +135,7 @@
     let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, fade, locked = false;
     function applyLayout(preserveFading = false) {
       delete nav.dataset.innerPage;
-      const brand = nav.querySelector(".sitenav__brand");
+      const brand = nav.querySelector(".sitenav_brand");
       if (brand) brand.setAttribute("aria-label", "Jamie Keaveney — home");
       const id = desktop ? compact ? variants[1] : null : variants[2];
       layoutNodes.forEach((el => {
@@ -239,7 +239,7 @@
     };
     function nameButtons(scope) {
       scope.querySelectorAll("a.btn:not([aria-label])").forEach((button => {
-        const text = button.querySelector(".btn__text")?.textContent.trim();
+        const text = button.querySelector(".btn_text")?.textContent.trim();
         if (text) button.setAttribute("aria-label", text);
       }));
     }

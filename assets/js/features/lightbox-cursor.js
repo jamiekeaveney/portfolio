@@ -38,7 +38,7 @@
       const hit = pointer.known ? document.elementFromPoint(pointer.x, pointer.y) : null;
       const active = document.querySelector('[data-mini-showreel-status="active"][data-mini-showreel-player]');
       close = targetAt();
-      const trigger = !active && hit?.closest(".case-featured [data-mini-showreel-open]");
+      const trigger = !active && hit?.closest(".case_featured [data-mini-showreel-open]");
       const blocked = !desktop.matches || document.documentElement.hasAttribute("data-transitioning");
       label.textContent = active ? "Back" : "View full screen";
       label.dataset.cursorKind = active ? "back" : "project";

@@ -27,9 +27,9 @@ function thumb(index) {
     cloneNode: () => thumb(index),
     setAttribute: (name, value) => attributes.set(name, String(value)),
     removeAttribute: name => attributes.delete(name),
-    querySelector: selector => ({ ".project-preview__poster": poster,
-      "[data-next-media]": picture, ".work-card__image": { classList: classes() } })[selector],
-    querySelectorAll: selector => ({ ".work-card__meta": [meta],
+    querySelector: selector => ({ ".project_preview_poster": poster,
+      "[data-next-media]": picture, ".work_card_image": { classList: classes() } })[selector],
+    querySelectorAll: selector => ({ ".work_card_meta": [meta],
       "[id],[data-flip-id]": [identity], "video": [video] })[selector] || [] };
 }
 function track() {
@@ -39,7 +39,7 @@ function track() {
 }
 const originals = [0, 1, 2].map(index => {
   const original = thumb(index);
-  return { original, querySelector: selector => selector === ".work-card__thumb" ? original :
+  return { original, querySelector: selector => selector === ".work_card_thumb" ? original :
     { textContent: selector === "[data-work-name]" ? `Project ${index}` : `Client ${index}` } };
 });
 const context = { originals, listLeft: track(), listRight: track(), numLeft: track(), numRight: track(),
