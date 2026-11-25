@@ -31,7 +31,7 @@ Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, Spli
 
 Runtime/CSS embeds in Global, Home, Projects and About have been migrated. CMS-bound video markup stays in Webflow because it needs each item's field bindings. Those markup embeds are not duplicate script owners.
 
-Layout refinements are native Webflow styles and variants, not a second HTML site in this repository. The footer uses Footer Navigation, Copy Email Footer and Footer Back To Top variants of Super Button. Their sliding motion inherits the existing Super Button behaviour; interaction colours live in the shared CSS.
+Edit layout and Button variants in Webflow. Footer Navigation, Copy Email Footer and Footer Back To Top share the Button component. The native variants own the label and arrow motion and interaction colours. Global Styles supplies the hover, keyboard and status values that those styles consume.
 
 ## Release
 
@@ -75,7 +75,7 @@ Services uses live CMS collections. Webflow rejects converting that bound sectio
 
 ## Utility pages and scaling
 
-The 404 is a full-viewport bouncing typographic screen and paddle rally with minimal perimeter controls. The supplied Osmo scaling tokens remain opt-in to avoid changing the established design. At the R16 audit, Style Guide, Licenses and Changelog were no longer present in Webflow's page list.
+The 404 is a full-viewport bouncing typographic screen and paddle rally with minimal perimeter controls. The supplied Osmo scaling tokens remain opt-in to avoid changing the established design. The draft Style Guide in Webflow contains the current typography, colour, spacing and grid examples.
 
 ## Verification
 
