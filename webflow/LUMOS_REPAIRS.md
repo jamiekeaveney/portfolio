@@ -100,3 +100,11 @@ Projects Gallery/List controls use a two-and-a-half-rem-high native rail to shar
 Project Lightbox now contains a native decorative `showreel_play_icon` SVG, outside the hidden full player. The card's `data-trigger="hover focus"` drives its opacity through the Global Styles trigger variables. It appears on touch layouts without requiring hover and hides while the full player is active. Project hero media retains its existing cursor label. The runtime no longer clones a play SVG or carries the old `jk_play_icon` selectors.
 
 The cursor controller schedules hit tests only after pointer, scroll, viewport, route or player-state changes. Gallery and List skip identical resting paints. Marquees pause outside the viewport and in hidden tabs. Reduced-motion changes disable Lenis and stop marquee movement. Hidden desktop service comparisons are inert; compact layouts restore their interaction. Paragraph SplitText keeps real text exposed without a prohibited paragraph ARIA label. Loader choreography and the forty-vh homepage text exit are preserved.
+
+### 25 November 2026 · Final semantics and contrast
+
+Source revision `d60998215ed8a2314e2640c377265c3924c64f43` reserves SplitText replacement accessible names for headings. Generic phrases and paragraphs retain their real text; paragraph/span content and loader messages use span wrappers. Odometer values expose one visually hidden static value while the animated digit layers remain decorative.
+
+Inactive Projects controls consume the shared muted-text token. Light-theme muted text uses the existing neutral-600 token. The native palette and the existing CSS hover, focus and selected states remain the owners of appearance.
+
+`npm run check`, `npm run build` and `git diff --check` pass for this cleanup. Staging publication and final Chrome DOM/contrast verification are complete; both asset pins and CDN content match this revision. The [performance audit](../validation/portfolio-polish-2026-11-25.md) contains the PageSpeed report links and explicitly associates those measurements with the earlier `1ac983f` runtime. The unsuccessful narrow-viewport override is recorded separately from the valid mobile lab runs. No custom production domains were published in this pass.
