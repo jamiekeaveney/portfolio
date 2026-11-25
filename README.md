@@ -19,9 +19,9 @@ npm run build
 - `assets/js/core/`: shared bootstrap, Barba/Lenis page transitions, scroll-media motion settings and Dublin clock.
 - `assets/js/features/`: one file per interaction, including navigation, projects, media transitions, lightbox, copy email, reveals, services and footer parallax.
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
-- `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
+- `assets/css/base/site.css`: shared layout and component styles. The native Webflow Global Styles component owns Lumos trigger and state rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both must pin the same immutable runtime revision. The validated repair release is v1.3.1. Both snippets pin runtime commit `4939ec255b83d01558a7b371e679aa5b8959a100`, which was verified on Webflow staging on 23 November 2026. See `VALIDATION.md` and `webflow/LUMOS_REPAIRS.md`.
+- `webflow/` contains the site-wide head and footer snippets. Each pins the same immutable Git commit for the generated CSS and JavaScript. Update the complete pair together in Webflow. `webflow/LUMOS_REPAIRS.md` records the native system and staging checks.
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -67,7 +67,7 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 ## Native Webflow structure
 
-Navigation, Footer Wrapper, CTA Section, Footer, Clients Section, Project Lightbox, Projects Browser and Super Button remain shared components. Footer layout uses explicit three/two/one-column breakpoint styles. The obsolete Close button instance and variant are removed. Other button variants have live usages and are retained.
+Navigation, Footer, Footer Content, Footer Wordmark, Section Clients, Project Lightbox, Projects Browser and Button are shared Webflow components. Footer Content contains the directory, which has three columns on desktop, two on tablet and one on small phones. Footer Wordmark and the legal links have their own responsive layout. The Button variants expose their text, icon, destination and interaction settings in Designer.
 
 Native grid templates use explicit `minmax(0, 1fr)` tracks at their intended breakpoint counts. Webflow Designer was expanding `repeat(var(--_column-count---value), 1fr)` with extra helper tracks, producing 23 columns in a 12-column layout. Explicit tracks avoid that serialization issue while preserving Lumos variable collections, modes, margins, gutters, typography, spacing and theme tokens. Keep this geometry in native styles so it remains editable and visible in Designer.
 
