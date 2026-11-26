@@ -8,13 +8,30 @@ const hasLenis = void 0 !== window.Lenis, hasScrollTrigger = void 0 !== window.S
 
 let reducedMotion = rmMQ.matches;
 
-rmMQ.addEventListener?.("change", (t => reducedMotion = t.matches)), rmMQ.addListener?.((t => reducedMotion = t.matches));
+const syncMotionPreference = event => {
+  if (event.matches === reducedMotion) return;
+  const retainedY = window.scrollY;
+  const page = document.querySelector('[data-barba="container"]');
+  reducedMotion = event.matches;
+  initLenis();
+  if (hasScrollTrigger) ScrollTrigger.refresh();
+  // Rebuilding a pinned layout can briefly reset native scroll as GSAP refreshes.
+  // Respect any scroll position the browser or a page transition has since set.
+  if (retainedY > 0) requestAnimationFrame(() => {
+    if (window.scrollY !== 0 || !page?.isConnected || document.documentElement.hasAttribute('data-transitioning')) return;
+    window.scrollTo(0, retainedY);
+    lenis?.scrollTo(retainedY, {immediate:true, force:true});
+    if (hasScrollTrigger) ScrollTrigger.update();
+  });
+};
+if (rmMQ.addEventListener) rmMQ.addEventListener("change", syncMotionPreference);
+else rmMQ.addListener(syncMotionPreference);
 
 const navEntry = performance.getEntriesByType("navigation")[0], navType = navEntry ? navEntry.type : "navigate";
 
-let lenis = null, nextPage = document, onceFunctionsInitialized = !1, flipState = null, flippedThumbnail = null, skipPageTransition = !1, isPopstate = !1, staggerDefault = .05, durationDefault = .6;
+let lenis = null, isPopstate = false;
 
-const has = t => !!nextPage.querySelector(t), SCROLL_STORAGE_KEY = "osmo_scroll_positions";
+const SCROLL_STORAGE_KEY = "osmo_scroll_positions";
 
 function getScrollPositions() {
   try {
@@ -59,7 +76,7 @@ const desktopScroll = matchMedia("(min-width:62rem) and (hover:hover) and (point
 const lenisTick = time => lenis?.raf(time * 1e3);
 
 function initLenis() {
-  if (!desktopScroll.matches) {
+  if (!desktopScroll.matches || reducedMotion) {
     if (lenis) {
       lenis.destroy();
       lenis = null;
@@ -76,6 +93,9 @@ function initLenis() {
     if (hasScrollTrigger) lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add(lenisTick);
     gsap.ticker.lagSmoothing(0);
+    if (document.documentElement.hasAttribute("data-transitioning") ||
+        document.documentElement.hasAttribute("data-loader-active") ||
+        document.querySelector('[data-mini-showreel-player][data-mini-showreel-status="active"]')) lenis.stop();
   }
 }
 
@@ -140,34 +160,34 @@ function applyThemeFrom(t) {
   o && (o.dataset.themeNav = n.nav);
 }
 
-function syncNavState(t) {
-  const e = document.createElement("template");
-  e.innerHTML = t.next.html.trim();
-  const n = e.content.querySelectorAll("[data-barba-update]");
-  document.querySelectorAll("nav [data-barba-update]").forEach(((t, e) => {
-    const r = n[e];
-    if (!r) return;
-    const o = r.getAttribute("aria-current");
-    null !== o ? t.setAttribute("aria-current", o) : t.removeAttribute("aria-current"), 
-    t.setAttribute("class", r.getAttribute("class") || "");
-  }));
+function syncNavState(path = location.pathname) {
+  for (const link of document.querySelectorAll('a[data-barba-update][href^="/"]')) {
+    const target = new URL(link.href, location.href);
+    const current = target.origin === location.origin && target.pathname === path;
+    link.classList.toggle("w--current", current);
+    if (current) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
 }
 
 function initOnceFunctions() {
-  initLenis(), initScrollSaver(), onceFunctionsInitialized || (onceFunctionsInitialized = !0);
+  initLenis();
+  initScrollSaver();
 }
 
 function initBeforeEnterFunctions(t) {
-  t?.querySelectorAll('.project-hero__meta-cell,.case-details__row').forEach(row=>{
-    const value=row.querySelector('.case__meta-value');
+  t?.querySelectorAll('.case_details_row').forEach(row=>{
+    const value=row.querySelector('.case_meta_value');
     row.style.display=value && !value.textContent.trim() ? 'none' : '';
   });
-  nextPage = t || document, has(".work") && initWorkSlider(nextPage);
+  const page = t || document;
+  if (page.querySelector(".projects_wrap")) initWorkSlider(page);
 }
 
 function initAfterEnterFunctions(t) {
-  nextPage = t || document, initServices(nextPage), lenis && lenis.resize(),
-  hasScrollTrigger && ScrollTrigger.refresh();
+  initServices(t || document);
+  lenis?.resize();
+  if (hasScrollTrigger) ScrollTrigger.refresh();
 }
 
 // Shared with the page stack: one parallax curve, duration and grey wash.
@@ -175,6 +195,7 @@ const PARALLAX_MOTION={duration:1.2,ease:'parallax',overlay:.8};
 function finishLoaderCover(){
   document.documentElement.removeAttribute('data-loader-pending');
   document.documentElement.removeAttribute('data-loader-active');
+  document.documentElement.classList.remove('page_shell_intro');
   document.dispatchEvent(new CustomEvent('jk:loader-finished'));
 }
 function runPageOnceAnimation(page) {
@@ -185,22 +206,21 @@ function runPageOnceAnimation(page) {
     if(wrap)gsap.set(wrap,{display:'none'});
     finishLoaderCover();return gsap.timeline().call(()=>resetPage(page,y));
   }
-  const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader-panel');
-  if(!bar||!content||!bg){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
+  const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader_panel');
+  const base=content?.querySelector(':scope > .nav_wordmark');
+  const fill=content?.querySelector(':scope > [data-load-logo]');
+  if(!bar||!content||!bg||!base||!fill){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
   CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
-  content.replaceChildren();bar.replaceChildren();
-  const logoWrap=document.createElement('div');logoWrap.className='loader-logo';
-  const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='sitenav__wordmark loader-logo__wordmark loader-logo__base';fill.className='sitenav__wordmark loader-logo__wordmark loader-logo__fill';fill.dataset.loadLogo='';
-  base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
-  const texts=document.createElement('div');texts.className='loader-messages';
-  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader-messages__message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
-  content.append(logoWrap,texts);
-  const overlay=document.createElement('div');overlay.className='loader-reveal-overlay';
+  // Animate the Designer's two wordmarks in place, preserving their first paint.
+  fill.classList.add('nav_wordmark');
+  fill.setAttribute('aria-hidden','true');
+  const texts=document.createElement('div');texts.className='loader_messages';
+  ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader_messages_message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
+  content.append(texts);
+  const overlay=document.createElement('div');overlay.className='loader_reveal_overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
-  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines,chars',mask:'lines'}));
-  for (const text of texts.children) text.firstElementChild?.classList.add('loader-messages__mask');
-  const charStagger=s=>Math.min(.025,.16/Math.max(1,s.chars.length-1));
+  const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines',aria:'none'}));
+  for (const text of texts.children) text.firstElementChild?.classList.add('loader_messages_mask');
   let finished=false;
   const preparePage=async()=>{
     await (document.fonts?.ready||Promise.resolve());
@@ -227,10 +247,12 @@ function runPageOnceAnimation(page) {
     lenis?.resize();lenis?.start();finishLoaderCover();
   };
   gsap.set(wrap,{display:'block',autoAlpha:1,background:'transparent'});
-  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'#000'});
-  gsap.set(bar,{scaleX:0,height:8,y:0,yPercent:0,clipPath:'none',backgroundColor:'#fff',transformOrigin:'left bottom'});
+  gsap.set(bg,{yPercent:0,autoAlpha:1,clipPath:'inset(0% 0% 0% 0%)',backgroundColor:'var(--loader-surface)'});
+  const sweepHeight=8;
+  gsap.set(bar,{scaleX:0,scaleY:1,height:sweepHeight,y:0,yPercent:0,clipPath:'none',backgroundColor:getComputedStyle(wrap).getPropertyValue('--loader-ink').trim() || '#fff',transformOrigin:'left bottom'});
   gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
-  gsap.set(splits.flatMap(s=>s.chars),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});
+  gsap.set(texts.children[1],{visibility:'hidden'});
   document.documentElement.setAttribute('data-loader-active','');
   document.documentElement.removeAttribute('data-loader-pending');
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
@@ -240,18 +262,25 @@ function runPageOnceAnimation(page) {
   const tl=gsap.timeline({defaults:{ease:'loader',duration:3},onComplete:finish,onInterrupt:finish})
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
-    .to(bar,{height:border,backgroundColor:getComputedStyle(page).getPropertyValue('--_theme---color--border').trim()||'#333',duration:.45,ease:'expo.out'},'collapse')
-    .add('revealPage','collapse+=.45')
-    .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
+    .to(bar,{backgroundColor:getComputedStyle(bar).getPropertyValue('--_theme---color--border').trim(),duration:.8,ease:'none'},'collapse')
+    .add('revealPage')
+    .to(content,{y:'-25vh',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bar,{y:()=>-innerHeight+border,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(bar,{scaleY:0,opacity:0,duration:.4,ease:'sine.inOut'},'revealPage+='+PARALLAX_MOTION.duration)
     .fromTo(page,{y:'12vh'},{y:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease,immediateRender:false},'revealPage')
     .fromTo(overlay,{opacity:PARALLAX_MOTION.overlay},{opacity:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage');
   tl.call(()=>document.dispatchEvent(new Event('jk:nav-reveal')),null,'revealPage+=.85');
-  tl.to(splits[0].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},0)
-    .to(splits[0].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[0])},1.45)
-    .to(splits[1].chars,{yPercent:0,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},1.6)
-    .to(splits[1].chars,{yPercent:-125,duration:1.25,ease:'power3.out',stagger:charStagger(splits[1])},'revealPage-=.2');
+  tl.to(splits[0].lines,{yPercent:0,duration:1,ease:'expo.out'},0)
+    .to(splits[0].lines,{yPercent:-125,duration:1,ease:'expo.out'},1.45)
+    .add('changeGreeting',1.75)
+    .set(texts.children[0],{visibility:'hidden'},'changeGreeting')
+    .set(texts.children[1],{visibility:'visible'},'changeGreeting')
+    .to(splits[1].lines,{yPercent:0,duration:1,ease:'expo.out'},'changeGreeting')
+    .to(splits[1].lines,{yPercent:-125,duration:1,ease:'expo.out'},'revealPage-=.2')
+    .set(texts.children[1],{visibility:'hidden'},'revealPage+=.15');
+  if (matchMedia('(max-width: 47.9375rem)').matches) tl.timeScale(1.7);
   return tl;
 }
 
@@ -259,7 +288,7 @@ function runPageLeaveAnimation(t) {
   const e = document.querySelector("[data-transition-wrap]"), n = e.querySelector("[data-transition-dark]"), r = gsap.timeline({
     onComplete: () => t.remove()
   });
-  return closeMenuIfOpen(), reducedMotion || skipPageTransition ? r.set(t, {
+  return closeMenuIfOpen(), reducedMotion ? r.set(t, {
     autoAlpha: 0
   }) : (r.set(e, {
     zIndex: 2
@@ -285,7 +314,7 @@ function runPageEnterAnimation(t, restoreY) {
   if (restoreY != null || isPopstate) gsap.set(t, {
     top: -n
   });
-  return reducedMotion || skipPageTransition ? (skipPageTransition = !1, e.set(t, {
+  return reducedMotion ? (e.set(t, {
     autoAlpha: 1
   }), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady")))) : (e.set(t, {
     zIndex: 3
@@ -299,54 +328,25 @@ function runPageEnterAnimation(t, restoreY) {
   }, 0), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady"))));
 }
 
-function runWorkLeaveAnimation(t, e, n) {
-  const r = n.closest("[data-case-link]").querySelector("[data-case-thumbnail]"), o = e.querySelector(".section");
-  flipState = Flip.getState(r), flippedThumbnail = r;
-  const a = gsap.timeline({
-    onComplete: () => t.remove()
-  });
-  return closeMenuIfOpen(), reducedMotion ? a.set(t, {
-    autoAlpha: 0
-  }) : (a.to(t, {
-    autoAlpha: 0,
-    duration: .6
-  }, 0), a.set(o, {
-    backgroundColor: "transparent"
-  }, 0), a);
-}
-
-function runCaseEnterAnimation(t) {
-  const e = t.querySelector(".section"), n = e.querySelectorAll("[data-case-reveal]"), r = isPopstate ? getSavedScroll(window.location.href) : 0, o = gsap.timeline();
-  if (reducedMotion) return flippedThumbnail = null, flipState = null, o.set(t, {
-    autoAlpha: 1
-  }), o.add("pageReady"), o.call(resetPage, [ t, r ], "pageReady"), new Promise((t => o.call(t, null, "pageReady")));
-  const a = t.querySelector("[data-case-thumbnail]");
-  return a.parentNode.insertBefore(flippedThumbnail, a), a.remove(), o.add(Flip.from(flipState, {
-    duration: .8
-  }), 0), o.add("startEnter", .6), o.fromTo(e, {
-    backgroundColor: "transparent"
-  }, {
-    backgroundColor: "#FFF",
-    duration: .5
-  }, "startEnter"), o.fromTo(n, {
-    autoAlpha: 0,
-    yPercent: 25
-  }, {
-    autoAlpha: 1,
-    yPercent: 0,
-    stagger: .1
-  }, "startEnter+=0.1"), o.add("pageReady"), o.call(resetPage, [ t, r ], "pageReady"), 
-  o.call((() => {
-    flippedThumbnail = null, flipState = null;
-  })), new Promise((t => o.call(t, null, "pageReady")));
+// Barba updates the document title. Carry the other page-specific head fields
+// through client navigation without executing scripts from the incoming page.
+function syncPageMetadata(html) {
+  if (!html) return;
+  const head = html.match(/<head(?:\s[^>]*)?>([\s\S]*?)<\/head>/i);
+  if (!head) return;
+  const incoming = new DOMParser().parseFromString(head[0], 'text/html').head;
+  const fields = 'meta[name="description" i],meta[name="robots" i],meta[property^="og:" i],meta[name^="twitter:" i],meta[property^="twitter:" i],link[rel~="canonical" i],script[type="application/ld+json" i]';
+  document.head.querySelectorAll(fields).forEach(node => node.remove());
+  incoming.querySelectorAll(fields).forEach(node => document.head.append(document.importNode(node, true)));
 }
 
 barba.hooks.before((t => {
   closeMenuIfOpen();
   isPopstate = ["popstate", "back", "forward"].includes(t.trigger), saveScrollPosition(t.current.url.href, getCurrentScroll()), 
   freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
-  document.documentElement.classList.add("page-shell--transitioning");
+  document.documentElement.classList.add("page_shell_transitioning");
 })), barba.hooks.beforeEnter((t => {
+  syncPageMetadata(t.next.html);
   gsap.set(t.next.container, {
     position: "fixed",
     top: 0,
@@ -355,15 +355,17 @@ barba.hooks.before((t => {
   }), initBeforeEnterFunctions(t.next.container), applyThemeFrom(t.next.container);
 })), barba.hooks.afterLeave((() => {
   hasScrollTrigger && ScrollTrigger.getAll().forEach((t => t.kill()));
-})), barba.hooks.enter((t => syncNavState(t))), barba.hooks.afterEnter((t => {
+})), barba.hooks.enter(t => syncNavState(t.next.url.path)), barba.hooks.afterEnter((t => {
   initAfterEnterFunctions(t.next.container), lenis && (lenis.resize(), lenis.start()), 
   hasScrollTrigger && ScrollTrigger.refresh();
 })), barba.hooks.after((() => {
-  isPopstate = !1, skipPageTransition = !1, document.documentElement.removeAttribute("data-transitioning");
-  document.documentElement.classList.remove("page-shell--transitioning");
+  isPopstate = false;
+  document.documentElement.removeAttribute("data-transitioning");
+  document.documentElement.classList.remove("page_shell_transitioning");
 }));
 
 function startPortfolio() {
+  syncNavState();
   // Utility pages such as the Style Guide are outside the transition shell.
   if (!document.querySelector('[data-barba="wrapper"]')) {finishLoaderCover();return;}
   barba.init({
@@ -371,18 +373,6 @@ function startPortfolio() {
     timeout: 7e3,
     preventRunning: !0,
     transitions: [ {
-      name: "work-to-case",
-      sync: !0,
-      from: {
-        namespace: [ "work" ]
-      },
-      to: {
-        namespace: [ "case" ]
-      },
-      custom: ({trigger: t}) => desktopScroll.matches && !reducedMotion && t instanceof Element && t.hasAttribute("data-case-link"),
-      leave: async t => runWorkLeaveAnimation(t.current.container, t.next.container, t.trigger),
-      enter: async t => runCaseEnterAnimation(t.next.container)
-    }, {
       name: "default",
       sync: !0,
       once: async t => (initOnceFunctions(), runPageOnceAnimation(t.next.container)),

@@ -8,9 +8,9 @@ fi
 
 git pull --ff-only origin main
 next_version=$(node -p "const [major,minor,patch]=require('./package.json').version.split('.').map(Number); [major,minor,patch+1].join('.')")
-release_tag="release-$next_version"
+release_tag="v$next_version"
 
-for alias in "$release_tag" "v$next_version" "$next_version"; do
+for alias in "$release_tag" "release-$next_version" "$next_version"; do
   if git show-ref --verify --quiet "refs/tags/$alias" ||
      git show-ref --verify --quiet "refs/heads/$alias"; then
     echo "Version $next_version already has a local reference named $alias." >&2
@@ -19,7 +19,7 @@ for alias in "$release_tag" "v$next_version" "$next_version"; do
 done
 remote_refs=$(git ls-remote --refs origin \
   "refs/heads/$release_tag" "refs/tags/$release_tag" \
-  "refs/heads/v$next_version" "refs/tags/v$next_version" \
+  "refs/heads/release-$next_version" "refs/tags/release-$next_version" \
   "refs/heads/$next_version" "refs/tags/$next_version")
 if [[ -n "$remote_refs" ]]; then
   echo "Version $next_version already exists on origin." >&2
@@ -35,7 +35,7 @@ const fs = require('node:fs');
 const tag = process.argv[2];
 for (const file of ['webflow/head.html', 'webflow/footer.html']) {
   const source = fs.readFileSync(file, 'utf8');
-  const portfolioRef = /(https:\/\/cdn\.jsdelivr\.net\/gh\/jamiekeaveney\/portfolio@)(?:release-|v)?\d+\.\d+\.\d+(?=\/dist\/)/g;
+  const portfolioRef = /(https:\/\/cdn\.jsdelivr\.net\/gh\/jamiekeaveney\/portfolio@)(?:(?:release-|v)?\d+\.\d+\.\d+|[0-9a-f]{40})(?=\/dist\/)/g;
   if ([...source.matchAll(portfolioRef)].length !== 1) {
     throw new Error(file + ' must pin one portfolio asset.');
   }

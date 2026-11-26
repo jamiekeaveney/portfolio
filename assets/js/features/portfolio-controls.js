@@ -14,20 +14,20 @@
         frames: ['6aff6c697439e11a3cca1966_composite-before.webp','6aff6c6a3e55f9821757b7e8_composite-after.webp']
       }
     };
-    page.querySelectorAll('.services__video-embed video[data-src]').forEach(video => {
-      const service = /\/services\/(colour|composite)\.mp4(?:[?#]|$)/.exec(video.dataset.src)?.[1];
+    page.querySelectorAll('.services_thumbnail video, .services_video_wrap video').forEach(video => {
+      const service = /\/services\/(colour|composite)\.mp4(?:[?#]|$)/.exec(portfolioPreviewSource(video))?.[1];
       if (!service) return;
       const comparison = comparisons[service];
       const box = video.parentElement;
       if (box.hasAttribute('data-splitter')) return;
       box.setAttribute('data-splitter','wrap');
-      box.classList.add('media-comparison');
+      box.classList.add('media_comparison');
       box.setAttribute('data-splitter-initial','50');
       const control = document.createElement('div');
-      control.className = 'media-comparison__surface';
+      control.className = 'media_comparison_surface';
       for (const [index,url] of comparison.frames.entries()) {
         const image = new Image();
-        image.className = index ? 'media-comparison__frame media-comparison__frame--after' : 'media-comparison__frame';
+        image.className = index ? 'media_comparison_frame media_comparison_frame_after' : 'media_comparison_frame';
         image.loading = 'lazy';
         image.alt = '';
         image.src = assetBase + url;
@@ -35,7 +35,7 @@
         control.append(image);
       }
       const input = document.createElement('input');
-      input.className = 'media-comparison__control';
+      input.className = 'media_comparison_control';
       input.type = 'range';
       input.value = '50';
       input.setAttribute('aria-label',comparison.label);
@@ -47,10 +47,10 @@
       input.addEventListener('input',move);
       control.append(input);
       const handle = document.createElement('span');
-      handle.className = 'media-comparison__divider';
+      handle.className = 'media_comparison_divider';
       handle.setAttribute('aria-hidden','true');
-      handle.innerHTML='<span class="media-comparison__grip"><svg class="media-comparison__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
-      const host=video.closest('.services__video-wrap')||box;
+      handle.innerHTML='<span class="media_comparison_grip"><svg class="media_comparison_icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+      const host=video.closest('.services_video_wrap')||box;
       host.querySelector(':scope > [data-mobile-play]')?.remove();
       let pointer=null;
       function drag(e){const r=input.getBoundingClientRect();input.value=String(Math.round(100*Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))));move();}
@@ -58,8 +58,8 @@
       input.addEventListener('pointermove',e=>{if(pointer===e.pointerId)drag(e);});
       input.addEventListener('lostpointercapture',()=>{pointer=null;});
       const grip = handle.firstElementChild;
-      input.addEventListener('focus', () => grip.classList.toggle('media-comparison__grip--focused', input.matches(':focus-visible')));
-      input.addEventListener('blur', () => grip.classList.remove('media-comparison__grip--focused'));
+      input.addEventListener('focus', () => grip.classList.toggle('media_comparison_grip_focused', input.matches(':focus-visible')));
+      input.addEventListener('blur', () => grip.classList.remove('media_comparison_grip_focused'));
       control.append(handle);
       box.append(control);
       video.pause();
@@ -71,11 +71,11 @@
   function list(page,signal) {
     const center=page.querySelector('[data-work-list-center]');
     if(!center)return;
-    const root=center.closest('.work');
+    const root=center.closest('.projects_wrap');
     let zoom,previousMedia;
     function settleThumbnail(){
       zoom?.kill();
-      previousMedia?.querySelector('.work-list__thumbnail')?.style.removeProperty('--list-thumb-scale');
+      previousMedia?.querySelector('.work_list_thumbnail')?.style.removeProperty('--list-thumb-scale');
       zoom=null;
     }
     function updateThumbnail(){
@@ -87,7 +87,7 @@
       settleThumbnail();
       previousMedia=active;
       if(!changedDuringUse)return;
-      const image=active.querySelector('.work-list__thumbnail');
+      const image=active.querySelector('.work_list_thumbnail');
       if(image)zoom=gsap.fromTo(image,{'--list-thumb-scale':1.12},{'--list-thumb-scale':1,duration:1,ease:'expo.out',
         onComplete:()=>image.style.removeProperty('--list-thumb-scale')});
     }
@@ -99,7 +99,7 @@
       if(root.dataset.workMode!=='list' || !matchMedia("(min-width:62rem)").matches)return;
       const box=center.getBoundingClientRect();
       if(!box.height)return;
-      root.querySelectorAll('.work-list__label--active').forEach(label=>{
+      root.querySelectorAll('.work_list_label_active').forEach(label=>{
         const row=label.closest('[data-work-row-left],[data-work-row-right]'),track=row?.parentElement;
         if(!track)return;
         const r=row.getBoundingClientRect(),dy=box.top+box.height/2-r.top-r.height/2;
@@ -113,27 +113,29 @@
     signal.addEventListener('abort',()=>{observer.disconnect();thumbnailObserver.disconnect();reset();});
   }
   function editorial(page,signal) {
-    const heading=page.querySelector('.folio-statement-heading[data-highlight-text]');
-    if(!heading || !motion.matches) return;
+    const heading=page.querySelector('[data-statement-endings][data-highlight-text]');
+    if(!heading) return;
+    const endings=heading.dataset.statementEndings.split('|').map(value=>value.trim()).filter(Boolean);
+    if(!endings.length) return;
     let cleanup;
     function connect() {
-      const words=[...heading.querySelectorAll('div,span')];
-      const first=words.find(el=>el.textContent==='frame' && el.childElementCount===5);
-      const last=first?.nextElementSibling;
-      if(!last || !/^count[.!]?$/.test(last.textContent.trim()) || first.closest('.rotating-statement')) return;
+      if(!motion.matches){cleanup?.();cleanup=null;return;}
+      const words=heading.querySelectorAll('.statement_word');
+      const first=words[words.length-2],last=words[words.length-1];
+      if(!first?.childElementCount || !last?.childElementCount || first.closest('.rotating_statement')) return;
       cleanup?.();
       const range=document.createRange();
       range.setStartBefore(first);range.setEndAfter(last);
       const shell=document.createElement('span'),measure=document.createElement('span'),layer=document.createElement('span');
       measure.append(range.extractContents());range.insertNode(shell);
-      shell.className='rotating-statement';measure.className='rotating-statement__measure';layer.className='rotating-statement__layer';
+      shell.className='rotating_statement';measure.className='rotating_statement_measure';layer.className='rotating_statement_layer';
       layer.setAttribute('aria-hidden','true');shell.append(measure,layer);
       const original=[...first.children,...last.children];
-      const phrases=['frame count.','shot count.','cut count.'];
+      const phrases=[first.textContent.trim()+' '+last.textContent.trim(),...endings];
       let index=0, sequence,visible;
       function phrase(text){
         const el=document.createElement('span');
-        el.className='rotating-statement__phrase';
+        el.className='rotating_statement_phrase';
         const chars=[...text].map(ch=>{
           if(ch===' ')return document.createTextNode(' ');
           const char=document.createElement('span');char.textContent=ch;return char;
@@ -155,7 +157,7 @@
       observer.observe(measure,{subtree:true,attributes:true,attributeFilter:['style']});
       const timer=setInterval(()=>{
         const rect=heading.getBoundingClientRect();
-        if(document.hidden || rect.bottom<=0 || rect.top>=innerHeight || original.some(el=>Number(el.style.opacity||1)<.999))return;
+        if(document.hidden || !heading.isConnected || rect.bottom<=0 || rect.top>=innerHeight)return;
         const outgoing=visible;index=(index+1)%phrases.length;visible=phrase(phrases[index]);sync();
         sequence=gsap.timeline().to(outgoing,{yPercent:-112,duration:1,ease:'expo.out'},0)
           .fromTo(visible,{yPercent:112},{yPercent:0,duration:1,ease:'expo.out'},0).call(()=>outgoing.remove());
@@ -165,16 +167,16 @@
     connect();
     const splits=new MutationObserver(connect);
     splits.observe(heading,{childList:true,subtree:true});
+    motion.addEventListener('change',connect,{signal});
     signal.addEventListener('abort',()=>{splits.disconnect();cleanup?.();});
   }
-  const gridControl='.footer-legal a[href="#layout-grid"]';
+  const gridControl='.footer_legal a[href="#layout-grid"]';
   function prepareGridControls(page){
     if(!page)return;
-    for (const link of page.querySelectorAll('.footer-legal a[href="#back-to-top"]')) link.classList.add('footer__back-to-top');
     const pressed=document.querySelector('[data-animated-grid]')?.dataset.open==='true';
     for(const button of page.querySelectorAll(gridControl)){
       button.setAttribute('role','button');
-      button.setAttribute('aria-label','Toggle layout grid (Shift G)');
+      button.removeAttribute('aria-label');
       button.setAttribute('aria-keyshortcuts','Shift+G');
       button.setAttribute('aria-pressed',String(pressed));
       button.setAttribute('data-barba-prevent','all');
@@ -204,12 +206,12 @@
     let grid,open=false;
     function toggle(){
       if(!grid){
-        grid=document.createElement('div');grid.className='layout-guide';grid.setAttribute('data-animated-grid','');grid.setAttribute('aria-hidden','true');
+        grid=document.createElement('div');grid.className='layout_guide';grid.setAttribute('data-animated-grid','');grid.setAttribute('aria-hidden','true');
         for(let index=0;index<12;index++){
           const column=document.createElement('div');
-          column.className='layout-guide__column';
-          if(index>=6)column.classList.add('layout-guide__column--desktop');
-          else if(index>=4)column.classList.add('layout-guide__column--tablet');
+          column.className='layout_guide_column';
+          if(index>=6)column.classList.add('layout_guide_column_desktop');
+          else if(index>=4)column.classList.add('layout_guide_column_tablet');
           column.setAttribute('data-animated-grid-col','');
           grid.append(column);
         }

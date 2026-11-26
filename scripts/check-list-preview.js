@@ -27,9 +27,9 @@ function thumb(index) {
     cloneNode: () => thumb(index),
     setAttribute: (name, value) => attributes.set(name, String(value)),
     removeAttribute: name => attributes.delete(name),
-    querySelector: selector => ({ ".project-preview__poster": poster,
-      "[data-next-media]": picture, ".work-card__image": { classList: classes() } })[selector],
-    querySelectorAll: selector => ({ ".work-card__meta": [meta],
+    querySelector: selector => ({ ".project_preview_poster": poster,
+      "[data-next-media]": picture, ".work_card_image": { classList: classes() } })[selector],
+    querySelectorAll: selector => ({ ".work_card_meta": [meta],
       "[id],[data-flip-id]": [identity], "video": [video] })[selector] || [] };
 }
 function track() {
@@ -39,7 +39,7 @@ function track() {
 }
 const originals = [0, 1, 2].map(index => {
   const original = thumb(index);
-  return { original, querySelector: selector => selector === ".work-card__thumb" ? original :
+  return { original, querySelector: selector => selector === ".work_card_thumb" ? original :
     { textContent: selector === "[data-work-name]" ? `Project ${index}` : `Client ${index}` } };
 });
 const context = { originals, listLeft: track(), listRight: track(), numLeft: track(), numRight: track(),
@@ -77,15 +77,15 @@ for (const index of [0, 1, 2, 0]) {
 // Exercise the actual shared playback policy across hover/focus, active item,
 // hidden tab, reduced motion, offscreen, and detached-page cases.
 const inline = fs.readFileSync("assets/js/features/inline-video.js", "utf8");
-const policy = { document: { hidden: false, activeElement: null }, reduced: false,
-  isVisible: () => true };
+const policy = { document: { hidden: false, activeElement: null }, motion: { matches: false },
+  dataPreference: { matches: false }, connection: { saveData: false } };
 vm.createContext(policy);
 vm.runInContext(inline.slice(inline.indexOf("    function wanted("), inline.indexOf("    function sync(")), policy);
 let active = true, hover = false, focused = false;
 const media = { dataset: { workState: "active" } };
 const video = { isConnected: true, dataset: { videoMode: context.listMedia[0].video.mode },
-  closest: selector => selector === "[data-work-list-media]" ? media : active ? media : null };
-const entry = { host: { matches: () => hover, contains: () => focused } };
+  closest: selector => selector.includes("data-video-ignore") ? null : selector === "[data-work-list-media]" ? media : active ? media : null };
+const entry = { visible: true, host: { matches: () => hover, contains: () => focused } };
 assert.equal(policy.wanted(video, entry), false, "Selected item alone cannot autoplay");
 hover = true;
 assert.equal(policy.wanted(video, entry), true, "Hovered active item plays");
@@ -96,10 +96,36 @@ assert.equal(policy.wanted(video, entry), false, "Old active item pauses while s
 active = true; media.dataset.workState = "active";
 policy.document.hidden = true;
 assert.equal(policy.wanted(video, entry), false, "Hidden tabs pause playback");
-policy.document.hidden = false; policy.reduced = true;
+policy.document.hidden = false; policy.motion.matches = true;
 assert.equal(policy.wanted(video, entry), false, "Reduced motion preserves the poster");
-policy.reduced = false; policy.isVisible = () => false;
+policy.motion.matches = false; policy.dataPreference.matches = true;
+assert.equal(policy.wanted(video, entry), false, "Reduced-data users keep the poster");
+policy.dataPreference.matches = false; policy.connection.saveData = true;
+assert.equal(policy.wanted(video, entry), false, "Connection data saver preserves the poster");
+policy.connection.saveData = false; entry.visible = false;
 assert.equal(policy.wanted(video, entry), false, "Hidden gallery/list modes pause playback");
-policy.isVisible = () => true; video.isConnected = false;
+entry.visible = true; video.isConnected = false;
 assert.equal(policy.wanted(video, entry), false, "Detached pages pause playback");
+
+// Run the real frame scheduler to ensure sleeping at rest never prevents a
+// resize, changed row geometry or resumed input from painting.
+let listPaints = 0, thumbnailPaints = 0;
+const idle = {root:{isConnected:true},frozen:false,fading:false,
+  L:{cur:120,tgt:120,off0:100,span:60,align:40,snap:{t:null},paintedValue:null,paintedAlign:null},
+  teardown(){throw new Error("A connected list must not be torn down");},
+  applyList(value){listPaints++;idle.L.paintedValue=value;idle.L.paintedAlign=idle.L.align;},
+  showListThumbnail(){thumbnailPaints++;}};
+vm.createContext(idle);
+vm.runInContext(source.slice(source.indexOf("    function listTick("),source.indexOf("    function applyList(")),idle);
+idle.listTick();
+assert.equal(listPaints,1);
+for(let frame=0;frame<120;frame++)idle.listTick();
+assert.equal(listPaints,1,"A settled list avoids repeated track writes and active-row queries");
+assert.equal(thumbnailPaints,1,"Settled thumbnails do not receive repeated visibility writes");
+idle.L.align+=10;idle.listTick();
+assert.equal(listPaints,2,"A geometry change repaints without requiring scroll input");
+idle.L.paintedValue=idle.L.paintedAlign=null;idle.listTick();
+assert.equal(listPaints,3,"A rebuilt list invalidates its old paint");
+idle.L.tgt+=10;idle.listTick();
+assert.equal(listPaints,4,"New input resumes list painting immediately");
 console.log("List media cloning, active hover/focus playback and pause lifecycle passed.");

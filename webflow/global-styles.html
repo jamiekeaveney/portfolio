@@ -1,0 +1,140 @@
+<style>
+/* An opting-in wrapper measures available space. Its grid may use a native Column Count mode. */
+[data-grid-container] { container-type: inline-size; }
+:where(.u-container, .u-query-container, [data-grid-container]) > *, [data-large-columns] {
+  --_responsive---large: 1; --_responsive---medium: 0;
+  --_responsive---small: 0; --_responsive---xsmall: 0;
+}
+[data-large-columns] {
+  display: grid;
+  grid-template-columns: repeat(var(--_column-count---value, 1), minmax(0, 1fr));
+  flex-direction: column;
+}
+[data-large-columns="1"] { display: flex; --_column-count---value: 1; }
+[data-large-columns="2"] { display: grid; --_column-count---value: 2; }
+[data-large-columns="3"] { display: grid; --_column-count---value: 3; }
+[data-large-columns="4"] { display: grid; --_column-count---value: 4; }
+[data-large-columns="5"] { display: grid; --_column-count---value: 5; }
+[data-large-columns="6"] { display: grid; --_column-count---value: 6; }
+[data-large-columns="7"] { display: grid; --_column-count---value: 7; }
+[data-large-columns="8"] { display: grid; --_column-count---value: 8; }
+[data-large-columns="9"] { display: grid; --_column-count---value: 9; }
+[data-large-columns="10"] { display: grid; --_column-count---value: 10; }
+[data-large-columns="11"] { display: grid; --_column-count---value: 11; }
+[data-large-columns="12"] { display: grid; --_column-count---value: 12; }
+@container (width < 53em) {
+  :where(.u-container, .u-query-container, [data-grid-container]) > *, [data-large-columns] {
+    --_responsive---large: 0; --_responsive---medium: 1; --_responsive---small: 0; --_responsive---xsmall: 0;
+  }
+  [data-medium-columns="1"] { display: flex; --_column-count---value: 1; }
+  [data-medium-columns="2"] { display: grid; --_column-count---value: 2; }
+  [data-medium-columns="3"] { display: grid; --_column-count---value: 3; }
+  [data-medium-columns="4"] { display: grid; --_column-count---value: 4; }
+  [data-medium-columns="5"] { display: grid; --_column-count---value: 5; }
+  [data-medium-columns="6"] { display: grid; --_column-count---value: 6; }
+  [data-medium-columns="7"] { display: grid; --_column-count---value: 7; }
+  [data-medium-columns="8"] { display: grid; --_column-count---value: 8; }
+  [data-medium-columns="9"] { display: grid; --_column-count---value: 9; }
+  [data-medium-columns="10"] { display: grid; --_column-count---value: 10; }
+  [data-medium-columns="11"] { display: grid; --_column-count---value: 11; }
+  [data-medium-columns="12"] { display: grid; --_column-count---value: 12; }
+}
+@container (width < 42em) {
+  :where(.u-container, .u-query-container, [data-grid-container]) > *, [data-large-columns] {
+    --_responsive---large: 0; --_responsive---medium: 0; --_responsive---small: 1; --_responsive---xsmall: 0;
+  }
+  [data-small-columns="1"] { display: flex; --_column-count---value: 1; }
+  [data-small-columns="2"] { display: grid; --_column-count---value: 2; }
+  [data-small-columns="3"] { display: grid; --_column-count---value: 3; }
+  [data-small-columns="4"] { display: grid; --_column-count---value: 4; }
+  [data-small-columns="5"] { display: grid; --_column-count---value: 5; }
+  [data-small-columns="6"] { display: grid; --_column-count---value: 6; }
+  [data-small-columns="7"] { display: grid; --_column-count---value: 7; }
+  [data-small-columns="8"] { display: grid; --_column-count---value: 8; }
+  [data-small-columns="9"] { display: grid; --_column-count---value: 9; }
+  [data-small-columns="10"] { display: grid; --_column-count---value: 10; }
+  [data-small-columns="11"] { display: grid; --_column-count---value: 11; }
+  [data-small-columns="12"] { display: grid; --_column-count---value: 12; }
+}
+@container (width < 27em) {
+  :where(.u-container, .u-query-container, [data-grid-container]) > *, [data-large-columns] {
+    --_responsive---large: 0; --_responsive---medium: 0; --_responsive---small: 0; --_responsive---xsmall: 1;
+  }
+  [data-xsmall-columns="1"] { display: flex; --_column-count---value: 1; }
+  [data-xsmall-columns="2"] { display: grid; --_column-count---value: 2; }
+  [data-xsmall-columns="3"] { display: grid; --_column-count---value: 3; }
+  [data-xsmall-columns="4"] { display: grid; --_column-count---value: 4; }
+  [data-xsmall-columns="5"] { display: grid; --_column-count---value: 5; }
+  [data-xsmall-columns="6"] { display: grid; --_column-count---value: 6; }
+  [data-xsmall-columns="7"] { display: grid; --_column-count---value: 7; }
+  [data-xsmall-columns="8"] { display: grid; --_column-count---value: 8; }
+  [data-xsmall-columns="9"] { display: grid; --_column-count---value: 9; }
+  [data-xsmall-columns="10"] { display: grid; --_column-count---value: 10; }
+  [data-xsmall-columns="11"] { display: grid; --_column-count---value: 11; }
+  [data-xsmall-columns="12"] { display: grid; --_column-count---value: 12; }
+}
+
+/* Interaction owners pass their state to the label, icon, and media inside them. */
+:where([data-state]:not([data-state=""])) {
+  --_state---true: 1;
+  --_state---false: 0;
+}
+.is-active,
+[data-state~="current"]:is(.w--current, [aria-current="page"], :has(.w--current, [aria-current="page"])),
+[data-state~="checked"]:is(:checked, [aria-checked="true"], :has(:checked, [aria-checked="true"])),
+[data-state~="menu"]:has(#nav-toggle:checked),
+[data-state~="expanded"]:is([aria-expanded="true"], :has([aria-expanded="true"])),
+[data-state~="pressed"]:is([aria-pressed="true"], :has([aria-pressed="true"])) {
+  --_state---true: 0;
+  --_state---false: 1;
+}
+:where([data-trigger]:not([data-trigger=""])) {
+  --_trigger---on: 1;
+  --_trigger---off: 0;
+  --trigger-self-active: 0;
+}
+[data-trigger~="focus"]:is(:focus-visible, :has(:focus-visible)),
+.wf-design-mode [data-trigger~="preview"] {
+  --_trigger---on: 0;
+  --_trigger---off: 1;
+  --trigger-self-active: 1;
+}
+[data-trigger~="focus-other"]:is(:focus-visible, :has(:focus-visible)) {
+  --trigger-self-active: 1;
+}
+[data-trigger~="group"]:has([data-trigger~="focus-other"]:is(:focus-visible, :has(:focus-visible)))
+[data-trigger~="focus-other"]:not(:focus-visible, :has(:focus-visible)) {
+  --_trigger---on: 0;
+  --_trigger---off: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-trigger~="hover"]:hover {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+    --trigger-self-active: 1;
+  }
+  [data-trigger~="hover-other"]:hover {
+    --trigger-self-active: 1;
+  }
+  [data-trigger~="group"]:has([data-trigger~="hover-other"]:hover)
+  [data-trigger~="hover-other"]:not(:hover, :focus-visible, :has(:focus-visible)) {
+    --_trigger---on: 0;
+    --_trigger---off: 1;
+  }
+}
+[data-trigger~="group"][data-state~="current"] {
+  --nav-group-current: var(--_state---false, 0);
+}
+.button_wrap {
+  --button-shift: var(--trigger-self-active, 0);
+  --copy-confirmed: 0;
+}
+.button_wrap[data-copy-status="copied"] { --copy-confirmed: 1; }
+.is-alternate-text:not(.w-condition-invisible) + .is-alternate-text { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .button_wrap, .button_text, .button_copy_confirmation, .button_icon_up, .button_icon_glyph,
+  .nav_menu_label, .nav_menu_close {
+    transition-duration: 0s !important;
+  }
+}
+</style>

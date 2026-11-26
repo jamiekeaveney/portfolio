@@ -5,18 +5,18 @@
     clean();
     const abort = new AbortController;
     clean = () => abort.abort();
-    const buttons = new Set([ ...document.querySelectorAll('.nav-root [data-wf--super-button--variant^="copy-email"]'), ...(page || document).querySelectorAll('[data-wf--super-button--variant^="copy-email"]') ]);
+    const buttons = new Set([ ...document.querySelectorAll('.nav_wrap [data-wf--button--variant^="copy-email"]'), ...(page || document).querySelectorAll('[data-wf--button--variant^="copy-email"]') ]);
     buttons.forEach((button => {
-      const email = button.querySelector(".btn__text")?.textContent.trim();
+      const email = button.querySelector(".button_text")?.textContent.trim();
       if (!email) return;
-      button.classList.remove("btn--copied");
+      button.removeAttribute("data-copy-status");
       button.setAttribute("role", "button");
       button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       button.setAttribute("data-barba-prevent", "");
       let pending = false, epoch = 0;
       const reset = () => {
         epoch++;
-        button.classList.remove("btn--copied");
+        button.removeAttribute("data-copy-status");
         button.setAttribute("aria-label", "Copy " + email + " to clipboard");
       };
       const copy = async event => {
@@ -28,11 +28,13 @@
         try {
           await navigator.clipboard.writeText(email);
           if (token === epoch && !abort.signal.aborted && button.isConnected) {
-            button.classList.add("btn--copied");
+            button.dataset.copyStatus = "copied";
             button.setAttribute("aria-label", "Email copied to clipboard");
           }
         } catch {
-          button.setAttribute("aria-label", "Copy unavailable. Email: " + email);
+          if (token === epoch && !abort.signal.aborted && button.isConnected) {
+            button.setAttribute("aria-label", "Copy unavailable. Email: " + email);
+          }
         } finally {
           pending = false;
         }

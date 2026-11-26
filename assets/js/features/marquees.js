@@ -19,23 +19,28 @@
       const scroll = root.querySelector("[data-marquee-scroll-target]");
       const content = scroll?.querySelector("[data-marquee-collection-target]");
       if (!content) return;
-      let loop, shift, trigger, resizeTimer, frozen = false, direction = root.dataset.marqueeDirection === "right" ? -1 : 1;
+      let loop, shift, trigger, resizeTimer, frozen = false, visible = false, direction = root.dataset.marqueeDirection === "right" ? -1 : 1;
       const baseDirection = direction;
       const entryStart = root.dataset.marqueeStart === "entry";
-      let started = !entryStart;
-      function start() {
-        if (!frozen) {
-          started = true;
-          loop?.paused(document.documentElement.hasAttribute('data-loader-active'));
-        }
+      let phase = entryStart ? 0 : .5;
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+      function syncPlayback() {
+        loop?.paused(frozen || !visible || reduced.matches || document.hidden || document.documentElement.hasAttribute('data-loader-active'));
       }
-      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // A pinned section above this marquee can change its scroll coordinates.
+      // Playback follows the visible element, including the footer's own parallax.
+      const visibility = new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        syncPlayback();
+      });
+      visibility.observe(root);
       function build() {
         if (frozen) return;
-        const phase = loop ? loop.progress() : entryStart ? 0 : .5;
+        if (loop) phase = loop.progress();
         loop?.kill();
         trigger?.kill(false);
         shift?.kill();
+        loop = trigger = shift = null;
         scroll.querySelectorAll("[data-marquee-clone]").forEach((el => el.remove()));
         gsap.set(content, {
           xPercent: 0
@@ -56,10 +61,11 @@
           scroll.appendChild(clone);
         }
         const collections = scroll.querySelectorAll("[data-marquee-collection-target]");
-        if (reduced) {
+        if (reduced.matches) {
           gsap.set(collections, {
             xPercent: 0
           });
+          gsap.set(scroll, { x: 0 });
           return;
         }
         const multiplier = innerWidth < SETTINGS.phoneBreakpoint ? SETTINGS.phoneDurationMultiplier : innerWidth < SETTINGS.tabletBreakpoint ? SETTINGS.tabletDurationMultiplier : 1;
@@ -76,7 +82,7 @@
             this.totalTime(this.totalTime() + this.duration() * 100);
           }
         });
-        loop.totalTime(duration * (100 + phase)).timeScale(direction).paused(!started||document.documentElement.hasAttribute('data-loader-active'));
+        loop.totalTime(duration * (100 + phase)).timeScale(direction);
 
         shift = gsap.fromTo(scroll, {
           x: () => baseDirection * amount * innerWidth / 100
@@ -92,10 +98,9 @@
           animation: shift,
           scrub: 0,
           invalidateOnRefresh: true,
-          onEnter: start,
-          onEnterBack: start,
-
+          refreshPriority: -1
         });
+        syncPlayback();
       }
       let lastWidth = innerWidth;
       const resize = () => {
@@ -107,6 +112,11 @@
           if (!frozen) ScrollTrigger.refresh();
         }), SETTINGS.resizeDebounceMs);
       };
+      const motionChanged = () => {
+        if (frozen) return;
+        build();
+        ScrollTrigger.refresh();
+      };
       let lastY=window.scrollY;
       const followScroll=()=>{
         const y=Math.max(0,Math.min(window.scrollY,ScrollTrigger.maxScroll(window)));
@@ -117,11 +127,16 @@
         root.dataset.marqueeStatus=direction===baseDirection?'normal':'inverted';
       };
       window.addEventListener('scroll',followScroll,{passive:true});
+      document.addEventListener('visibilitychange', syncPlayback);
+      reduced.addEventListener('change', motionChanged);
       const state = {
-        release(){if(!frozen&&started)loop?.paused(false);},
+        release: syncPlayback,
         freeze() {
           frozen = true;
+          visibility.disconnect();
           window.removeEventListener('scroll',followScroll);
+          document.removeEventListener('visibilitychange', syncPlayback);
+          reduced.removeEventListener('change', motionChanged);
           clearTimeout(resizeTimer);
           window.removeEventListener("resize", resize);
           loop?.pause();

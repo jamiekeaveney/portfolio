@@ -1,10 +1,15 @@
 <meta name="theme-color" content="#000000">
 <style>
-.page-shell {
-  --loader-surface: rgb(0 0 0);
+.page_shell {
+  --loader-surface: #000;
+  --loader-ink: #fff;
+}
+.page_shell[data-theme-status="light"] {
+  --loader-surface: #f7f7f5;
+  --loader-ink: #111;
 }
 
-.page-shell--covered::before {
+.page_shell[data-loader-pending]::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -12,140 +17,42 @@
   background: var(--loader-surface);
   pointer-events: none;
 }
-
-.page-shell--loading {
-  --loader-display: block;
-}
-
-.loader-wrap {
-  display: var(--loader-display, none);
-  visibility: visible;
-  opacity: 1;
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: var(--loader-surface);
-}
-
-.wf-design-mode,
-.wf-editor {
-  --loader-display: none;
-}
-
-.error-game--ready {
-  --error-poster-display: none;
-}
-
-.error-game__poster {
-  display: var(--error-poster-display, block);
-}
-
-@media (max-width: 61.9375rem) {
-  .page-shell::after {
-    content: "";
-    position: fixed;
-    inset: -100vh 0 auto;
-    height: 100vh;
-    z-index: 2147482999;
-    background: var(--loader-surface);
-    pointer-events: none;
-  }
-
-  .page-shell--light::after {
-    background: var(--_theme---color--background);
-  }
-
-  .page-shell--loading::after {
-    background: var(--loader-surface);
-  }
-}
 </style>
 <script>
 (() => {
   const root = document.documentElement;
-  if (root.classList.contains("wf-design-mode") || root.classList.contains("wf-editor")) return;
+  if (root.matches(".wf-design-mode, .wf-editor")) return;
 
   let light = false;
   try {
     light = localStorage.getItem("jk-theme") === "light";
   } catch {}
-
-  root.classList.add("page-shell", "page-shell--covered", "page-shell--loading");
-  root.classList.toggle("page-shell--light", light);
+  root.classList.add("page_shell");
+  root.classList.toggle("u-theme-light", light);
   root.dataset.themeStatus = light ? "light" : "dark";
+  if (light) document.querySelector('meta[name="theme-color"]').content = "#f7f7f5";
+  if (performance.getEntriesByType("navigation")[0]?.type !== "back_forward") {
+    root.classList.add("page_shell_intro");
+  }
   root.setAttribute("data-loader-pending", "");
   root.setAttribute("data-loader-active", "");
+  history.scrollRestoration = "manual";
 
   const viewport = document.querySelector('meta[name="viewport"]');
   if (viewport && !viewport.content.includes("viewport-fit=")) {
     viewport.content += ", viewport-fit=cover";
   }
-  history.scrollRestoration = "manual";
-
-  const chrome = document.querySelector('meta[name="theme-color"]');
-  if (chrome) chrome.classList.add("u-theme-light");
-  let palette;
-
-  function applyTheme() {
-    const body = document.body;
-    if (!body) return;
-    body.classList.add("page-body");
-    const light = root.dataset.themeStatus === "light";
-    root.classList.toggle("page-shell--light", light);
-    body.classList.toggle("u-theme-light", light);
-    body.classList.toggle("page-theme--light", light);
-    if (light && chrome && !palette) {
-      const colors = getComputedStyle(chrome);
-      palette = Array.from(colors)
-        .filter(name => name.startsWith("--_theme---color--"))
-        .map(name => [name, colors.getPropertyValue(name).trim()]);
-    }
-    if (palette) {
-      for (const [name, value] of palette) {
-        if (light) root.style.setProperty(name, value);
-        else root.style.removeProperty(name);
-      }
-    }
-    if (chrome) {
-      const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
-      if (background) chrome.content = background;
-    }
-  }
-
-  function syncLoader() {
-    root.classList.toggle("page-shell--covered", root.hasAttribute("data-loader-pending"));
-    root.classList.toggle("page-shell--loading", root.hasAttribute("data-loader-active"));
-  }
-
-  const attributes = {
-    attributes: true,
-    attributeFilter: ["data-theme-status", "data-loader-active", "data-loader-pending"]
-  };
-
-  const observer = new MutationObserver(records => {
-    if (records.some(record => record.type === "childList") && document.body) {
-      observer.observe(root, attributes);
-      applyTheme();
-    } else if (records.some(record => record.attributeName === "data-theme-status")) {
-      applyTheme();
-    }
-    syncLoader();
-  });
-  observer.observe(root, { ...attributes, childList: !document.body });
-  applyTheme();
-
-  function clearLoader() {
+  function releaseCover() {
     root.removeAttribute("data-loader-pending");
     root.removeAttribute("data-loader-active");
-    syncLoader();
+    root.classList.remove("page_shell_intro");
   }
   document.addEventListener("DOMContentLoaded", () => {
-    if (!document.querySelector(".loader-wrap")) clearLoader();
+    if (!document.querySelector(".loader_wrap")) releaseCover();
   }, { once: true });
   setTimeout(() => {
-    if (root.hasAttribute("data-loader-pending")) clearLoader();
+    if (root.hasAttribute("data-loader-pending")) releaseCover();
   }, 12000);
 })();
 </script>
-<link rel="stylesheet" href="https://unpkg.com/lenis@1.3.17/dist/lenis.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@4939ec255b83d01558a7b371e679aa5b8959a100/dist/css/site.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@v1.4.0/dist/css/site.css">

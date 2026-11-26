@@ -10,7 +10,7 @@ JKProject.register((s => {
   const {page: page, root: root, rail: rail, details: details, first: first, toggle: toggle, abort: abort} = s;
   if (!first || innerWidth < SETTINGS.minimumWidth || matchMedia("(pointer:coarse)").matches) return;
   let flip, busy = false, unlock = () => {};
-  const media = [ ...rail.querySelectorAll(".case-media") ];
+  const media = [ ...rail.querySelectorAll(".case_media_wrap") ];
   const label = () => s.expanded ? SETTINGS.expandedLabel : SETTINGS.compactLabel;
   s.cursorLabel = label;
   const change = () => {
@@ -60,7 +60,7 @@ JKProject.register((s => {
     const state = Flip.getState(media);
     s.expanded = expanding;
     root.setAttribute("data-list-grid-view", expanding ? "grid" : "list");
-    rail.classList.toggle("case-media-rail--expanded", expanding);
+    rail.classList.toggle("case_media_rail_expanded", expanding);
     keepScroll();
     details.style.pointerEvents = expanding ? "none" : "";
     if (toggle) {
@@ -87,7 +87,6 @@ JKProject.register((s => {
   };
   s.toggleMedia = change;
   media.forEach((el => {
-    el.setAttribute("data-cursor-marquee-text", "View full width");
     el.addEventListener("click", (e => {
       if (e.target.closest("a,button") || e.target.controls) return;
       change();
@@ -116,7 +115,7 @@ JKProject.register((s => {
   s.cleanups.push((() => {
     flip?.kill();
     unlock();
-    rail.classList.remove("case-media-rail--expanded");
+    rail.classList.remove("case_media_rail_expanded");
     details.style.pointerEvents = "";
     gsap.set(details, {
       clearProps: "opacity,visibility"

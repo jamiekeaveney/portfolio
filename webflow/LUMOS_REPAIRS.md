@@ -62,3 +62,57 @@ All ten native page trees and 35 shared component definitions were inspected. Th
 After future native track changes, reload Designer before measuring its generated rules. Validate the first/later heading patterns at desktop and compact widths. Do not add published-only geometry fixes that leave the native canvas inconsistent.
 
 The full native change record and before/after style data are retained privately with the project owner. The browser observations, automated checks and release runtime are recorded in [VALIDATION.md](../VALIDATION.md).
+
+## 25 November 2026 migration
+
+The native portfolio now uses underscore-separated component classes, shared `u-` utilities and scoped `is-` variants. Earlier sections record the class names used on 23 November. For example, the former `home-hero__layout`, `layout__grid` and `case-index__grid` are now `home_hero_layout`, `layout_grid` and `case_index_grid` respectively.
+
+Use the draft **Style Guide** in Designer to inspect the portfolio’s type, spacing, theme and grid examples. The shared **Global Styles** component supplies the responsive container rules on the populated page templates. Native `u-container` establishes inline-size containment. Five About sections and the Working Method section on Approach also use `u-query-container`, so their responsive flags follow the width available to each section. Fixed editorial compositions retain explicit native tracks because a variable repeat previously produced extra tracks on the Designer canvas. The About client grid uses `auto-fill` with a 7.5rem minimum. The related-project grid uses its container’s responsive column settings and stacks on compact screens.
+
+The runtime keeps the 24 November motion settings, including the homepage text exit over 40vh of scroll. When changing the generated CSS or JavaScript, run `npm run check` and `npm run build`, fetch the immutable CDN assets, then update both complete Webflow site-level custom-code blocks from `webflow/head.html` and `webflow/footer.html` in the same staging release. The head owns first-paint loader classes that the shared runtime also uses.
+
+Staging was checked on Home, Projects, Approach, About, all three published project pages, Password and 404 at 1366px and 390px. The release bundle is `ac8435cc9e1dfcc5325957efe6d9537a678bb7a8`.
+
+### 25 November 2026 · Native button and interaction cleanup
+
+The Webflow Button component and the shared Global Styles component now own the rollover system. Set `data-trigger` on the interactive element. Its text and icon inherit that state. Desktop navigation uses `hover-other focus-other` within a group to dim peers while only the hovered or keyboard-focused item moves its own label. Set `data-state` for native current links, pressed controls or checked inputs as appropriate. Gallery and List are native buttons with `aria-pressed`.
+
+Footer email has three native label positions for the address, Copy Email and confirmation. The clipboard handler sets `data-copy-status="copied"` after a successful write. Back to Top uses the native up-arrow SVG and its own rollover. The footer invitation is a heading. The runtime no longer assigns generated trigger classes or repairs link semantics at startup.
+
+Use `--site--margin`, `--site--gutter` and `--site--column-count` for their respective layout measurements, and the Typography collection for shared family, size and letter spacing. The Projects CMS gallery's native card and track are `work_card_wrap` and `work_gallery_track`. Native CMS video embeds use `media_video` on their video elements for fill and cover sizing. Their CMS media URLs and playback settings remain available to the player. The shared showreel preview uses `showreel_poster`. Earlier entries record historical selector names.
+
+This earlier staging build used `8f764cff329dcee6ac5d135ef41e4573fc94a095` in both Webflow custom-code snippets.
+
+### Production-readiness checks
+
+The Home work and services sections display their first class, `section_wrap`, in Navigator. Use the shared native `u-section` utility for their section spacing. The portfolio has 527 native styles, including the draft Style Guide, and 119 variables across 12 collections. All Webflow Classic events and action lists were removed.
+
+Project search and sharing previews use the Projects collection's Name, Project Summary and Thumbnail fields. Client names come from the Clients reference. The Services collection feeds the Home listings and has its detail template disabled.
+
+The gallery exposes its current desktop card to keyboard and screen-reader navigation. Full players load video on demand and share the playback adapter. About’s client previews request a responsive poster on hover. The current asset commit is recorded in `head.html` and `footer.html`.
+
+### 25 November 2026 · Control polish and idle work
+
+The FAQ icon's native `faq_icon` class centres its glyph in the existing two-rem square with an explicit centre transform origin. The existing attribute-driven CSS rotation and timing remain unchanged.
+
+Projects Gallery/List controls use a two-and-a-half-rem-high native rail to share the counter/arrow centreline. The `nav_link` class resets button appearance, background, borders and padding; its labels retain the existing CSS current, hover and focus states. Both rails use the same typography token. The view controls have a labelled `group` role and native pressed buttons.
+
+Project Lightbox now contains a native decorative `showreel_play_icon` SVG, outside the hidden full player. The card's `data-trigger="hover focus"` drives its opacity through the Global Styles trigger variables. It appears on touch layouts without requiring hover and hides while the full player is active. Project hero media retains its existing cursor label. The runtime no longer clones a play SVG or carries the old `jk_play_icon` selectors.
+
+The cursor controller schedules hit tests only after pointer, scroll, viewport, route or player-state changes. Gallery and List skip identical resting paints. Marquees pause outside the viewport and in hidden tabs. Reduced-motion changes disable Lenis and stop marquee movement. Hidden desktop service comparisons are inert; compact layouts restore their interaction. Paragraph SplitText keeps real text exposed without a prohibited paragraph ARIA label. Loader choreography and the forty-vh homepage text exit are preserved.
+
+### 25 November 2026 · Final semantics and contrast
+
+Source revision `d60998215ed8a2314e2640c377265c3924c64f43` reserves SplitText replacement accessible names for headings. Generic phrases and paragraphs retain their real text. This revision also forced span wrappers for paragraph/span content and loader messages; that wrapper choice caused the regression documented below and is superseded by default-wrapper restoration. Odometer values expose one visually hidden static value while the animated digit layers remain decorative.
+
+Inactive Projects controls consume the shared muted-text token. Light-theme muted text uses the existing neutral-600 token. The native palette and the existing CSS hover, focus and selected states remain the owners of appearance.
+
+`npm run check`, `npm run build` and `git diff --check` passed for this cleanup. Staging publication, asset pins and selected Chrome DOM/contrast states were verified, but those checks missed the visible loader/hero regression. The [performance audit](../validation/portfolio-polish-2026-11-25.md) contains the PageSpeed report links and explicitly associates those measurements with the earlier `1ac983f` runtime. The unsuccessful narrow-viewport override is recorded separately from the valid mobile lab runs. No custom production domains were published in this pass.
+
+### Correction · Restore SplitText's default wrappers
+
+The user subsequently reported stacked loader messages, excessive homepage introduction line gaps and displacement/clipping of the large Jamie heading. The forced `tag: 'span'` option prevented SplitText's expected block display handling for line and mask wrappers. Inline masks and non-transformable inline line children broke the established geometry. The prior DOM/source checks did not establish visual correctness and missed this regression.
+
+Repair revision `7132182d87408ded835d20bd632103243dbde743` removes the forced tag options from the text-reveal and loader setup, restoring SplitText's default wrappers. It retains the required `aria: 'none'` behaviour, heading semantics, existing loader timing and the forty-vh homepage text exit. The earlier span-wrapper statement is superseded by this restoration.
+
+The repair is published to staging and **visually verified**. Loader messages appear sequentially within block masks. The three-line hero paragraph measures 171.07px rather than the broken 399.16px, and the full Jamie heading fits in the viewport. Scroll exit and return restore the expected geometry. Both pinned asset files match the local build. All recorded PageSpeed measurements remain attached to `1ac983f`; no new score or performance gain is claimed for the repair.

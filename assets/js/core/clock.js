@@ -14,13 +14,13 @@
       if (p.type === "minute") m = p.value;
       if (p.type === "dayPeriod") period = p.value.toUpperCase();
     }));
-    document.querySelectorAll(".sitenav__clock-h").forEach((function(el) {
+    document.querySelectorAll(".nav_clock_hour").forEach((function(el) {
       el.textContent = h;
     }));
-    document.querySelectorAll(".sitenav__clock-m").forEach((function(el) {
+    document.querySelectorAll(".nav_clock_minute").forEach((function(el) {
       el.textContent = m;
     }));
-    document.querySelectorAll(".sitenav__clock-period").forEach((function(el) {
+    document.querySelectorAll(".nav_clock_period").forEach((function(el) {
       el.textContent = " " + period;
     }));
   }

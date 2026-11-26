@@ -16,12 +16,12 @@
     function mount() {
       release?.(); release = null;
       if (!active || !media.matches || frozen || !page.isConnected || !window.ScrollTrigger) return;
-      const slot = origin.closest('.editorial-media-slot');
+      const slot = origin.closest('.editorial_media_slot');
       if (!slot) return;
       const flight = document.createElement('div'), face = image.cloneNode(true);
-      flight.className = 'portrait-flight';
+      flight.className = 'portrait_flight';
       flight.setAttribute('aria-hidden','true');
-      face.className = 'portrait-flight__image';
+      face.className = 'portrait_flight_image';
       face.removeAttribute('style'); face.alt = '';
       flight.append(face); page.append(flight);
       const coordinateRoot = flight.offsetParent || page;
@@ -35,7 +35,9 @@
         const rem = value => (value / remSize) + 'rem';
         const inFlight = p>0 && p<1;
         const from = origin.getBoundingClientRect();
-        slot.style.width = p>0 ? rem((from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * (1-Math.min(1,p/.65))) : '';
+        const remaining = Math.max(0, 1 - p / .65);
+        const slotScale = remaining * motion.edgeRamp(remaining, .15);
+        slot.style.width = p>0 ? rem((from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * slotScale) : '';
         image.style.visibility = p>0 ? 'hidden' : '';
         destination.style.visibility = p<1 ? 'hidden' : '';
         flight.hidden = !inFlight;
@@ -50,16 +52,13 @@
           borderRadius:rem(mix(parseFloat(style.borderTopLeftRadius)||0,parseFloat(getComputedStyle(target).borderTopLeftRadius)||0,p))
         });
       }
-      tween=gsap.to(progress,{value:1,ease:'sine.inOut',onUpdate:paint,scrollTrigger:{
+      tween=gsap.to(progress,{value:1,ease:motion.flightEase,onUpdate:paint,scrollTrigger:{
         trigger:slot,start:'center center',endTrigger:target,end:'center center',scrub:motion.settings.scrub,
         onRefresh:paint,invalidateOnRefresh:true
       }});
       function momentum(_,dt) {
-        if (frozen || progress.value<=0 || progress.value>=1) {tilt=0;return;}
-        tilt=motion.approach(tilt,tween.scrollTrigger.getVelocity(),dt);
-        const edge=Math.min(1,progress.value/.16,(1-progress.value)/.16);
-        const angle=tilt*edge*edge*(3-2*edge);
-        face.style.transform=motion.transform(angle);
+        if (frozen) return;
+        tilt=motion.updateTilt(face,tilt,tween.scrollTrigger.getVelocity(),dt,progress.value);
       }
       const size = new ResizeObserver(paint);
       size.observe(origin);size.observe(target);
@@ -71,7 +70,7 @@
     }
     function attach() { if(!release)mount(); }
     const observer = new MutationObserver(()=>{
-      if (!origin.closest('.editorial-media-slot')) return;
+      if (!origin.closest('.editorial_media_slot')) return;
       observer.disconnect();attach();
     });
     observer.observe(origin.parentElement,{childList:true,subtree:true});

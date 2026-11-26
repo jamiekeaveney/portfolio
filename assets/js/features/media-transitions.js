@@ -40,7 +40,7 @@
   const desktopMedia = matchMedia('(min-width:62rem) and (hover:hover) and (pointer:fine)');
   let pair = null, active = null, pending = null;
   function videoFrame(card) {
-    const v = card?.querySelector(".mini-showreel__cover-image") || card?.querySelector("video"), poster = card?.querySelector(".project-preview__poster");
+    const v = card?.querySelector(".showreel_poster") || card?.querySelector("video"), poster = card?.querySelector(".project_preview_poster");
     if (!v || v.readyState < 2 || poster && parseFloat(getComputedStyle(poster).opacity) > .1) return null;
     const canvas = document.createElement("canvas");
     canvas.width = v.videoWidth;
@@ -60,7 +60,7 @@
     return getComputedStyle(document.documentElement).getPropertyValue("--radius--radius").trim() || ".75rem";
   }
   function capture(page, clicked) {
-    const footer = clicked || pair?.mediaSource || JKProject.states.get(page)?.handoffCard || page.querySelector("[data-case-suggested]") || page.querySelector('.case-next__item[style*="block"] .case-next__link');
+    const footer = clicked || pair?.mediaSource || JKProject.states.get(page)?.handoffCard || page.querySelector("[data-case-suggested]");
     frozen.set(page, {
       footer: footer ? {
         frame: videoFrame(footer),
@@ -92,10 +92,10 @@
   }
   function floatNavigation(current, next) {
     const layer = document.createElement("div");
-    layer.className = "case-navigation-transition";
+    layer.className = "case_navigation_transition";
     document.body.append(layer);
     const records = [ current, next ].map((page => {
-      const el = page.querySelector(".case-nav");
+      const el = page.querySelector(".case_nav_wrap");
       if (!el) return null;
       const marker = document.createComment("case navigation");
       el.before(marker);
@@ -130,10 +130,10 @@
     window.JKReveals?.showLoad(next);
     const nav = floatNavigation(current, next);
     const stage = document.createElement("div"), out = document.createElement("div"), incoming = document.createElement("div");
-    stage.className = "case-transition";
+    stage.className = "case_transition";
     stage.dataset.transitionKind = "side";
-    out.className = "case-transition__page";
-    incoming.className = "case-transition__page";
+    out.className = "case_transition_page";
+    incoming.className = "case_transition_page";
     stage.append(out, incoming);
     document.body.append(stage);
     window.JKReveals?.showLoad(next);
@@ -269,7 +269,7 @@
     JKProject.transitioning = true;
     window.JKReveals?.prepare(next, true);
     const parent = next.parentNode, stage = document.createElement("div"), cover = source.clone;
-    stage.className = "case-transition";
+    stage.className = "case_transition";
     stage.dataset.transitionKind = "media";
     gsap.set(stage, {
       position: "fixed",
@@ -310,11 +310,8 @@
       xPercent: 0,
       yPercent: 0
     });
-    const touchOrigin = matchMedia("(max-width:61.9375rem)").matches ? current.querySelector("[data-case-origin]") : null;
-    const originLayers = touchOrigin ? [...touchOrigin.children].filter(layer => !layer.matches(".work-card__meta")) : [];
-    for (const layer of originLayers) layer.classList.add("case-transition__concealed");
-    const image = oldMedia.querySelector(".project-preview__poster") || oldMedia.querySelector("img");
-    if (image) image.classList.add("case-transition__poster");
+    const image = oldMedia.querySelector(".project_preview_poster") || oldMedia.querySelector("img");
+    if (image) image.classList.add("case_transition_poster");
     if (image) gsap.set(image, {
       scale: 1,
       opacity: 1
@@ -344,9 +341,8 @@
       width: "100%",
       autoAlpha: 0
     });
-    const media = next.querySelector(".case-featured .case-media"), hero = next.querySelector(".project-hero");
+    const media = next.querySelector(".case_featured .case_media_wrap"), hero = next.querySelector(".project_hero_wrap");
     if (!media) {
-      for (const layer of originLayers) layer.classList.remove("case-transition__concealed");
       stage.remove();
       gsap.set(next, {
         clearProps: "all"
@@ -354,16 +350,14 @@
       JKProject.transitioning = false;
       return swap(current, next, null);
     }
-    const landing = next.querySelector("[data-case-landing]");
-    landing?.classList.add("case-transition__concealed");
-    gsap.set(next.querySelector(".case-featured"), {
+    gsap.set(next.querySelector(".case_featured"), {
       clearProps: "transform,clipPath,opacity,visibility"
     });
     // Lower media is revealed only after the destination returns to document flow.
     // This avoids exposing its fixed-container layout during the mobile handoff.
-    const deferredSections = !matchMedia("(min-width:62rem)").matches ? [...next.querySelectorAll('.case-section')] : [];
+    const deferredSections = !matchMedia("(min-width:62rem)").matches ? [...next.querySelectorAll('.case_section')] : [];
     if (deferredSections.length) gsap.set(deferredSections, {autoAlpha:0});
-    const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".mini-showreel__cover-image") || media.querySelector("video");
+    const to = media.getBoundingClientRect(), actualVideo = media.querySelector(".showreel_poster") || media.querySelector("video");
     let video, videoParent, videoSibling, videoStyle, videoClass, ready = false;
     if (actualVideo) {
       video = actualVideo;
@@ -372,10 +366,11 @@
       videoStyle = video.getAttribute("style");
       videoClass = video.className;
       oldMedia.prepend(video);
-      video.className = "case-index__video";
+      video.className = "case_index_video";
       video.muted = true;
       video.playsInline = true;
-      if (!video.getAttribute("src")) video.src = video.dataset.src || "";
+      const previewSource = portfolioPreviewSource(video);
+      if (!video.getAttribute("src") && previewSource) video.src = previewSource;
       video.preload = "auto";
       const matchTime = () => {
         try {
@@ -429,7 +424,7 @@
           if (videoStyle === null) video.removeAttribute("style"); else video.setAttribute("style", videoStyle);
           if (!ready && image) {
             const poster = image.cloneNode(true);
-            poster.className = "case-index__image";
+            poster.className = "case_index_image";
             media.append(poster);
             const removePoster = () => gsap.to(poster, {
               opacity: 0,
@@ -443,7 +438,6 @@
         }
         parent.append(next);
         current.remove();
-        landing?.classList.remove("case-transition__concealed");
         stage.remove();
         gsap.set([ media, hero ], {
           clearProps: "opacity,visibility"
@@ -464,7 +458,7 @@
         resolve();
       }
     });
-    const work = current.querySelector(".work");
+    const work = current.querySelector(".projects_wrap");
     if (work) {
       const chosen = source.rect.left + source.rect.width / 2;
       const others = [ ...work.querySelectorAll("[data-work-item]") ].filter((el => {
@@ -473,7 +467,7 @@
       }));
       const offset = peerOffsets(others, chosen);
       const selected = [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !others.includes(el)));
-      tl.to([ ...selected, ...work.querySelectorAll(".work-list__center,.work-list__col") ], {
+      tl.to([ ...selected, ...work.querySelectorAll(".work_list_center,.work_list_col") ], {
         autoAlpha: 0,
         duration: SETTINGS.expandDuration,
         ease: SETTINGS.expandEase
@@ -484,7 +478,7 @@
         duration: SETTINGS.expandDuration,
         ease: SETTINGS.expandEase
       }, 0);
-      tl.to(work.querySelectorAll(".work__controls,.work-nav"), {
+      tl.to(work.querySelectorAll(".work_controls,.work_nav_wrap"), {
         autoAlpha: 0,
         duration: .3
       }, 0);
@@ -516,7 +510,7 @@
   }
   function returnToWork(current, next, href) {
     if (active) return active;
-    const work = next.querySelector(".work"), savedOrigin = origin();
+    const work = next.querySelector(".projects_wrap"), savedOrigin = origin();
     let returnY = work ? innerWidth >= 992 || savedOrigin?.path !== "/projects" ? 0 : savedOrigin?.y || 0 : savedOrigin?.y || 0;
     gsap.set(next, {
       position: "fixed",
@@ -536,17 +530,17 @@
       if (window.JKWork?.root !== work && typeof initWorkSlider === "function") initWorkSlider(next);
       target = window.JKWork?.restore(href);
       if (!target) target = work.querySelector("[data-work-item]:not([data-work-clone]) a[href]");
-    } else if (next.querySelector(".clients__credits")) {
+    } else if (next.querySelector(".clients_credits")) {
       contextPreview = window.JKHoverAdditions?.prepareReturn(next, savedOrigin?.href || href, savedOrigin?.previewPose);
       target = contextPreview?.media;
     } else if (!work && !contextPreview) {
       const path = savedOrigin?.href || href;
-      target = [ ...next.querySelectorAll(".home-slide a[href]") ].find((a => new URL(a.href).pathname === path))?.closest(".home-slide");
+      target = [ ...next.querySelectorAll(".home_card_wrap a[href]") ].find((a => new URL(a.href).pathname === path))?.closest(".home_card_wrap");
     }
-    const card = target?.closest(".work-card,.home-slide") || target?.closest("[data-work-list-center]") || target;
+    const card = target?.closest(".work_card_wrap,.home_card_wrap") || target?.closest("[data-work-list-center]") || target;
     const touch = matchMedia("(max-width:61.9375rem),(hover:none)").matches;
-    const targetMedia = (touch ? target?.matches(".work-card__thumb,.home-slide-image") ? target : target?.querySelector(".work-card__thumb,.home-slide-image") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work-card__poster,.slide-thumbnail") || target;
-    const sources = [ ...current.querySelectorAll(".case-media,.case-index__media") ].filter((el => {
+    const targetMedia = (touch ? target?.matches(".work_card_thumb,.home_card_visual") ? target : target?.querySelector(".work_card_thumb,.home_card_visual") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work_card_poster,.home_card_thumbnail") || target;
+    const sources = [ ...current.querySelectorAll(".case_media_wrap,.case_index_media") ].filter((el => {
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
     }));
@@ -554,7 +548,7 @@
       const r = el.getBoundingClientRect(), visible = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) * Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0));
       return visible / (1 + Math.abs((Math.max(0, r.top) + Math.min(innerHeight, r.bottom)) / 2 - innerHeight / 2) / innerHeight);
     };
-    const source = sources.sort(((a, b) => score(b) - score(a)))[0] || current.querySelector(".case-media");
+    const source = sources.sort(((a, b) => score(b) - score(a)))[0] || current.querySelector(".case_media_wrap");
     if (!targetMedia || !source) {
       // If media is unavailable, retain the normal page transition; never a case-to-case slide to an index.
       gsap.set(next, {
@@ -569,7 +563,7 @@
         if (!touch && !contextPreview) card?.setAttribute("data-jk-return-hover", "");
     card?.setAttribute("data-jk-return-measure", "");
     if (work && touch) {
-      const r = targetMedia.getBoundingClientRect(), navBottom = document.querySelector(".sitenav__bar")?.getBoundingClientRect().bottom || 80;
+      const r = targetMedia.getBoundingClientRect(), navBottom = document.querySelector(".nav_bar")?.getBoundingClientRect().bottom || 80;
       if (r.top < navBottom || r.bottom > innerHeight) {
         returnY = Math.max(0, returnY + r.top - navBottom - 24);
         gsap.set(next, {
@@ -579,12 +573,12 @@
     }
     const from = source.getBoundingClientRect(), to = targetMedia.getBoundingClientRect();
     card?.removeAttribute("data-jk-return-measure");
-    const v = source.querySelector(".mini-showreel__cover-image") || source.querySelector("video");
+    const v = source.querySelector(".showreel_poster") || source.querySelector("video");
     const frame = videoFrame(source) || source.querySelector("img")?.cloneNode(true) || document.createElement("img");
     if (frame.tagName === "IMG" && !frame.getAttribute("src") && v?.poster) frame.src = v.poster;
     const stage = document.createElement("div");
-    stage.className = "case-return-media";
-    frame.classList.add("case-return-media__frame");
+    stage.className = "case_return_media";
+    frame.classList.add("case_return_media_frame");
     stage.append(frame);
     document.body.append(stage);
     gsap.set(stage, {
@@ -605,11 +599,11 @@
       height: "100%",
       objectFit: "cover"
     });
-    const destinationImage = targetMedia.querySelector(".project-preview__poster,img");
+    const destinationImage = targetMedia.querySelector(".project_preview_poster,img");
     const dissolve = destinationImage?.cloneNode(true);
     if (dissolve) {
       dissolve.removeAttribute("id");
-      dissolve.className = "case-return-media__frame";
+      dissolve.className = "case_return_media_frame";
       stage.append(dissolve);
       gsap.set(dissolve, {
         position: "absolute",
@@ -620,8 +614,8 @@
         opacity: 0
       });
     }
-    const others = work && work.dataset.workMode !== "list" ? [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !el.contains(targetMedia) && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth)) : !work ? [ ...next.querySelectorAll(".home-slide") ].filter((el => el !== card)) : [];
-    const controls = work ? work.querySelectorAll(".work__controls,.work-nav,.work-list__col,.work-list__num-clip") : next.querySelectorAll(".home-slide-info");
+    const others = work && work.dataset.workMode !== "list" ? [ ...work.querySelectorAll("[data-work-item]") ].filter((el => !el.contains(targetMedia) && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth)) : !work ? [ ...next.querySelectorAll(".home_card_wrap") ].filter((el => el !== card)) : [];
+    const controls = work ? work.querySelectorAll(".work_controls,.work_nav_wrap,.work_list_col,.work_list_num_clip") : next.querySelectorAll(".home_card_caption");
     const offset = peerOffsets(others, to.left + to.width / 2);
     if (others.length) gsap.set(others, {
       ...work ? {
@@ -735,18 +729,18 @@
       };
       const link = e.target.closest("a");
       if (!link) return;
-      const preview = link.matches(".clients__credit") ? link.closest(".clients__credits")?.querySelector('.client-preview__visual[data-preview-position="current"]') : null;
+      const preview = link.matches(".clients_credit") ? link.closest(".clients_credits")?.querySelector('.client_preview_visual[data-preview-position="current"]') : null;
       if (preview) preview.setAttribute("data-next-media", "");
-      const source = (preview ? preview.parentElement : null) || link.closest(".home-slide") || (link.matches(".work-list__center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work-card__link") ? link : null);
+      const source = (preview ? preview.parentElement : null) || link.closest(".home_card_wrap") || (link.matches(".work_list_center") ? link.querySelector('[data-work-state="active"]') : link.matches(".work_card_link") ? link : null);
       const page = link.closest('[data-barba="container"]');
-      if (link.closest(".case-nav") && page && !document.documentElement.hasAttribute("data-transitioning")) gsap.to(page.querySelector(".case-nav"), {
+      if (link.closest(".case_nav_wrap") && page && !document.documentElement.hasAttribute("data-transitioning")) gsap.to(page.querySelector(".case_nav_wrap"), {
         autoAlpha: 0,
         duration: .3,
         ease: "power1.out",
         overwrite: true
       });
       if (source && page && source.querySelector("[data-next-media]")) {
-        const home = !!source.closest(".home-slide");
+        const home = !!source.closest(".home_card_wrap");
         // Compact/touch layouts use the ordinary page transition. Preserve the
         // breadcrumb origin without making media clones or a FLIP handoff.
         if (desktopMedia.matches && !JKProject.reduced()) {
@@ -779,7 +773,7 @@
     barba.hooks.before((d => {
       const trigger = d.trigger instanceof Element ? d.trigger.closest("a") : null;
       const captured = pending?.page === d.current.container && pending.href === d.next.url.href ? pending : null;
-      const mediaSource = captured?.source || (trigger?.matches(".home-slide-image,.slide-info,.work-card__link,.work-list__media") ? trigger.closest(".home-slide") || trigger : null);
+      const mediaSource = captured?.source || (trigger?.matches(".home_card_visual,.home_card_caption,.work_card_link,.work_list_media") ? trigger.closest(".home_card_wrap") || trigger : null);
       const nextCase = d.next.container?.matches("[data-case-page]");
       if (nextCase && !d.current.container?.matches("[data-case-page]")) {
         try {
@@ -802,7 +796,7 @@
         mediaSource: mediaSource,
         continuation: !!mediaSource || trigger?.dataset.caseTransition === "continuation"
       } : null;
-      if (d.current.container?.matches("[data-case-page]") && (d.next.container?.querySelector(".work") || d.next.url.path === "/" && origin()?.path === "/")) pair = {
+      if (d.current.container?.matches("[data-case-page]") && (d.next.container?.querySelector(".projects_wrap") || d.next.url.path === "/" && origin()?.path === "/")) pair = {
         next: d.next.container,
         returning: true,
         href: d.current.url.path

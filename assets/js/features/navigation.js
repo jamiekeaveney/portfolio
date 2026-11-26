@@ -3,6 +3,7 @@
     compactAfter: 64,
     expandBefore: 24,
     desktopWidth: 992,
+    heroExitViewportFraction: .4,
     layoutDuration: .95,
     layoutEase: "case-two-step",
     layoutCurve: "0.625, 0.05, 0, 1",
@@ -11,9 +12,23 @@
     defaultTheme: "dark"
   };
   const root = document.documentElement;
-  delete root.dataset.fontPreview;
+  const browserTheme = document.querySelector('meta[name="theme-color"]');
+  let browserThemePending = false;
   function applyTheme(theme) {
+    const light = theme === "light";
     root.dataset.themeStatus = theme;
+    root.classList.toggle("u-theme-light", light);
+    document.body.classList.add("theme_body");
+    document.body.classList.toggle("u-theme-light", light);
+    document.body.classList.toggle("page_theme_light", light);
+    if (browserTheme && !browserThemePending) {
+      browserThemePending = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        browserThemePending = false;
+        const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
+        if (background) browserTheme.content = background;
+      }));
+    }
     document.querySelectorAll("[data-theme-toggle]").forEach((b => {
       b.setAttribute("aria-checked", String(theme === "light"));
       b.setAttribute("aria-label", theme === "light" ? "Switch to dark theme" : "Switch to light theme");
@@ -27,134 +42,139 @@
   applyTheme(theme === "light" ? "light" : "dark");
   function init() {
     if (window.JKHeader) return;
-    const nav = document.querySelector(".nav-root");
+    const nav = document.querySelector(".nav_wrap");
     if (!nav) return;
     const toggle = nav.querySelector("#nav-toggle");
+    const panel = nav.querySelector(".nav_mobile_wrap");
     function syncMenu() {
-      nav.classList.toggle("sitenav--menu-open", Boolean(toggle?.checked));
+      if (!toggle || !panel) return;
+      const mobile = innerWidth < SETTINGS.desktopWidth;
+      const open = mobile && toggle.checked;
+      if (!open && panel.contains(document.activeElement)) {
+        (mobile ? toggle : nav.querySelector(".nav_brand"))?.focus({preventScroll:true});
+      }
+      panel.inert = !open;
+      toggle.setAttribute("aria-expanded", String(open));
     }
-    toggle?.addEventListener("change", syncMenu);
-    syncMenu();
-    document.addEventListener("click", event => {
-      if (!toggle?.checked || event.target.closest('.sitenav__mobile-wrap,label[for="nav-toggle"],#nav-toggle')) return;
+    function closeMenu() {
+      if (!toggle?.checked) return;
       toggle.checked = false;
-      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      toggle.dispatchEvent(new Event("change", {bubbles:true}));
+    }
+    syncMenu();
+    toggle?.addEventListener("change", syncMenu);
+    document.addEventListener("click", event => {
+      if (!event.target.closest('.nav_mobile_wrap,label[for="nav-toggle"],#nav-toggle')) closeMenu();
     }, true);
-    nav.querySelector(".transition.mobile")?.classList.add("sitenav__overlay");
-    nav.querySelector(".transition__dark.mobile")?.classList.add("sitenav__overlay-shade");
-    nav.querySelectorAll(".sitenav__project-count").forEach(count => {
-      const button = count.closest(".sitenav__item")?.querySelector(".btn");
-      if (button) {
-        button.classList.add("sitenav__link--counted");
-        button.append(count);
-      }
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape" || !toggle?.checked) return;
+      closeMenu();
+      toggle.focus({preventScroll:true});
+    });
+    nav.querySelectorAll(".nav_project_count").forEach(count => {
+      const button = count.closest(".nav_item")?.querySelector(".button_wrap");
+      if (button) button.append(count);
     });
 
-    const contact = nav.querySelector(".sitenav__contact .btn");
-    contact?.classList.add("sitenav__contact-link", "sitenav__link-surface");
-    contact?.querySelectorAll(".btn__main, .btn__text-mask, .btn__text").forEach(part => {
-      part.classList.add("sitenav__contact-content");
-    });
-    nav.querySelectorAll(".sitenav .btn__main").forEach(part => part.classList.add("sitenav__button-body"));
-    nav.querySelectorAll(".sitenav .btn__text-mask").forEach(part => part.classList.add("sitenav__button-mask"));
-
-    const groups = Array.from(nav.querySelectorAll(".sitenav__links, .sitenav__socials"), group => {
-      const links = Array.from(group.querySelectorAll('[data-wf--super-button--variant="navigation-desktop"]'));
-      for (const link of links) {
-        link.classList.add("sitenav__link", "sitenav__link-surface");
-        link.addEventListener("pointerenter", () => group.classList.add("sitenav__group--pointed"));
-        link.addEventListener("pointerleave", () => group.classList.remove("sitenav__group--pointed"));
-      }
-      return { group, links, primary: group.classList.contains("sitenav__links") };
-    });
-    const variants = ["77974df0-b189-fee1-a56a-288237d327e5", "e72fbfa9-7432-caad-d8b8-f691e4b91418", "0f7d95bf-3fe7-c346-459f-79ff0521e166"];
+    const scrolledVariant = "w-variant-e72fbfa9-7432-caad-d8b8-f691e4b91418";
+    const mobileVariant = "w-variant-0f7d95bf-3fe7-c346-459f-79ff0521e166";
     const layoutNodes = [ nav, ...nav.querySelectorAll("*") ];
-    nav.querySelectorAll(".sitenav__project-count").forEach(el => el.removeAttribute("data-nav-fade"));
-    const fading = [ ...nav.querySelectorAll("[data-nav-fade]") ];
+    nav.querySelectorAll(".nav_project_count").forEach(el => el.removeAttribute("data-nav-fade"));
+    const compactGroups = [ ...nav.querySelectorAll("[data-nav-fade]") ];
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const moving = [ ...nav.querySelectorAll("[data-nav-flip]") ];
-    const wordmark = nav.querySelector(".sitenav__wordmark");
+    const wordmark = nav.querySelector(".nav_wordmark");
     if (wordmark) {
       const label = wordmark.textContent;
       wordmark.setAttribute("aria-label", label);
       wordmark.textContent = "";
       Array.from(label).forEach(((letter, i) => {
         const mask = document.createElement("span");
-        mask.className = "nav-logo__char";
+        mask.className = "nav_logo_char";
         mask.setAttribute("aria-hidden", "true");
         mask.style.setProperty("--char-i", i);
         for (let n = 0; n < 2; n++) {
           const glyph = document.createElement("span");
-          glyph.className = n === 0 ? "nav-logo__glyph" : "nav-logo__glyph nav-logo__glyph--repeat";
+          glyph.className = n === 0 ? "nav_logo_glyph" : "nav_logo_glyph nav_logo_glyph_repeat";
           glyph.textContent = letter === " " ? " " : letter;
           mask.append(glyph);
         }
         wordmark.append(mask);
       }));
     }
-    let heroTween;
+    let heroTween, arrowTween;
     let heroPage = document.querySelector('[data-barba="container"]');
-    function moveHero(hidden, immediate = false) {
-      if (innerWidth < SETTINGS.desktopWidth) {
-        hidden = false;
-        immediate = true;
-      }
-      if (!heroPage) return;
-      const chars = [ ...heroPage.querySelectorAll("[data-home-scroll] .hero-scroll-char") ];
-      const lines = [ ...heroPage.querySelectorAll("[data-home-intro-exit] .hero-scroll-line") ], arrows = [ ...heroPage.querySelectorAll("[data-home-arrow-exit],.hero .scroll-arrow__mask") ];
-      if (!window.gsap || !chars.length && !lines.length && !arrows.length) return;
-      heroTween?.kill();
-      if (window.CustomEase) CustomEase.create(SETTINGS.layoutEase, SETTINGS.layoutCurve);
-      const duration = immediate ? 0 : SETTINGS.layoutDuration;
-      heroTween = gsap.timeline().to(chars, {
-        yPercent: hidden ? -120 : 0,
-        duration: duration,
-        stagger: immediate ? 0 : .025,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
-      }, 0).to(lines, {
-        yPercent: hidden ? -120 : 0,
-        duration: duration,
-        stagger: immediate ? 0 : parseFloat(lines[0]?.closest("[data-home-intro-exit]")?.dataset.linesStagger) || parseFloat(getComputedStyle(root).getPropertyValue("--motion-line-stagger")) || .1,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
-      }, 0).to(arrows, {
-        y: hidden ? "-1.5rem" : 0,
-        autoAlpha: hidden ? 0 : 1,
-        duration: immediate ? 0 : .3,
-        ease: SETTINGS.layoutEase,
-        overwrite: true
+    function seekHeroText(y) {
+      if (!heroTween) return;
+      const flip = window.ScrollTrigger?.getById("jk-home-showreel");
+      const start = flip?.start ?? 0;
+      const distance = Math.max(1, innerHeight * SETTINGS.heroExitViewportFraction);
+      heroTween.progress(Math.max(0, Math.min(1, (y - start) / distance)));
+    }
+    function refreshHeroText() {
+      heroTween?.revert();
+      heroTween = null;
+      if (!heroPage || !window.gsap || innerWidth < SETTINGS.desktopWidth ||
+          matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const chars = heroPage.querySelectorAll("[data-home-scroll] .hero_scroll_char");
+      const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero_scroll_line");
+      if (!chars.length && !lines.length) return;
+      heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:"none"}});
+      // Keep the wordmark's original 1.05s scrubbed span. Each successive
+      // letter now starts later while the paragraph keeps its own timing.
+      if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {
+        yPercent:-120, duration:.85, stagger:{amount:.20}, ease:"sine.inOut"
       }, 0);
+      if (lines.length) {
+        const stagger = parseFloat(lines[0].closest("[data-home-intro-exit]").dataset.linesStagger) ||
+          parseFloat(getComputedStyle(root).getPropertyValue("--motion-line-stagger")) || .1;
+        heroTween.fromTo(lines, {yPercent:0}, {yPercent:-120, stagger}, 0);
+      }
+      seekHeroText(routeY ?? scrollY);
+    }
+    function moveHeroArrow(hidden, immediate = false) {
+      const arrows = heroPage?.querySelectorAll("[data-home-arrow-exit],.section_wrap.is-home-hero .scroll_arrow_mask");
+      if (!arrows?.length || !window.gsap) return;
+      if (innerWidth < SETTINGS.desktopWidth) { hidden = false; immediate = true; }
+      arrowTween?.kill();
+      if (window.CustomEase) CustomEase.create(SETTINGS.layoutEase, SETTINGS.layoutCurve);
+      arrowTween = gsap.to(arrows, {y:hidden ? "-1.5rem" : 0, autoAlpha:hidden ? 0 : 1,
+        duration:immediate ? 0 : .3, ease:SETTINGS.layoutEase, overwrite:true});
+    }
+    function moveHero(hidden, immediate) {
+      refreshHeroText();
+      moveHeroArrow(hidden, immediate);
     }
     let routeY = null;
-    let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, fade, locked = false;
-    function applyLayout(preserveFading = false) {
-      delete nav.dataset.innerPage;
-      const brand = nav.querySelector(".sitenav__brand");
+    let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, groupReveal, locked = false;
+    function applyLayout(preserveGroups = false) {
+      const brand = nav.querySelector(".nav_brand");
       if (brand) brand.setAttribute("aria-label", "Jamie Keaveney — home");
-      const id = desktop ? compact ? variants[1] : null : variants[2];
+      const id = desktop ? compact ? scrolledVariant : null : mobileVariant;
       layoutNodes.forEach((el => {
-        if (preserveFading && el.closest("[data-nav-fade]")) return;
-        variants.forEach((v => el.classList.remove("w-variant-" + v)));
-        if (id) el.classList.add("w-variant-" + id);
+        if (preserveGroups && el.closest("[data-nav-fade]")) return;
+        el.classList.remove(scrolledVariant, mobileVariant);
+        if (id) el.classList.add(id);
       }));
       nav.dataset.navCompact = String(compact);
-      nav.setAttribute("data-wf--nav--variant", desktop ? compact ? "scrolled" : "top-of-page" : "mobile");
-      fading.forEach((el => el.inert = compact || !desktop));
+      nav.setAttribute("data-wf--navigation--variant", desktop ? compact ? "scrolled" : "top-of-page" : "mobile");
+      compactGroups.forEach((el => el.inert = compact || !desktop));
     }
     function finish() {
       tween?.progress(1);
       tween?.kill();
-      fade?.progress(1);
-      fade?.kill();
+      groupReveal?.progress(1);
+      groupReveal?.kill();
     }
+    motion.addEventListener("change", () => { if (motion.matches) finish(); });
     function change(next, immediate = false, options = {}) {
       if (next === compact) return;
       finish();
-      const animate = !immediate && window.gsap && window.Flip && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const animate = !immediate && window.gsap && window.Flip && !motion.matches;
       const state = animate ? Flip.getState(moving) : null;
       document.dispatchEvent(new CustomEvent('jk:nav-layout',{detail:{compact:next,fadeDuration:SETTINGS.fadeDuration,duration:animate?(options.duration??SETTINGS.layoutDuration):0,ease:options.ease??SETTINGS.layoutEase}}));
       compact = next;
-      moveHero(next, immediate);
+      moveHeroArrow(next, immediate);
       applyLayout(animate && next);
       if (!animate) {
         applyLayout();
@@ -169,22 +189,16 @@
         scale: false,
         prune: true
       });
-      const clear = () => {
-        gsap.set(fading, {
-          clearProps: "opacity,visibility"
-        });
-        applyLayout();
-      };
-      fade = compact ? gsap.to(fading, {
-        autoAlpha: 0,
-        duration: SETTINGS.fadeDuration,
-        onComplete: clear
-      }) : gsap.fromTo(fading, {
-        autoAlpha: 0
+      const hidden = "inset(0% 0% 100% 0%)", shown = "inset(0% 0% 0% 0%)";
+      groupReveal = gsap.fromTo(compactGroups, {
+        clipPath: compact ? shown : hidden
       }, {
-        autoAlpha: 1,
+        clipPath: compact ? hidden : shown,
         duration: SETTINGS.fadeDuration,
-        onComplete: clear
+        onComplete() {
+          applyLayout();
+          gsap.set(compactGroups, {clearProps: "clipPath"});
+        }
       });
     }
     function syncPosition() {
@@ -195,19 +209,13 @@
     }
     function update(immediate = false) {
       const y = routeY ?? scrollY;
+      seekHeroText(y);
       const nextDesktop = innerWidth >= SETTINGS.desktopWidth;
       if (nextDesktop !== desktop) {
         finish();
         desktop = nextDesktop;
-        if (desktop) {
-          const toggle = nav.querySelector("#nav-toggle");
-          if (toggle?.checked) {
-            toggle.checked = false;
-            toggle.dispatchEvent(new Event("change", {
-              bubbles: true
-            }));
-          }
-        }
+        if (desktop) closeMenu();
+        syncMenu();
         compact = y > SETTINGS.compactAfter;
         applyLayout();
         moveHero(compact, true);
@@ -230,49 +238,26 @@
         moveHero(compact, true);
       }
     };
-    function nameButtons(scope) {
-      scope.querySelectorAll("a.btn:not([aria-label])").forEach((button => {
-        const text = button.querySelector(".btn__text")?.textContent.trim();
-        if (text) button.setAttribute("aria-label", text);
-      }));
-    }
-    function syncGroups(path = location.pathname) {
-      for (const { group, links, primary } of groups) {
-        let hasCurrent = false;
-        for (const link of links) {
-          const current = primary && new URL(link.href, location.href).pathname === path;
-          link.classList.toggle("w--current", current);
-          link.classList.toggle("sitenav__link--current", current);
-          if (current) link.setAttribute("aria-current", "page");
-          else link.removeAttribute("aria-current");
-          hasCurrent ||= current;
-        }
-        group.classList.toggle("sitenav__group--current", hasCurrent);
-      }
-    }
-    syncGroups();
-    nameButtons(document);
-    if (window.barba) barba.hooks.afterEnter((d => nameButtons(d.next.container)));
     applyLayout();
     async function updateProjectCount() {
+      const displays = nav.querySelectorAll('[data-count-display="projects"]');
+      if (!displays.length) return;
       try {
-        const response = await fetch("/projects", {
-          credentials: "same-origin"
-        });
+        const response = await fetch("/sitemap.xml", {priority: "low"});
         if (!response.ok) return;
-        const doc = (new DOMParser).parseFromString(await response.text(), "text/html");
-        const group = doc.querySelector('[data-count-group="projects"]');
-        if (!group) return;
-        const count = group.querySelectorAll("[data-count-item]").length;
-        nav.querySelectorAll('[data-count-display="projects"]').forEach((el => el.textContent = count));
-      } catch {}
+        const sitemap = new DOMParser().parseFromString(await response.text(), "application/xml");
+        if (sitemap.documentElement.localName !== "urlset") return;
+        const paths = new Set();
+        for (const item of sitemap.getElementsByTagNameNS("*", "loc")) {
+          const path = new URL(item.textContent.trim(), location.href).pathname.replace(/\/$/, "");
+          if (/^\/project\/[^/]+$/.test(path)) paths.add(path);
+        }
+        for (const display of displays) display.textContent = "(" + paths.size + ")";
+      } catch {
+        // The number authored in the Navigation component remains visible offline.
+      }
     }
     updateProjectCount();
-    document.querySelectorAll(".cta-section a.secondary-link,[data-footer-link]").forEach((a => {
-      const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === location.pathname;
-      a.classList.toggle("w--current", current);
-      if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
-    }));
     nav.querySelectorAll("[data-theme-toggle]").forEach((button => button.addEventListener("click", (event => {
       event.preventDefault();
       const value = root.dataset.themeStatus === "dark" ? "light" : "dark";
@@ -297,8 +282,8 @@
       passive: true
     });
     window.addEventListener("pageshow", (() => {
-      applyTheme(root.dataset.themeStatus);
       syncMenu();
+      applyTheme(root.dataset.themeStatus);
       update(true);
     }));
     document.addEventListener("jk:page-intro", (() => {
@@ -310,18 +295,11 @@
         const freeze = window.freezeContainer;
     if (freeze) window.freezeContainer = function(page) {
       routeY = typeof getCurrentScroll === "function" ? getCurrentScroll() : scrollY;
-      heroTween?.pause();
+      heroTween?.kill();
+      heroTween = null;
+      arrowTween?.pause();
       heroPage = null;
       return freeze(page);
-    };
-    if (window.syncNavState) window.syncNavState = function(data) {
-      const path = new URL(data.next.url.href).pathname;
-      syncGroups(path);
-      document.querySelectorAll("a[data-barba-update],.cta-section a.secondary-link,[data-footer-link]").forEach((a => {
-        const current = a.getAttribute("href")?.startsWith("/") && new URL(a.href, location.href).pathname === path;
-        a.classList.toggle("w--current", current);
-        if (current) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
-      }));
     };
     if (window.barba) {
       barba.hooks.beforeEnter((d => {

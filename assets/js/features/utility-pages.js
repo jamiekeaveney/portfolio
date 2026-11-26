@@ -2,12 +2,12 @@
 (() => {
   function init(){
     const root=document.querySelector('[data-error-game]');if(!root)return;
-    const court=root.querySelector('.error-game__court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
+    const court=root.querySelector('.error_game_court'),start=root.querySelector('[data-game-start]');if(!court||!start)return;
     const canvas=document.createElement('canvas'),status=document.createElement('p');
     const ctx=canvas.getContext('2d');
     if (!ctx) return;
     canvas.setAttribute('aria-label','Pong. Move or drag your paddle, or use the left and right arrow keys. Escape pauses.');
-    canvas.className='error-game__canvas';canvas.tabIndex=0;court.append(canvas);status.className='error-game__status';status.setAttribute('role','status');court.after(status);
+    canvas.className='error_game_canvas';canvas.tabIndex=0;court.append(canvas);status.className='error_game_status';status.setAttribute('role','status');court.after(status);
     const reduced=matchMedia('(prefers-reduced-motion:reduce)');
     let countdown=0;
     let width=0,height=0,x=0,y=0,vx=170,vy=115,paddle=0,score=0,playing=false,paused=false,last=0,raf,keys={};
@@ -15,15 +15,15 @@
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
     const label=document.createElement('span'),replacement=document.createElement('span');
-    label.className='btn__text error-game__control-label';
-    replacement.className='btn__text error-game__control-label error-game__control-label--duplicate';
+    label.className='button_text error_game_control_label';
+    replacement.className='button_text error_game_control_label error_control_label_duplicate';
     replacement.setAttribute('aria-hidden','true');
     start.textContent='';
     start.append(label,replacement);
     function setLabel(value){label.textContent=replacement.textContent=value;}
     function showState(){
-      root.classList.toggle('error-game--in-progress',playing);
-      court.classList.toggle('error-game__court--playing',playing);
+      root.classList.toggle('error_game_in_progress',playing);
+      court.classList.toggle('error_game_court_playing',playing);
       root.dataset.gameState=playing?(paused?'paused':'playing'):'idle';
       setLabel(playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong'));
       status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns'):'';
@@ -34,7 +34,10 @@
       paddle=clamp(paddle||width/2,paddleWidth()/2,width-paddleWidth()/2);x=clamp(x,0,width);y=clamp(y,0,height);
     };
     const observer=new ResizeObserver(resize);observer.observe(court);resize();showState();
-    function begin(){countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
+    const board = createPongLeaderboard(root, () => {
+      if (playing && !paused) { paused = true; showState(); }
+    });
+    function begin(){board.startRound();countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
     function toggle(e){e?.preventDefault();if(!playing){begin();return;}paused=!paused;showState();if(!paused)canvas.focus({preventScroll:true});}
     start.addEventListener('click',toggle);
     start.addEventListener('keydown',e=>{if(e.key===' '&&start.tagName!=='BUTTON')toggle(e);});
@@ -79,6 +82,7 @@
           }
           if(y>height+r){
             playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';setLabel('Play again');
+            board.finishRound(score);
             x=width*.12;y=height*.3;vx=170;vy=115;
           }
         }
@@ -97,7 +101,7 @@
       raf=requestAnimationFrame(paint);
     }
     paint(0);
-    root.classList.add('error-game--ready');
+    root.classList.add('error_game_ready');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

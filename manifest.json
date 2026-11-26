@@ -3,8 +3,6 @@
     "assets/js/core/scroll-media-motion.js",
     "assets/js/features/portrait-flight.js",
     "assets/js/features/mobile-transition.js",
-    "assets/js/features/trigger-state.js",
-    "assets/js/core/site.js",
     "assets/js/features/pointer-motion.js",
     "assets/js/features/project-lifecycle.js",
     "assets/js/features/home-scroll.js",
@@ -18,6 +16,7 @@
     "assets/js/features/marquees.js",
     "assets/js/features/footer-parallax.js",
     "assets/js/features/editorial.js",
+    "assets/js/core/video-playback.js",
     "assets/js/features/lightbox.js",
     "assets/js/features/mobile-media.js",
     "assets/js/vendor/sticky-library.js",
@@ -30,20 +29,20 @@
     "assets/js/features/client-previews.js",
     "assets/js/features/services.js",
     "assets/js/features/projects.js",
-    "assets/js/features/utility-pages.js",
+    "assets/js/core/error-game-loader.js",
     "assets/js/core/page-transitions.js",
     "assets/js/core/clock.js",
     "assets/js/features/tab-title.js",
     "assets/js/features/portfolio-controls.js"
   ],
   "css": [
+    "assets/css/vendor/lenis.css",
     "assets/css/components/loader.css",
     "assets/css/base/site.css",
     "assets/css/components/navigation.css",
     "assets/css/components/bunny-player.css",
     "assets/css/components/projects.css",
     "assets/css/components/interactions.css",
-    "assets/css/components/utility-pages.css",
     "assets/css/components/portfolio-controls.css"
   ]
 }

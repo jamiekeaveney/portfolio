@@ -58,15 +58,15 @@
       started: false
     };
     pages.set(page, s);
-    if (mobileCards) page.querySelectorAll(".work-slide__track > .work-card:not([data-work-clone])").forEach(((el, i) => {
+    if (mobileCards) page.querySelectorAll(".work_gallery_track > .work_card_wrap:not([data-work-clone])").forEach(((el, i) => {
       el.dataset.reveal = i < 2 ? "load" : "scroll";
       el.dataset.revealEffect = "rise";
       el.dataset.revealDelay = String(i % 2 * .1);
     }));
     page.querySelectorAll('[data-reveal="load"],[data-reveal="scroll"]').forEach((el => {
       if (s.entries.some((e => e.el === el)) || responsive && !el.matches("[data-home-scroll],[data-home-intro-exit]")) return;
-      if (el.closest('[data-reveal="none"],.work-list,.case-index__card,.clients__credits') || el.closest(".work-card") && !(mobileCards && el.matches(".work-card")) || !el.getClientRects().length) return;
-      if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case-featured,.case-featured *")) return;
+      if (el.closest('[data-reveal="none"],.work_list_wrap,.case_index_card,.clients_credits') || el.closest(".work_card_wrap") && !(mobileCards && el.matches(".work_card_wrap")) || !el.getClientRects().length) return;
+      if ((handoff || page.dataset.mediaHandoff === "true") && el.matches(".case_featured,.case_featured *")) return;
       const entry = {
         el: el,
         played: responsive || restoring && el.dataset.reveal === "load",
@@ -79,21 +79,26 @@
       if (mode && window.SplitText) {
         s.splits.push(SplitText.create(el, {
           type: mode === "letters" ? "lines,words,chars" : mode === "words" ? "lines,words" : "lines",
+          // Only headings receive a replacement accessible name. Generic
+          // phrases and paragraphs keep their real text in the accessibility tree.
+          aria: el.matches("h1,h2,h3,h4,h5,h6,[role='heading']") ? "auto" : "none",
+          // Keep SplitText's default block line/mask and inline-block glyph layout.
           mask: "lines",
-          linesClass: "reveal-line",
+          linesClass: "reveal_line",
           autoSplit: true,
           onSplit(split) {
-            if (el.hasAttribute("data-home-scroll")) split.chars.forEach((ch => {
+            if (el.hasAttribute("data-home-scroll")) split.chars.forEach(((ch, index) => {
               const wrap = document.createElement("span");
-              wrap.className = "hero-scroll-char";
+              wrap.className = "hero_scroll_char";
               ch.before(wrap);
               wrap.append(ch);
+              if (index === split.chars.length - 1) ch.setAttribute("data-wordmark-end", "");
             }));
             split.lines.forEach((l => {
-              l.parentElement.classList.add("reveal-line-mask");
+              l.parentElement.classList.add("reveal_line_mask");
               if (el.hasAttribute("data-home-intro-exit")) {
                 const wrap = document.createElement("span");
-                wrap.className = "hero-scroll-line";
+                wrap.className = "hero_scroll_line";
                 wrap.style.display = "block";
                 l.before(wrap);
                 wrap.append(l);
@@ -109,9 +114,9 @@
               yPercent: SETTINGS.maskedTravelPercent
             }, {
               yPercent: 0,
-              duration: SETTINGS.textDuration,
+              duration: Number.parseFloat(el.dataset.revealDuration) || SETTINGS.textDuration,
               stagger: stagger,
-              ease: "power3.out",
+              ease: mode === "letters" ? SETTINGS.ease : "power3.out",
               paused: true,
               onComplete: () => entry.completed = true
             });
@@ -125,7 +130,7 @@
       } else if (effect === "inline-media") {
         const bounds = el.getBoundingClientRect(), w = bounds.width;
         const slot=document.createElement('span');
-        slot.className='editorial-media-slot';
+        slot.className='editorial_media_slot';
         slot.style.height=(bounds.height + (parseFloat(getComputedStyle(el).marginBottom)||0))+'px';
         el.before(slot);slot.append(el);
         el.dataset.inlineWidth = String(w);
@@ -164,7 +169,7 @@
         entry.tween = t;
         s.tweens.push(t);
       } else {
-        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case-media,.mini-showreel__card") || el).borderTopLeftRadius : "0px";
+        const radius = effect === "height" ? getComputedStyle(el).borderTopLeftRadius !== "0px" ? getComputedStyle(el).borderTopLeftRadius : getComputedStyle(el.querySelector(".case_media_wrap,.showreel_card") || el).borderTopLeftRadius : "0px";
         const round = radius === "0px" ? SETTINGS.radiusFallback : radius;
         const from = effect === "height" ? {
           clipPath: "inset(0% 0% 100% 0% round " + round + ")"
@@ -182,7 +187,7 @@
         } : {
           autoAlpha: 1
         };
-        const followers = effect === "height" && el.matches(".mini-showreel__media") ? [ ...el.parentElement.querySelectorAll(".mini-showreel__info") ] : [];
+        const followers = effect === "height" && el.matches(".showreel_media") ? [ ...el.parentElement.querySelectorAll(".showreel_info") ] : [];
         if (followers.length) gsap.set(followers, {
           y: -el.offsetHeight
         });
@@ -250,10 +255,7 @@
     prepare(page);
     const s = pages.get(page);
     if (!s || s.started) return;
-    if (navIntro && !document.documentElement.hasAttribute('data-loader-active')) {
-      navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.55:0).play();
-      navIntro = null;
-    }
+    if (!document.documentElement.hasAttribute('data-loader-active')) navIntro?.play();
     page.dataset.pageIntroStarted = "true";
     page.dispatchEvent(new CustomEvent("jk:page-intro", {
       bubbles: true
@@ -313,20 +315,30 @@
     gsap.registerPlugin(SplitText, ScrollTrigger);
     const page = document.querySelector('[data-barba="container"]');
     prepare(page);
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const nav = [ ...document.querySelectorAll(".sitenav") ].filter((el => el.getClientRects().length));
-      document.addEventListener('jk:nav-reveal',()=>{
-        navIntro?.restart(true);
-        navIntro=null;
-      },{once:true});
-      navIntro = gsap.from(nav, {
-        autoAlpha: 0,
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    const navBar = document.querySelector(".nav_layout > .nav_bar");
+    if (navBar && !motion.matches) {
+      const startNav = () => navIntro?.play();
+      const settleNav = () => { if (motion.matches) navIntro?.progress(1); };
+      // Clip the shared bar, leaving its wordmark glyphs and link rollover masks intact.
+      navIntro = gsap.fromTo(navBar, {
+        clipPath: "inset(0% 0% 100% 0%)",
+        visibility: "hidden"
+      }, {
+        clipPath: "inset(0% 0% 0% 0%)",
+        visibility: "visible",
         duration: .6,
-        stagger: 0,
         ease: "sine.inOut",
         paused: true,
-        clearProps: "opacity,visibility"
+        clearProps: "clipPath,visibility",
+        onComplete() {
+          document.removeEventListener("jk:nav-reveal", startNav);
+          motion.removeEventListener("change", settleNav);
+          navIntro = null;
+        }
       });
+      document.addEventListener("jk:nav-reveal", startNav, {once: true});
+      motion.addEventListener("change", settleNav);
     }
     barba.hooks.beforeEnter((d => {
       const historyVisit = ["popstate", "back", "forward"].includes(d.trigger);

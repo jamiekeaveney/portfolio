@@ -3,7 +3,7 @@
   const states=new Map();
   const OVERLAP=.6; // Fallback until the actual font metrics are available.
   function glyphMidpoint(name){
-    const text=name.querySelector?.('.marquee-advanced__text');if(!text)return name.offsetHeight*OVERLAP;
+    const text=name.querySelector?.('.marquee_text');if(!text)return name.offsetHeight*OVERLAP;
     const css=getComputedStyle(text),ctx=document.createElement('canvas').getContext('2d');ctx.font=css.font;
     const m=ctx.measureText('e'),size=parseFloat(css.fontSize),line=parseFloat(css.lineHeight)||size*1.08;
     const ascent=m.fontBoundingBoxAscent||size*.8,descent=m.fontBoundingBoxDescent||size*.2;
@@ -12,17 +12,14 @@
     return Math.max(0,Math.min(name.offsetHeight,top+baseline-(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2));
   }
   function init(page) {
-    page.querySelectorAll('.footer-editorial-panel').forEach(panel=>{
+    page.querySelectorAll('.footer_editorial_panel').forEach(panel=>{
       if(states.has(panel))return;
-      const wrap=panel.closest('.footer-wrap'),inner=panel.querySelector('.footer-editorial');
-      const stage=wrap?.querySelector('.sticky-footer'),name=stage?.querySelector('.footer');
+      const wrap=panel.closest('.footer_wrap'),inner=panel.querySelector('.footer_editorial_wrap');
+      const stage=wrap?.querySelector('.footer_sticky'),name=stage?.querySelector('.footer_main');
       if(!wrap||!inner||!stage||!name)return;
-      const title=panel.querySelector('.footer-editorial__contact');
-      const legal=inner.querySelector('.footer-legal');
-      legal?.querySelectorAll('.btn').forEach(button=>button.classList.add('footer-legal__action'));
-      if(title){title.removeAttribute('href');title.removeAttribute('tabindex');title.removeAttribute('data-trigger');title.setAttribute('role','heading');title.setAttribute('aria-level','2');}
-      let tint=panel.querySelector(':scope > .footer-parallax__tint');
-      if(!tint){tint=document.createElement('div');tint.className='footer-parallax__tint';tint.setAttribute('aria-hidden','true');panel.append(tint);}
+      // This variant is visible only below the desktop parallax breakpoint.
+      if(wrap.getAttribute('data-wf--footer--variant')==='project-mobile')return;
+      const legal=inner.querySelector('.footer_legal');
       let frozen=false;const mm=gsap.matchMedia();
       let overlap=0,paintNow=()=>{};
       const measure=()=>{if(!frozen){overlap=glyphMidpoint(name);wrap.style.setProperty('--footer-overlap',overlap+'px');}};
@@ -34,8 +31,8 @@
         let placeholder,legalStyle;
         if(legal){
           legalStyle=legal.getAttribute('style');placeholder=document.createElement('div');
-          placeholder.className='footer-legal-placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
-          legal.before(placeholder);wrap.append(legal);legal.classList.add('footer-legal--floating');
+          placeholder.className='footer_legal_placeholder';placeholder.style.height=legal.offsetHeight+'px';placeholder.style.marginTop='auto';
+          legal.before(placeholder);wrap.append(legal);legal.classList.add('footer_legal_floating');
         }
         const paint=()=>{
           if(frozen)return;
@@ -43,11 +40,15 @@
           if(!height)return;
           const progress=Math.max(0,Math.min(1,(innerHeight-top)/height));
           const offset=-overlap*(1-progress);
-          if(offset!==lastOffset){name.style.setProperty('--footer-reveal-y',offset+'px');lastOffset=offset;}
+          if(offset!==lastOffset){
+            name.style.setProperty('--footer-reveal-y',offset+'px');
+            name.style.setProperty('--footer-reveal-shade',String(.5*(1-progress)));
+            lastOffset=offset;
+          }
           if(legal){const a=placeholder.getBoundingClientRect(),b=wrap.getBoundingClientRect();legal.style.left=(a.left-b.left)+'px';legal.style.top=(a.top-b.top)+'px';legal.style.width=a.width+'px';}
         };
         paintNow=paint;paint();gsap.ticker.add(paint);
-        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer-legal--floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');inner.style.removeProperty('--footer-entry-y');tint.style.opacity='0';};
+        return ()=>{if(legal){placeholder.replaceWith(legal);legal.classList.remove('footer_legal_floating');if(legalStyle===null)legal.removeAttribute('style');else legal.setAttribute('style',legalStyle);}gsap.ticker.remove(paint);name.style.removeProperty('--footer-reveal-y');name.style.removeProperty('--footer-reveal-shade');};
       });
       states.set(panel,{
         refresh(){measure();paintNow();},

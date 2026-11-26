@@ -1,12 +1,12 @@
-.bunny-player[data-player-status="playing"],
-.bunny-player[data-player-status="paused"],
-.bunny-player[data-player-status="ready"][data-player-activated="true"] {
+.player_wrap[data-player-status="playing"],
+.player_wrap[data-player-status="paused"],
+.player_wrap[data-player-status="ready"][data-player-activated="true"] {
   --player-poster-opacity: 0;
   --player-poster-visibility: hidden;
 }
 
-.bunny-player[data-player-status="playing"],
-.bunny-player[data-player-status="loading"] {
+.player_wrap[data-player-status="playing"],
+.player_wrap[data-player-status="loading"] {
   --player-control-opacity: 0;
   --player-interface-opacity: 0;
   --player-interface-transform: translateY(1em) rotate(.001deg);
@@ -14,40 +14,40 @@
   --player-pause-display: block;
 }
 
-.bunny-player[data-player-status="playing"] { --player-shade-opacity: 0; }
-.bunny-player[data-player-status="paused"],
-.bunny-player[data-player-status="playing"][data-player-hover="active"] { --player-shade-opacity: .3; }
-.bunny-player[data-player-status="playing"][data-player-hover="active"] { --player-hover-control-opacity: 1; }
-.bunny-player[data-player-status="playing"][data-player-hover="active"],
-.bunny-player[data-player-status="loading"][data-player-hover="active"] {
+.player_wrap[data-player-status="playing"] { --player-shade-opacity: 0; }
+.player_wrap[data-player-status="paused"],
+.player_wrap[data-player-status="playing"][data-player-hover="active"] { --player-shade-opacity: .3; }
+.player_wrap[data-player-status="playing"][data-player-hover="active"] { --player-hover-control-opacity: 1; }
+.player_wrap[data-player-status="playing"][data-player-hover="active"],
+.player_wrap[data-player-status="loading"][data-player-hover="active"] {
   --player-hover-interface-opacity: 1;
   --player-hover-interface-transform: translateY(0) rotate(.001deg);
 }
 
-.bunny-player[data-player-status="loading"] {
+.player_wrap[data-player-status="loading"] {
   --player-loading-opacity: 1;
   --player-loading-visibility: visible;
 }
 
-.bunny-player[data-player-status="idle"][data-player-activated="false"],
-.bunny-player[data-player-status="ready"][data-player-activated="false"] { --player-timeline-events: none; }
-.bunny-player[data-timeline-drag="true"] { --player-handle-scale: 1; }
-.bunny-player[data-player-fullscreen="true"] {
+.player_wrap[data-player-status="idle"][data-player-activated="false"],
+.player_wrap[data-player-status="ready"][data-player-activated="false"] { --player-timeline-events: none; }
+.player_wrap[data-timeline-drag="true"] { --player-handle-scale: 1; }
+.player_wrap[data-player-fullscreen="true"] {
   --player-fullscreen-shrink: block;
   --player-fullscreen-expand: none;
 }
-.bunny-player[data-player-muted="true"] {
+.player_wrap[data-player-muted="true"] {
   --player-volume-muted: block;
   --player-volume-up: none;
 }
-.bunny-player[data-player-update-size="cover"] {
+.player_wrap[data-player-update-size="cover"] {
   --player-before-display: none;
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
 }
-.bunny-player[data-player-update-size="cover"][data-player-fullscreen="false"] { --player-video-fit: cover; }
+.player_wrap[data-player-update-size="cover"][data-player-fullscreen="false"] { --player-video-fit: cover; }
 
 [data-mini-showreel-status="not-active"] {
   --showreel-poster-opacity: 1;
@@ -58,88 +58,106 @@
   --showreel-interface-transform: translateY(1em) rotate(.001deg);
 }
 
-.bunny-player__placeholder,
-.bunny-player__dark,
-.bunny-player__playpause,
-.bunny-player__loading { transition: opacity .3s linear, visibility .3s linear; }
-.bunny-player__placeholder {
+.showreel_poster,
+.player_shade,
+.player_play_indicator,
+.player_loading { transition: opacity .3s linear, visibility .3s linear; }
+.showreel_poster {
   opacity: var(--showreel-poster-opacity, var(--player-poster-opacity, 1));
   visibility: var(--showreel-poster-visibility, var(--player-poster-visibility, inherit));
 }
-.bunny-player__dark { opacity: var(--showreel-shade-opacity, var(--player-shade-opacity, .1)); }
-.bunny-player__playpause { opacity: var(--player-hover-control-opacity, var(--showreel-control-opacity, var(--player-control-opacity, 1))); }
-.bunny-player__play-svg { display: var(--player-play-display, inline); }
-.bunny-player__pause-svg { display: var(--player-pause-display, none); }
-.bunny-player__loading {
+.player_shade { opacity: var(--showreel-shade-opacity, var(--player-shade-opacity, .1)); }
+.player_play_indicator { opacity: var(--player-hover-control-opacity, var(--showreel-control-opacity, var(--player-control-opacity, 1))); }
+.player_play_icon { display: var(--player-play-display, inline); }
+.player_pause_icon { display: var(--player-pause-display, none); }
+.player_loading {
   opacity: var(--player-loading-opacity, 0);
   visibility: var(--player-loading-visibility, hidden);
 }
-.bunny-player__interface {
+.player_controls {
   opacity: var(--player-hover-interface-opacity, var(--showreel-interface-opacity, var(--player-interface-opacity, 1)));
   transform: var(--player-hover-interface-transform, var(--showreel-interface-transform, var(--player-interface-transform, none)));
-  transition: all .6s cubic-bezier(.625, .05, 0, 1);
+  transition: opacity .6s cubic-bezier(.625, .05, 0, 1), transform .6s cubic-bezier(.625, .05, 0, 1);
 }
-.bunny-player__timeline { pointer-events: var(--player-timeline-events, inherit); }
-.bunny-player__timeline-handle {
+.player_timeline { pointer-events: var(--player-timeline-events, inherit); }
+.player_timeline_handle {
   transform: translate(-50%, -50%) scale(var(--player-handle-scale, 0));
   transition: transform .15s ease-in-out;
 }
-.bunny-player__fullscreen-shrink-svg { display: var(--player-fullscreen-shrink, none); }
-.bunny-player__fullscreen-scale-svg { display: var(--player-fullscreen-expand, block); }
-.bunny-player__volume-mute-svg { display: var(--player-volume-muted, none); }
-.bunny-player__volume-up-svg { display: var(--player-volume-up, block); }
-.bunny-player__before { display: var(--player-before-display, block); }
-.bunny-player__video { object-fit: var(--player-video-fit, contain); }
+.player_collapse_icon { display: var(--player-fullscreen-shrink, none); }
+.player_expand_icon { display: var(--player-fullscreen-expand, block); }
+.player_muted_icon { display: var(--player-volume-muted, none); }
+.player_volume_icon { display: var(--player-volume-up, block); }
+.player_ratio { display: var(--player-before-display, block); }
+.player_video { object-fit: var(--player-video-fit, contain); }
 
-[data-mini-showreel-status="active"] .mini-showreel__click {
+[data-mini-showreel-status="active"] .showreel_open {
   display: none;
 }
 
-.mini-showreel__info {
+.showreel_info {
   transition: margin 1s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-[data-mini-showreel-status="active"] .mini-showreel__info {
+[data-mini-showreel-status="active"] .showreel_info {
   margin-top: -2.3rem;
 }
 
-.mini-showreel__card {
+.showreel_card {
   transition: background-color 1s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-[data-mini-showreel-status="active"] .mini-showreel__card {
+[data-mini-showreel-status="active"] .showreel_card {
   background-color: transparent;
 }
 
-.mini-showreel-lightbox__dark {
-  transition: all 1s cubic-bezier(0.87, 0, 0.13, 1);
+.showreel_lightbox_shade {
+  transition: opacity 1s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-[data-mini-showreel-status="active"] .mini-showreel-lightbox__dark {
+[data-mini-showreel-status="active"] .showreel_lightbox_shade {
   opacity: 1;
   visibility: visible;
 }
 
-.mini-showreel__stage {
+.showreel_stage {
   container-type: size;
   transition: border-radius 1s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-.bunny-player.is-showreel {
+.player_wrap.is-showreel {
   width: min(100cqw, 100cqh * 16 / 9);
 }
 
 
-[data-mini-showreel-status="active"] .mini-showreel__stage {
+[data-mini-showreel-status="active"] .showreel_stage {
+  --showreel-expanded: 1;
   border-radius: var(--radius--radius, .75rem);
 }
 
-[data-mini-showreel-status="not-active"] .bunny-player.is-showreel {
+[data-mini-showreel-status="not-active"] .player_wrap.is-showreel {
   opacity: 0;
   transition: opacity .3s ease;
 }
 
-[data-mini-showreel-status="active"] .bunny-player.is-showreel {
+[data-mini-showreel-status="active"] .player_wrap.is-showreel {
   opacity: 1;
   transition: opacity .6s ease .5s;
 }
+
+/* The closed native player starts visibility:hidden. Expose both its controls
+   and backdrop immediately when the shared player becomes a dialog. */
+.showreel_wrap[aria-modal="true"] .player_controls,
+.showreel_wrap[aria-modal="true"] .showreel_lightbox_shade { visibility: visible; }
+
+/* Keep keyboard controls visible while pointer-idle controls fade away. */
+.player_wrap:has(:focus-visible) .player_controls { opacity: 1; transform: none; }
+.showreel_wrap [data-player-control]:focus-visible,
+.showreel_wrap [data-player-timeline]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.showreel_lightbox_shade:focus-visible::after {
+  content: "Close video"; position: absolute; top: 1rem; right: 1rem;
+  background: #151515; color: white; padding: .5em .8em; outline: 2px solid white;
+}
+
+/* Show the responsive CMS poster until the actual first playback frame is ready. */
+.media_preview > video:not([data-preview-frame]) { opacity: 0; }

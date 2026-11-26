@@ -112,8 +112,11 @@
       if (!match) return;
       const target = Number(match[2]);
       if (target > 1e3) return;
-      el.setAttribute("aria-label", original);
       el.innerHTML = "";
+      const accessible = document.createElement("span");
+      accessible.className = "odometer_accessible_text";
+      accessible.textContent = original;
+      el.append(accessible);
       const add = text => {
         if (text) {
           const s = document.createElement("span");
@@ -245,12 +248,12 @@
     return () => mm.revert();
   }
   function initBottomStack(wrap) {
-    const list = wrap.querySelector(".cv__list");
+    const list = wrap.querySelector(".cv_list");
     if (!list) return () => {};
     const cards = [ ...list.children ], layers = [];
     cards.forEach(((card, i) => {
       const layer = document.createElement("div");
-      layer.className = "cv-stack-layer";
+      layer.className = "cv_stack_layer";
       card.before(layer);
       layer.append(card);
       layer.style.zIndex = cards.length - i;
@@ -262,7 +265,7 @@
         const height = card.getBoundingClientRect().height;
         total += height - (i ? 1 : 0);
         layers[i].style.height = total + "px";
-        card.style.top = "calc(100svh - var(--grid--padding) - " + height + "px)";
+        card.style.top = "calc(100svh - var(--site--margin) - " + height + "px)";
       }));
       list.style.height = total + "px";
     };
@@ -327,6 +330,7 @@
           if (window.SplitText) root.querySelectorAll("[data-highlight-text]").forEach((h => {
             const split = new SplitText(h, {
               type: "words,chars",
+              wordsClass: h.hasAttribute("data-statement-endings") ? "statement_word" : "",
               autoSplit: true,
               onSplit(self) {
                 gsap.set(self.chars, {

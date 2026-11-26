@@ -1,6 +1,6 @@
 # Jamie Keaveney — portfolio runtime
 
-The Webflow Designer owns the HTML, CMS bindings, responsive layout, grid, typography and component variants. This repository owns the shared interaction CSS and JavaScript. There is one compiled stylesheet and one compiled script; do not paste the feature files into Webflow embeds as well.
+The Webflow Designer owns the HTML, CMS bindings, responsive layout, grid, typography and component variants. This repository owns the shared interaction CSS and JavaScript. Every page shares one compiled stylesheet and one compiled script. Keep the feature sources out of individual Webflow embeds.
 
 ## Build
 
@@ -12,30 +12,31 @@ npm run check
 npm run build
 ```
 
-`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
+`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. The 404 page loads its own `dist/js/pong.min.js` and `dist/css/pong.css` from the same version. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
 
 ## Structure
 
 - `assets/js/core/`: shared bootstrap, Barba/Lenis page transitions, scroll-media motion settings and Dublin clock.
 - `assets/js/features/`: one file per interaction, including navigation, projects, media transitions, lightbox, copy email, reveals, services and footer parallax.
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
-- `assets/css/base/site.css`: site tokens, shared utilities and migrated state-manager rules.
+- `assets/css/base/site.css`: shared layout and component styles. The native Webflow Global Styles component owns Lumos trigger and state rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/`: the only site-wide head/footer snippets. Both must pin the same immutable runtime revision. The validated repair release is v1.3.1. Both snippets pin runtime commit `4939ec255b83d01558a7b371e679aa5b8959a100`, which was verified on Webflow staging on 23 November 2026. See `VALIDATION.md` and `webflow/LUMOS_REPAIRS.md`.
+- `webflow/global-styles.html` is the versioned source for the single embed inside the Webflow Global Styles component. Update that embed when its column, trigger or state rules change. Serving this block in the component lets the Designer and published pages use the same rules.
+- `webflow/` contains the site-wide head and footer snippets. Each pins the same version tag for the generated CSS and JavaScript. Update the complete pair together in Webflow. `webflow/LUMOS_REPAIRS.md` records the native system and staging checks.
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
 ## Webflow integration
 
-Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, SplitText and CustomEase. Webflow loads those before the custom footer. Barba and Lenis are pinned in the footer snippet. The app includes the Dublin clock, Clarity initialisation and the former Global runtime scripts. Font smoothing is in the shared CSS.
+Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, SplitText and CustomEase. Webflow loads those before the custom footer. Barba and Lenis are pinned in the footer snippet. The app includes the Dublin clock and the site’s shared interaction scripts. Font smoothing is in the shared CSS.
 
-Runtime/CSS embeds in Global, Home, Projects and About have been migrated. CMS-bound video markup stays in Webflow because it needs each item's field bindings. Those markup embeds are not duplicate script owners.
+The native Media Preview component binds a responsive poster, film slug and optional project slug in Webflow. Its shared playback helper resolves the Bunny video URL when playback is requested. Service previews use the service slug, and project previews use the referenced project and film slugs.
 
-Layout refinements are native Webflow styles and variants, not a second HTML site in this repository. The footer uses Footer Navigation, Copy Email Footer and Footer Back To Top variants of Super Button. Their sliding motion inherits the existing Super Button behaviour; interaction colours live in the shared CSS.
+Edit layout and Button variants in Webflow. Footer Navigation, Copy Email Footer and Footer Back To Top share the Button component. The native variants own the label and arrow motion and interaction colours. Global Styles supplies the hover, keyboard and status values that those styles consume.
 
 ## Release
 
-Run `./release.sh` from a clean `main` checkout. It checks and builds the source, updates both Webflow snippets and pushes one immutable `release-X.Y.Z` tag with the release commit. The script checks for existing release branches and tags before assigning a version. Paste the updated snippets into Webflow and verify staging before publishing to custom domains.
+Run `./release.sh` from a clean `main` checkout. It checks and builds the source, updates both Webflow snippets and pushes one versioned `vX.Y.Z` tag with the release commit. The script checks for existing release branches and tags before assigning a version. Paste the updated snippets into Webflow and verify staging before publishing to custom domains.
 
 ## Motion and responsive behaviour
 
@@ -49,13 +50,13 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 ## Desktop lightbox restoration
 
-`assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. The only routing addition is a separate conventional player for mobile/tablet; do not apply its dimensions or gesture handling to desktop.
+`assets/js/features/lightbox.js` restores the R8 implementation, the version after the project ancestor z-index correction and before the R9 viewport-player rewrite. The original Flip opening/closing timeline and the fitted inner Bunny player are retained. Desktop and touch players share the on-demand video source loader. Native HLS runs directly where supported. Browsers that need MediaSource load the pinned HLS adapter when the player opens. The desktop dialog keeps keyboard focus within its controls and returns it to the opener on close.
 
 ## Interaction ownership
 
 - Footer: the editorial stage stays in normal document flow; only the marquee reveal uses parallax. Its overlap is measured from the lowercase e. Legal text follows the theme foreground. Back to top reuses the shared button arrow, rotated upwards at `1em`.
-- Loader: the progress bar collapses to a one-pixel white border and rises with the clipped black curtain. The page enters beneath it. Add **loader-no-overlay** to **loader-wrap** in the Global component to disable the neutral-700 wash; remove that combo class to enable it.
-- Projects: gallery uses its original uniform infinite track; no per-card velocity offsets or return staggering. List measures the real gallery frame for identical height and vertical placement, with the same 16:9 inset hover frame and no pointer kick, rotation or following. List clones retain the original video/poster markup. Videos play only while the active card is hovered or keyboard-focused; settling on a row does not start playback. Gallery/list transfer uses the project media `case-two-step` easing. Text uses the footer navigation 2xl size and 1.3em row height. Client and project tracks still move in opposite directions.
+- Loader: the progress bar collapses to a one-pixel white border and rises with the clipped black curtain. The page enters beneath it. The loader creates its neutral overlay in the shared transition timeline.
+- Projects: gallery uses its original uniform infinite track; no per-card velocity offsets or return staggering. List measures the real gallery frame for identical height and vertical placement, with the same 16:9 inset hover frame and no pointer kick, rotation or following. List clones retain the original video/poster markup. Only the current desktop gallery card participates in keyboard navigation and the accessibility tree. Videos play only while the active card is hovered or keyboard-focused; settling on a row does not start playback. Gallery/list transfer uses the project media `case-two-step` easing. Text uses the footer navigation 2xl size and 1.3em row height. Client and project tracks still move in opposite directions.
 - Touch lightbox: independent from the preserved desktop timeline. Phone video is edge-to-edge and square-cornered. Swipe down/diagonally to dismiss, tap outside, or Escape. Short drags return to rest; native playback controls are excluded from the drag start zone.
 - Copy email: the email, hover instruction and copied confirmation share one clipped text slot. Alternate labels are absolutely positioned with combo-class specificity, so native variants cannot place them back in normal flow.
 - Card captions: native `top` and `left` transitions each have an explicit duration and easing; both coordinates animate with the media hover.
@@ -67,7 +68,7 @@ Only elements with `data-current-year` update automatically. `data-year-template
 
 ## Native Webflow structure
 
-Navigation, Footer Wrapper, CTA Section, Footer, Clients Section, Project Lightbox, Projects Browser and Super Button remain shared components. Footer layout uses explicit three/two/one-column breakpoint styles. The obsolete Close button instance and variant are removed. Other button variants have live usages and are retained.
+Navigation, Footer, Footer Content, Footer Wordmark, Section Clients, Project Lightbox, Projects Browser and Button are shared Webflow components. Footer Content contains the directory, which has three columns on desktop, two on tablet and one on small phones. Footer Wordmark and the legal links have their own responsive layout. The Button variants expose their text, icon, destination and interaction settings in Designer.
 
 Native grid templates use explicit `minmax(0, 1fr)` tracks at their intended breakpoint counts. Webflow Designer was expanding `repeat(var(--_column-count---value), 1fr)` with extra helper tracks, producing 23 columns in a 12-column layout. Explicit tracks avoid that serialization issue while preserving Lumos variable collections, modes, margins, gutters, typography, spacing and theme tokens. Keep this geometry in native styles so it remains editable and visible in Designer.
 
@@ -75,7 +76,7 @@ Services uses live CMS collections. Webflow rejects converting that bound sectio
 
 ## Utility pages and scaling
 
-The 404 is a full-viewport bouncing typographic screen and paddle rally with minimal perimeter controls. The supplied Osmo scaling tokens remain opt-in to avoid changing the established design. At the R16 audit, Style Guide, Licenses and Changelog were no longer present in Webflow's page list.
+The 404 is a full-viewport bouncing typographic screen and paddle rally with minimal perimeter controls. The supplied Osmo scaling tokens remain opt-in to avoid changing the established design. The draft Style Guide in Webflow contains the current typography, colour, spacing and grid examples.
 
 ## Verification
 
@@ -83,7 +84,7 @@ Run `npm run check` and `npm run build`. Check desktop and compact widths, dark/
 
 ## Loader and utility details
 
-The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .45s with `expo.out`, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
+The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .45s with `expo.out`, using the current Theme / Color / Border value, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
 
 Light secondary text uses neutral RGB values, with separate lighter large labels. The About client list has 3rem native top margin.
 

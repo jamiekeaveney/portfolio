@@ -4,23 +4,30 @@
   const motion = window.JKScrollMediaMotion;
   function init(scope) {
     const page = scope?.querySelector ? scope : document.querySelector('[data-barba="container"]');
-    const home = page?.querySelector(".scaling-video__wrapper");
+    const home = page?.querySelector(".hero_reel_media");
     if (!home || instances.has(home) || !window.Flip || !window.ScrollTrigger) return;
     window.JKLightbox?.mount(page);
-    const target = home.querySelector(".mini-showreel");
-    const destination = page.querySelector('.scaling-element__big-box[data-flip-element="wrapper"]');
+    const target = home.querySelector(".showreel_wrap");
+    const destination = page.querySelector('.hero_reel_destination[data-flip-element="wrapper"]');
     const end = page.querySelector('[data-flip-element="end"]');
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
-    const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll-arrow__mask")));
-    let timeline, render, timer, suspended = false, dead = false;
+    const staticMedia = matchMedia("(max-width: 61.9375rem), (prefers-reduced-motion: reduce)");
+    const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask")));
+    let timeline, render, timer, refreshFrame, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
+    function afterRefresh() {
+      // ScrollTrigger can measure at scroll zero. Paint after it restores the viewport.
+      cancelAnimationFrame(refreshFrame);
+      refreshFrame = requestAnimationFrame(() => render?.());
+    }
     function build() {
       if (dead || suspended || target.dataset.miniShowreelStatus === "active") return;
       timeline?.scrollTrigger?.kill();
       timeline?.kill();
+      render = null;
       restore();
-      if (matchMedia("(max-width: 61.9375rem), (prefers-reduced-motion: reduce)").matches) return;
+      if (staticMedia.matches) return;
       // Interpolate one viewport rectangle. Scroll compensation is immediate;
       // only the A-to-B playhead is scrubbed, so vertical movement cannot lag twice.
       const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
@@ -38,8 +45,8 @@
           width:from.w+(to.w-from.w)*p,height:from.h+(to.h-from.h)*p});
       };
       timeline=gsap.timeline({scrollTrigger:{id:'jk-home-showreel',trigger:end,
-        start:0,end:'bottom bottom',scrub:motion.settings.scrub,onUpdate:()=>render?.()}});
-      timeline.to(playhead,{value:1,duration:1,ease:'sine.inOut',onUpdate:()=>render?.()},0);
+        start:0,end:'bottom bottom',scrub:motion.settings.scrub,onUpdate:()=>render?.(),onRefresh:afterRefresh}});
+      timeline.to(playhead,{value:1,duration:1,ease:motion.flightEase,onUpdate:()=>render?.()},0);
       if (fade.length) timeline.fromTo(fade, {
         autoAlpha: 1
       }, {
@@ -52,20 +59,6 @@
       timeline.progress(timeline.scrollTrigger.progress);
       render();
     }
-    const face=target.querySelector('.mini-showreel__card');
-    let swing=0;
-    function tilt(time,dt=16.667){
-      if(!face)return;
-      const track=timeline?.scrollTrigger;
-      if(!track||suspended||!track.enabled){swing=0;face.style.removeProperty('transform');face.style.removeProperty('transform-origin');return;}
-      swing=motion.approach(swing,track.getVelocity(),dt);
-      const progress=timeline.progress();
-      face.style.transformOrigin='top left';
-      const entry=Math.min(1,progress/.09);
-      const tilt=swing*entry*entry*(3-2*entry)*(1-progress)**2;
-      face.style.transform=motion.transform(tilt);
-    }
-    gsap.ticker.add(tilt);
     let viewportWidth = innerWidth;
     const resize = () => {
       if (innerWidth === viewportWidth && !matchMedia("(min-width:62rem)").matches) return;
@@ -79,7 +72,6 @@
       build: build,
       suspend() {
         suspended = true;
-        face?.style.removeProperty('transform');
         timeline?.scrollTrigger?.disable(false);
       },
       resume() {
@@ -88,19 +80,19 @@
       },
       cleanup() {
         dead = true;
-        gsap.ticker.remove(tilt);
-        face?.style.removeProperty('transform');
-        face?.style.removeProperty('transform-origin');
         clearTimeout(timer);
+        cancelAnimationFrame(refreshFrame);
         timeline?.scrollTrigger?.kill();
         timeline?.kill();
         window.removeEventListener("resize", resize);
+        staticMedia.removeEventListener("change", build);
         restore();
         instances.delete(home);
       }
     };
     instances.set(home, state);
     window.addEventListener("resize", resize);
+    staticMedia.addEventListener("change", build);
     build();
   }
   window.initFlipOnScroll = init;
