@@ -18,7 +18,9 @@ function createPongLeaderboard(root, pauseGame) {
   let roundTicket = null;
   let roundNumber = 0;
   let playerId;
-  const api = root.getAttribute("data-score-api") || "https://jamiekeaveneyportfolio.webflow.io/pong-scores/v1/";
+  const configuredAPI = root.getAttribute("data-score-api")?.trim();
+  // The shared service is enabled on the native 404 root after its database is live.
+  const api = configuredAPI ? new URL(configuredAPI.replace(/\/+$/, "") + "/", location.origin) : null;
 
   async function request(resource, data) {
     const controller = new AbortController();
@@ -53,6 +55,7 @@ function createPongLeaderboard(root, pauseGame) {
   }
 
   async function refreshShared() {
+    if (!api) return;
     const revision = ++sharedRevision;
     try {
       const scores = validScores(await request("scores"));
@@ -205,9 +208,12 @@ function createPongLeaderboard(root, pauseGame) {
     } catch {
       ++sharedRevision;
       sharedScores = null;
-      if (round === roundNumber) feedback.textContent = storageAvailable
-        ? "Shared scores unavailable. Your result was saved on this device."
-        : "Shared scores unavailable. Your result is saved for this visit.";
+      if (round === roundNumber) {
+        const scope = storageAvailable ? "on this device" : "for this visit";
+        const ranked = memory.scores.some(row => row.name === name);
+        feedback.textContent = (api ? "Shared scores unavailable. " : "") +
+          (ranked ? "Your personal best is saved " + scope + "." : "This round finished outside the top ten " + scope + ".");
+      }
     }
     if (round === roundNumber) {
       openButton.textContent = "High scores";
@@ -222,10 +228,9 @@ function createPongLeaderboard(root, pauseGame) {
       pendingScore = 0;
       submitted = false;
       openButton.textContent = "High scores";
-      roundTicket = Promise.resolve()
-        .then(() => request("rounds", {player: player()}))
-        .then(result => result.token)
-        .catch(() => null);
+      roundTicket = api
+        ? Promise.resolve().then(() => request("rounds", {player: player()})).then(result => result.token).catch(() => null)
+        : null;
     },
     finishRound(score) {
       pendingScore = score;

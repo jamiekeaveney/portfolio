@@ -52,7 +52,7 @@ JKProject.register((s => {
     el.replaceChildren();
     const lead = document.createElement("span"), detail = document.createElement("span");
     lead.className = el === hint ? "case_index_prompt case_index_prompt_progress" : "case_index_prompt";
-    lead.textContent = prompt;
+    lead.textContent = prompt + " ";
     detail.className = "case_index_value";
     detail.textContent = value;
     el.append(lead, detail);
@@ -66,7 +66,6 @@ JKProject.register((s => {
     compactLink = document.createElement("a");
     compactLink.className = "case_index_next_link";
     compactLink.href = cards[0].href;
-    compactLink.setAttribute("aria-label", "Next project: " + suggestedTitle.textContent.trim());
     compactLink.dataset.caseTransition = "continuation";
     status.before(compactLink);
     compactLink.append(status);
