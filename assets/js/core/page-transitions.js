@@ -29,7 +29,7 @@ else rmMQ.addListener(syncMotionPreference);
 
 const navEntry = performance.getEntriesByType("navigation")[0], navType = navEntry ? navEntry.type : "navigate";
 
-let lenis = null, isPopstate = false;
+let lenis = null, isPopstate = false, historyScrollTarget;
 
 const SCROLL_STORAGE_KEY = "osmo_scroll_positions";
 
@@ -60,8 +60,11 @@ function getCurrentScroll() {
 function initScrollSaver() {
   let t;
   const e = () => {
-    clearTimeout(t), t = setTimeout((() => {
-      saveScrollPosition(window.location.href, getCurrentScroll());
+    const href = window.location.href;
+    clearTimeout(t);
+    if (document.documentElement.hasAttribute("data-transitioning")) return;
+    t = setTimeout((() => {
+      if (window.location.href === href && !document.documentElement.hasAttribute("data-transitioning")) saveScrollPosition(href, getCurrentScroll());
     }), 150);
   };
   window.addEventListener("scroll", e, {
@@ -227,7 +230,7 @@ function runPageOnceAnimation(page) {
     if(finished)return;
     gsap.set(page,{clearProps:'position,top,left,right'});
     document.dispatchEvent(new CustomEvent('jk:loader-prepare',{detail:{page}}));
-    initAfterEnterFunctions(page);
+    initServices(page);
     if(y>0)window.JKReveals?.restore(page,y);
     window.scrollTo(0,y);lenis?.resize();lenis?.scrollTo(y,{immediate:true,force:true});
     ScrollTrigger.refresh();ScrollTrigger.update();
@@ -314,9 +317,13 @@ function runPageEnterAnimation(t, restoreY) {
   if (restoreY != null || isPopstate) gsap.set(t, {
     top: -n
   });
+  const settle = () => {
+    resetPage(t, n);
+    if (restoreY > 0) window.JKReveals?.restore(t, n);
+  };
   return reducedMotion ? (e.set(t, {
     autoAlpha: 1
-  }), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady")))) : (e.set(t, {
+  }), e.add("pageReady"), e.call(settle, null, "pageReady"), new Promise((t => e.call(t, null, "pageReady")))) : (e.set(t, {
     zIndex: 3
   }), e.fromTo(t, {
     y: "100vh"
@@ -325,7 +332,7 @@ function runPageEnterAnimation(t, restoreY) {
     duration: 1.2,
     clearProps: "transform,opacity,visibility,zIndex",
     ease: "parallax"
-  }, 0), e.add("pageReady"), e.call(resetPage, [ t, n ], "pageReady"), new Promise((t => e.call(t, null, "pageReady"))));
+  }, 0), e.add("pageReady"), e.call(settle, null, "pageReady"), new Promise((t => e.call(t, null, "pageReady"))));
 }
 
 // Barba updates the document title. Carry the other page-specific head fields
@@ -342,7 +349,9 @@ function syncPageMetadata(html) {
 
 barba.hooks.before((t => {
   closeMenuIfOpen();
-  isPopstate = ["popstate", "back", "forward"].includes(t.trigger), saveScrollPosition(t.current.url.href, getCurrentScroll()), 
+  isPopstate = ["popstate", "back", "forward"].includes(t.trigger);
+  historyScrollTarget = isPopstate ? getSavedScroll(t.next.url.href) : undefined;
+  saveScrollPosition(t.current.url.href, getCurrentScroll()),
   freezeContainer(t.current.container), document.documentElement.setAttribute("data-transitioning", "");
   document.documentElement.classList.add("page_shell_transitioning");
 })), barba.hooks.beforeEnter((t => {
@@ -360,6 +369,7 @@ barba.hooks.before((t => {
   hasScrollTrigger && ScrollTrigger.refresh();
 })), barba.hooks.after((() => {
   isPopstate = false;
+  historyScrollTarget = undefined;
   document.documentElement.removeAttribute("data-transitioning");
   document.documentElement.classList.remove("page_shell_transitioning");
 }));
@@ -377,7 +387,7 @@ function startPortfolio() {
       sync: !0,
       once: async t => (initOnceFunctions(), runPageOnceAnimation(t.next.container)),
       leave: async t => runPageLeaveAnimation(t.current.container),
-      enter: async t => runPageEnterAnimation(t.next.container)
+      enter: async t => runPageEnterAnimation(t.next.container, historyScrollTarget)
     } ]
   });
 }
