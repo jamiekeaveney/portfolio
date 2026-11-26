@@ -281,18 +281,21 @@ function reducedScrollFixture() {
   const queries = query => ({matches:query.includes('reduced-motion'), addEventListener(type, fn) { this.change = fn; }});
   const reduce = queries('reduced-motion'), desktop = queries('desktop'), ticker = new Set(), created = [];
   desktop.matches = true;
-  let dialog = false, refreshes = 0;
+  let dialog = false, refreshes = 0, transitioning = false;
+  const page = {isConnected:true}, nextFrame = [];
   class Lenis {
     constructor() { created.push(this); }
     on() {}
     destroy() { this.destroyed = true; }
     stop() { this.stopped = true; }
+    scrollTo(y) { this.y = y; }
   }
   const ScrollTrigger = {update(){}, refresh(){refreshes++;}};
   const context = vm.createContext({
-    window:{Lenis,ScrollTrigger,matchMedia:()=>reduce},Lenis,ScrollTrigger,
+    window:{Lenis,ScrollTrigger,scrollY:0,scrollTo(x,y){this.scrollY=y;},matchMedia:()=>reduce},Lenis,ScrollTrigger,
+    requestAnimationFrame:fn=>nextFrame.push(fn),
     matchMedia:()=>desktop,performance:{getEntriesByType:()=>[]},
-    document:{documentElement:{hasAttribute:()=>false},querySelector:()=>dialog},
+    document:{documentElement:{hasAttribute:attr=>attr==='data-transitioning'&&transitioning},querySelector:selector=>selector.includes('data-barba')?page:dialog},
     gsap:{ticker:{add:fn=>ticker.add(fn),remove:fn=>ticker.delete(fn),lagSmoothing(){}}}
   });
   vm.runInContext(controller + '\ninitLenis();',context);
@@ -308,6 +311,19 @@ function reducedScrollFixture() {
   desktop.matches = false; desktop.change();
   assert.equal(created[1].destroyed,true); assert.equal(ticker.size,0);
   assert.ok(refreshes >= 3,'Preference changes refresh scroll geometry');
+  function changeMotion(matches, afterLayout) {
+    context.window.scrollY=583;
+    reduce.matches=matches; reduce.change({matches});
+    context.window.scrollY=afterLayout;
+    nextFrame.shift()();
+    return context.window.scrollY;
+  }
+  assert.equal(changeMotion(true, 0),583,'Recover a mid-page position lost during the native-scroll refresh');
+  assert.equal(changeMotion(false, 420),420,'Keep a valid new position after layout changes');
+  transitioning=true;
+  assert.equal(changeMotion(true, 0),0,'A page transition retains its own scroll position');
+  transitioning=false; page.isConnected=false;
+  assert.equal(changeMotion(false, 0),0,'Never restore the scroll position of a page that has been removed');
 }
 reducedScrollFixture();
 console.log('Event-driven cursor idle, input, route and dialog handling; live reduced-motion scrolling passed.');

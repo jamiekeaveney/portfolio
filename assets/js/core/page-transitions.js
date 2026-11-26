@@ -9,9 +9,20 @@ const hasLenis = void 0 !== window.Lenis, hasScrollTrigger = void 0 !== window.S
 let reducedMotion = rmMQ.matches;
 
 const syncMotionPreference = event => {
+  if (event.matches === reducedMotion) return;
+  const retainedY = window.scrollY;
+  const page = document.querySelector('[data-barba="container"]');
   reducedMotion = event.matches;
   initLenis();
   if (hasScrollTrigger) ScrollTrigger.refresh();
+  // Rebuilding a pinned layout can briefly reset native scroll as GSAP refreshes.
+  // Respect any scroll position the browser or a page transition has since set.
+  if (retainedY > 0) requestAnimationFrame(() => {
+    if (window.scrollY !== 0 || !page?.isConnected || document.documentElement.hasAttribute('data-transitioning')) return;
+    window.scrollTo(0, retainedY);
+    lenis?.scrollTo(retainedY, {immediate:true, force:true});
+    if (hasScrollTrigger) ScrollTrigger.update();
+  });
 };
 if (rmMQ.addEventListener) rmMQ.addEventListener("change", syncMotionPreference);
 else rmMQ.addListener(syncMotionPreference);
