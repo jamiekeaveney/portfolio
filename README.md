@@ -1,6 +1,6 @@
 # Jamie Keaveney — portfolio runtime
 
-The Webflow Designer owns the HTML, CMS bindings, responsive layout, grid, typography and component variants. This repository owns the shared interaction CSS and JavaScript. There is one compiled stylesheet and one compiled script; do not paste the feature files into Webflow embeds as well.
+The Webflow Designer owns the HTML, CMS bindings, responsive layout, grid, typography and component variants. This repository owns the shared interaction CSS and JavaScript. Every page shares one compiled stylesheet and one compiled script. Keep the feature sources out of individual Webflow embeds.
 
 ## Build
 
@@ -12,7 +12,7 @@ npm run check
 npm run build
 ```
 
-`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
+`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. The 404 page loads its own `dist/js/pong.min.js` and `dist/css/pong.css` from the same version. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
 
 ## Structure
 
@@ -21,7 +21,8 @@ npm run build
 - `assets/js/vendor/sticky-library.js`: adapted Alpacka sticky implementation; copyright and licence in `THIRD_PARTY_NOTICES.md`.
 - `assets/css/base/site.css`: shared layout and component styles. The native Webflow Global Styles component owns Lumos trigger and state rules.
 - `assets/css/components/`: loader, navigation, video player, projects and interaction states.
-- `webflow/` contains the site-wide head and footer snippets. Each pins the same immutable Git commit for the generated CSS and JavaScript. Update the complete pair together in Webflow. `webflow/LUMOS_REPAIRS.md` records the native system and staging checks.
+- `webflow/global-styles.html` is the versioned source for the single embed inside the Webflow Global Styles component. Update that embed when its column, trigger or state rules change. Serving this block in the component lets the Designer and published pages use the same rules.
+- `webflow/` contains the site-wide head and footer snippets. Each pins the same version tag for the generated CSS and JavaScript. Update the complete pair together in Webflow. `webflow/LUMOS_REPAIRS.md` records the native system and staging checks.
 
 The empty CSS/JS placeholders and checked-in `node_modules` from the previous structure have been removed. `npm ci` restores build dependencies locally.
 
@@ -35,7 +36,7 @@ Edit layout and Button variants in Webflow. Footer Navigation, Copy Email Footer
 
 ## Release
 
-Run `./release.sh` from a clean `main` checkout. It checks and builds the source, updates both Webflow snippets and pushes one immutable `release-X.Y.Z` tag with the release commit. The script checks for existing release branches and tags before assigning a version. Paste the updated snippets into Webflow and verify staging before publishing to custom domains.
+Run `./release.sh` from a clean `main` checkout. It checks and builds the source, updates both Webflow snippets and pushes one versioned `vX.Y.Z` tag with the release commit. The script checks for existing release branches and tags before assigning a version. Paste the updated snippets into Webflow and verify staging before publishing to custom domains.
 
 ## Motion and responsive behaviour
 
@@ -83,7 +84,7 @@ Run `npm run check` and `npm run build`. Check desktop and compact widths, dark/
 
 ## Loader and utility details
 
-The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .45s with `expo.out`, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
+The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .45s with `expo.out`, using the current Theme / Color / Border value, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
 
 Light secondary text uses neutral RGB values, with separate lighter large labels. The About client list has 3rem native top margin.
 

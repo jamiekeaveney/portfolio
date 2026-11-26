@@ -12,8 +12,23 @@
     defaultTheme: "dark"
   };
   const root = document.documentElement;
+  const browserTheme = document.querySelector('meta[name="theme-color"]');
+  let browserThemePending = false;
   function applyTheme(theme) {
+    const light = theme === "light";
     root.dataset.themeStatus = theme;
+    root.classList.toggle("u-theme-light", light);
+    document.body.classList.add("theme_body");
+    document.body.classList.toggle("u-theme-light", light);
+    document.body.classList.toggle("page_theme_light", light);
+    if (browserTheme && !browserThemePending) {
+      browserThemePending = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        browserThemePending = false;
+        const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
+        if (background) browserTheme.content = background;
+      }));
+    }
     document.querySelectorAll("[data-theme-toggle]").forEach((b => {
       b.setAttribute("aria-checked", String(theme === "light"));
       b.setAttribute("aria-label", theme === "light" ? "Switch to dark theme" : "Switch to light theme");
@@ -225,17 +240,22 @@
     };
     applyLayout();
     async function updateProjectCount() {
+      const displays = nav.querySelectorAll('[data-count-display="projects"]');
+      if (!displays.length) return;
       try {
-        const response = await fetch("/projects", {
-          credentials: "same-origin"
-        });
+        const response = await fetch("/sitemap.xml", {priority: "low"});
         if (!response.ok) return;
-        const doc = (new DOMParser).parseFromString(await response.text(), "text/html");
-        const group = doc.querySelector('[data-count-group="projects"]');
-        if (!group) return;
-        const count = group.querySelectorAll("[data-count-item]").length;
-        nav.querySelectorAll('[data-count-display="projects"]').forEach((el => el.textContent = count));
-      } catch {}
+        const sitemap = new DOMParser().parseFromString(await response.text(), "application/xml");
+        if (sitemap.documentElement.localName !== "urlset") return;
+        const paths = new Set();
+        for (const item of sitemap.getElementsByTagNameNS("*", "loc")) {
+          const path = new URL(item.textContent.trim(), location.href).pathname.replace(/\/$/, "");
+          if (/^\/project\/[^/]+$/.test(path)) paths.add(path);
+        }
+        for (const display of displays) display.textContent = "(" + paths.size + ")";
+      } catch {
+        // The number authored in the Navigation component remains visible offline.
+      }
     }
     updateProjectCount();
     nav.querySelectorAll("[data-theme-toggle]").forEach((button => button.addEventListener("click", (event => {

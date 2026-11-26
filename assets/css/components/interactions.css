@@ -62,9 +62,9 @@ html.is-lightbox-open,html.is-lightbox-open body{overflow:hidden!important}
  .home_hero_heading [data-wordmark-end]::after{
    content:"©" / "";
    position:absolute;
-   inset-block-start:.24em;
-   inset-inline-end:.12em;
-   font-size:.095em;
+   inset-block-start:.38em;
+   inset-inline-end:.20em;
+   font-size:.12em;
    font-weight:var(--_typography---font--primary-medium,500);
    line-height:1;
    letter-spacing:0;

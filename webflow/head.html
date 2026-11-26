@@ -9,7 +9,7 @@
   --loader-ink: #111;
 }
 
-.page_shell_covered::before {
+.page_shell[data-loader-pending]::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -17,181 +17,42 @@
   background: var(--loader-surface);
   pointer-events: none;
 }
-
-.page_shell_loading {
-  --loader-display: block;
-}
-
-.loader_wrap {
-  display: var(--loader-display, none);
-  visibility: visible;
-  opacity: 1;
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: var(--loader-surface);
-}
-
-/* Paint the authored wordmark over the first-load cover as soon as it exists. */
-@media (prefers-reduced-motion: no-preference) {
-  .page_shell_intro.page_shell_covered .loader_wrap:has(.loader_brand > .nav_wordmark) {
-    z-index: 2147483001;
-  }
-}
-
-.page_shell_covered .loader_panel {
-  background: var(--loader-surface);
-}
-
-.page_shell_covered .loader_bar {
-  visibility: hidden;
-}
-
-.loader_brand > :is(.nav_wordmark, [data-load-logo]) {
-  color: var(--loader-ink);
-  font-size: var(--font-size--2xl, 2.5rem);
-}
-
-.loader_brand > .nav_wordmark:first-child {
-  color: color-mix(in srgb, var(--loader-ink) 60%, var(--loader-surface));
-}
-
-@media (max-width: 47.9375rem) {
-  .loader_brand > .nav_wordmark {
-    font-size: clamp(1.5rem, 6vw, 2rem);
-  }
-}
-
-.wf-design-mode,
-.wf-editor {
-  --loader-display: none;
-}
-
-.error_game_ready {
-  --error-poster-display: none;
-}
-
-.error_game_poster {
-  display: var(--error-poster-display, block);
-}
-
-@media (max-width: 61.9375rem) {
-  .page_shell::after {
-    content: "";
-    position: fixed;
-    inset: -100vh 0 auto;
-    height: 100vh;
-    z-index: 2147482999;
-    background: var(--loader-surface);
-    pointer-events: none;
-  }
-
-  .page_shell_light::after {
-    background: var(--_theme---color--background);
-  }
-
-  .page_shell_loading::after {
-    background: var(--loader-surface);
-  }
-}
 </style>
 <script>
 (() => {
   const root = document.documentElement;
-  if (root.classList.contains("wf-design-mode") || root.classList.contains("wf-editor")) return;
+  if (root.matches(".wf-design-mode, .wf-editor")) return;
 
   let light = false;
   try {
     light = localStorage.getItem("jk-theme") === "light";
   } catch {}
-
-  root.classList.add("page_shell", "page_shell_covered", "page_shell_loading");
+  root.classList.add("page_shell");
+  root.classList.toggle("u-theme-light", light);
+  root.dataset.themeStatus = light ? "light" : "dark";
+  if (light) document.querySelector('meta[name="theme-color"]').content = "#f7f7f5";
   if (performance.getEntriesByType("navigation")[0]?.type !== "back_forward") {
     root.classList.add("page_shell_intro");
   }
-  root.classList.toggle("page_shell_light", light);
-  root.dataset.themeStatus = light ? "light" : "dark";
   root.setAttribute("data-loader-pending", "");
   root.setAttribute("data-loader-active", "");
+  history.scrollRestoration = "manual";
 
   const viewport = document.querySelector('meta[name="viewport"]');
   if (viewport && !viewport.content.includes("viewport-fit=")) {
     viewport.content += ", viewport-fit=cover";
   }
-  history.scrollRestoration = "manual";
-
-  const chrome = document.querySelector('meta[name="theme-color"]');
-  if (chrome) chrome.classList.add("u-theme-light");
-  let palette;
-  let chromeUpdatePending = false;
-
-  function syncBrowserChrome() {
-    if (!chrome || chromeUpdatePending) return;
-    chromeUpdatePending = true;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      chromeUpdatePending = false;
-      const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
-      if (background) chrome.content = background;
-    }));
-  }
-
-  function applyTheme() {
-    const body = document.body;
-    if (!body) return;
-    body.classList.add("theme_body");
-    const light = root.dataset.themeStatus === "light";
-    root.classList.toggle("page_shell_light", light);
-    body.classList.toggle("u-theme-light", light);
-    body.classList.toggle("page_theme_light", light);
-    if (light && chrome && !palette) {
-      const colors = getComputedStyle(chrome);
-      palette = Array.from(colors)
-        .filter(name => name.startsWith("--_theme---color--"))
-        .map(name => [name, colors.getPropertyValue(name).trim()]);
-    }
-    if (palette) {
-      for (const [name, value] of palette) {
-        if (light) root.style.setProperty(name, value);
-        else root.style.removeProperty(name);
-      }
-    }
-    syncBrowserChrome();
-  }
-
-  function syncLoader() {
-    root.classList.toggle("page_shell_covered", root.hasAttribute("data-loader-pending"));
-    root.classList.toggle("page_shell_loading", root.hasAttribute("data-loader-active"));
-    if (!root.hasAttribute("data-loader-pending")) root.classList.remove("page_shell_intro");
-  }
-
-  const attributes = {
-    attributes: true,
-    attributeFilter: ["data-theme-status", "data-loader-active", "data-loader-pending"]
-  };
-
-  const observer = new MutationObserver(records => {
-    if (records.some(record => record.type === "childList") && document.body) {
-      observer.observe(root, attributes);
-      applyTheme();
-    } else if (records.some(record => record.attributeName === "data-theme-status")) {
-      applyTheme();
-    }
-    syncLoader();
-  });
-  observer.observe(root, { ...attributes, childList: !document.body });
-  applyTheme();
-
-  function clearLoader() {
+  function releaseCover() {
     root.removeAttribute("data-loader-pending");
     root.removeAttribute("data-loader-active");
-    syncLoader();
+    root.classList.remove("page_shell_intro");
   }
   document.addEventListener("DOMContentLoaded", () => {
-    if (!document.querySelector(".loader_wrap")) clearLoader();
+    if (!document.querySelector(".loader_wrap")) releaseCover();
   }, { once: true });
   setTimeout(() => {
-    if (root.hasAttribute("data-loader-pending")) clearLoader();
+    if (root.hasAttribute("data-loader-pending")) releaseCover();
   }, 12000);
 })();
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@cd030f7548956953c22d6a0c0b88e10015ec0b4c/dist/css/site.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@v1.4.0/dist/css/site.css">

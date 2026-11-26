@@ -17,6 +17,8 @@
       const wrap=panel.closest('.footer_wrap'),inner=panel.querySelector('.footer_editorial_wrap');
       const stage=wrap?.querySelector('.footer_sticky'),name=stage?.querySelector('.footer_main');
       if(!wrap||!inner||!stage||!name)return;
+      // This variant is visible only below the desktop parallax breakpoint.
+      if(wrap.getAttribute('data-wf--footer--variant')==='project-mobile')return;
       const legal=inner.querySelector('.footer_legal');
       let frozen=false;const mm=gsap.matchMedia();
       let overlap=0,paintNow=()=>{};

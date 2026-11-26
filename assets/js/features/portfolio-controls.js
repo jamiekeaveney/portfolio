@@ -113,14 +113,16 @@
     signal.addEventListener('abort',()=>{observer.disconnect();thumbnailObserver.disconnect();reset();});
   }
   function editorial(page,signal) {
-    const heading=page.querySelector('.statement_heading[data-highlight-text]');
-    if(!heading || !motion.matches) return;
+    const heading=page.querySelector('[data-statement-endings][data-highlight-text]');
+    if(!heading) return;
+    const endings=heading.dataset.statementEndings.split('|').map(value=>value.trim()).filter(Boolean);
+    if(!endings.length) return;
     let cleanup;
     function connect() {
-      const words=[...heading.querySelectorAll('div,span')];
-      const first=words.find(el=>el.textContent==='frame' && el.childElementCount===5);
-      const last=first?.nextElementSibling;
-      if(!last || !/^count[.!]?$/.test(last.textContent.trim()) || first.closest('.rotating_statement')) return;
+      if(!motion.matches){cleanup?.();cleanup=null;return;}
+      const words=heading.querySelectorAll('.statement_word');
+      const first=words[words.length-2],last=words[words.length-1];
+      if(!first?.childElementCount || !last?.childElementCount || first.closest('.rotating_statement')) return;
       cleanup?.();
       const range=document.createRange();
       range.setStartBefore(first);range.setEndAfter(last);
@@ -129,7 +131,7 @@
       shell.className='rotating_statement';measure.className='rotating_statement_measure';layer.className='rotating_statement_layer';
       layer.setAttribute('aria-hidden','true');shell.append(measure,layer);
       const original=[...first.children,...last.children];
-      const phrases=['frame count.','shot count.','cut count.'];
+      const phrases=[first.textContent.trim()+' '+last.textContent.trim(),...endings];
       let index=0, sequence,visible;
       function phrase(text){
         const el=document.createElement('span');
@@ -155,7 +157,7 @@
       observer.observe(measure,{subtree:true,attributes:true,attributeFilter:['style']});
       const timer=setInterval(()=>{
         const rect=heading.getBoundingClientRect();
-        if(document.hidden || rect.bottom<=0 || rect.top>=innerHeight || original.some(el=>Number(el.style.opacity||1)<.999))return;
+        if(document.hidden || !heading.isConnected || rect.bottom<=0 || rect.top>=innerHeight)return;
         const outgoing=visible;index=(index+1)%phrases.length;visible=phrase(phrases[index]);sync();
         sequence=gsap.timeline().to(outgoing,{yPercent:-112,duration:1,ease:'expo.out'},0)
           .fromTo(visible,{yPercent:112},{yPercent:0,duration:1,ease:'expo.out'},0).call(()=>outgoing.remove());
@@ -165,6 +167,7 @@
     connect();
     const splits=new MutationObserver(connect);
     splits.observe(heading,{childList:true,subtree:true});
+    motion.addEventListener('change',connect,{signal});
     signal.addEventListener('abort',()=>{splits.disconnect();cleanup?.();});
   }
   const gridControl='.footer_legal a[href="#layout-grid"]';

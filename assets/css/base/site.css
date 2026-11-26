@@ -139,7 +139,6 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 [data-odometer-part="roller"]{display:block;width:max-content;text-align:center;will-change:transform}
 [data-odometer-part="cell"]{display:block;height:1.15em;line-height:1.15;padding:0 .06em;box-sizing:border-box}
 [data-odometer-part="static"]{display:inline-block;line-height:1.15;flex:none}
-[data-count-display]:before{content:"("}[data-count-display]:after{content:")"}
 
 /* Attribute-driven states; geometry is defined in Designer. */
 
@@ -171,10 +170,8 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 .editorial_hero_caption .editorial_hero_subtitle{grid-column:2/3}
 .cv_stats{grid-template-columns:1fr 1fr;gap:2.5rem}
 .cv_stats>.cv_stat,.cv_stats>.cv_stat_detail{grid-column:auto}
-.intro_list_item{grid-template-columns:1fr 1fr}
-.intro_list_heading{grid-column:1/2}.intro_list_description{grid-column:2/3}
 }
-@media(max-width:29.9375rem){.cv_stats{grid-template-columns:1fr}.intro_list_item{grid-template-columns:1fr}.intro_list_heading,.intro_list_description{grid-column:1/-1}.intro_list_description{margin-top:1.5rem}}
+@media(max-width:29.9375rem){.cv_stats{grid-template-columns:1fr}}
 /* Static, fully expanded editing state. */
 :is(.wf-design-mode,.wf-editor) [data-reveal]{opacity:1!important;visibility:visible!important;transform:none!important}
 :is(.wf-design-mode,.wf-editor) .editorial_hero_media{opacity:1!important;visibility:visible!important}
@@ -399,7 +396,10 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 
 /* Shared responsive token and component state overrides. Geometry is native. */
 @media(max-width:61.9375rem){
- .case_index_status,.case_index_progress{display:none!important;}
+ .case_next_wrap:has(.case_index_next_link){padding-bottom:clamp(8rem,25svh,14rem);}
+ .case_index_next_link{display:block;width:100%;margin:var(--site--gutter,1.5rem) 0 0;color:inherit;text-decoration:none;}
+ .case_index_next_link .case_index_status{display:block;width:100%;margin:0;}
+ .case_index_next_link .case_index_progress{display:block;}
  .case_index_title{display:block!important;opacity:1!important;visibility:visible!important;}
 }
 

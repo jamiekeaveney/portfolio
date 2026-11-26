@@ -330,6 +330,7 @@
           if (window.SplitText) root.querySelectorAll("[data-highlight-text]").forEach((h => {
             const split = new SplitText(h, {
               type: "words,chars",
+              wordsClass: h.hasAttribute("data-statement-endings") ? "statement_word" : "",
               autoSplit: true,
               onSplit(self) {
                 gsap.set(self.chars, {

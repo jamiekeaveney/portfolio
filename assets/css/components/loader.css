@@ -1,3 +1,72 @@
+.page_shell[data-loader-active] {
+  --loader-display: block;
+}
+
+.loader_wrap {
+  display: var(--loader-display, none);
+  visibility: visible;
+  opacity: 1;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--loader-surface);
+}
+
+/* Paint the authored wordmark over the first-load cover as soon as it exists. */
+@media (prefers-reduced-motion: no-preference) {
+  .page_shell_intro[data-loader-pending] .loader_wrap:has(.loader_brand > .nav_wordmark) {
+    z-index: 2147483001;
+  }
+}
+
+.page_shell[data-loader-pending] .loader_panel {
+  background: var(--loader-surface);
+}
+
+.page_shell[data-loader-pending] .loader_bar {
+  visibility: hidden;
+}
+
+.loader_brand > :is(.nav_wordmark, [data-load-logo]) {
+  color: var(--loader-ink);
+  font-size: var(--font-size--2xl, 2.5rem);
+}
+
+.loader_brand > .nav_wordmark:first-child {
+  color: color-mix(in srgb, var(--loader-ink) 60%, var(--loader-surface));
+}
+
+@media (max-width: 47.9375rem) {
+  .loader_brand > .nav_wordmark {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+}
+
+.wf-design-mode,
+.wf-editor {
+  --loader-display: none;
+}
+
+@media (max-width: 61.9375rem) {
+  .page_shell::after {
+    content: "";
+    position: fixed;
+    inset: -100vh 0 auto;
+    height: 100vh;
+    z-index: 2147482999;
+    background: var(--loader-surface);
+    pointer-events: none;
+  }
+
+  .page_shell[data-theme-status="light"]::after {
+    background: var(--_theme---color--background);
+  }
+
+  .page_shell[data-loader-active]::after {
+    background: var(--loader-surface);
+  }
+}
+
 .page_shell_transitioning { cursor: progress; }
 .loader_bar{min-height:0;transition:none;will-change:transform,height;overflow:hidden}
 .loader_brand{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:inherit;color:var(--loader-ink,#fff)}

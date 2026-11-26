@@ -195,6 +195,7 @@ const PARALLAX_MOTION={duration:1.2,ease:'parallax',overlay:.8};
 function finishLoaderCover(){
   document.documentElement.removeAttribute('data-loader-pending');
   document.documentElement.removeAttribute('data-loader-active');
+  document.documentElement.classList.remove('page_shell_intro');
   document.dispatchEvent(new CustomEvent('jk:loader-finished'));
 }
 function runPageOnceAnimation(page) {
@@ -262,7 +263,7 @@ function runPageOnceAnimation(page) {
     .to(bar,{scaleX:1}).to(fill,{clipPath:'inset(0% 0% 0% 0%)'},'<')
     .add('collapse').addPause('collapse',()=>prepared.then(()=>{if(!finished)tl.resume();}))
     .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
-    .to(bar,{backgroundColor:getComputedStyle(bar).getPropertyValue('--_theme---neutral--600').trim(),duration:.8,ease:'none'},'collapse')
+    .to(bar,{backgroundColor:getComputedStyle(bar).getPropertyValue('--_theme---color--border').trim(),duration:.8,ease:'none'},'collapse')
     .add('revealPage')
     .to(content,{y:'-25vh',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
@@ -279,6 +280,7 @@ function runPageOnceAnimation(page) {
     .to(splits[1].lines,{yPercent:0,duration:1,ease:'expo.out'},'changeGreeting')
     .to(splits[1].lines,{yPercent:-125,duration:1,ease:'expo.out'},'revealPage-=.2')
     .set(texts.children[1],{visibility:'hidden'},'revealPage+=.15');
+  if (matchMedia('(max-width: 47.9375rem)').matches) tl.timeScale(1.7);
   return tl;
 }
 

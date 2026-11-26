@@ -11,7 +11,7 @@ root.classList={
   toggle: (name,on)=>on?rootClasses.add(name):rootClasses.delete(name)
 };
 const doc={readyState:'complete',hidden:false,querySelector:()=>root,createElement:t=>t==='canvas'?canvas:status,addEventListener(){}};
-vm.runInNewContext(fs.readFileSync('assets/js/features/utility-pages.js','utf8'),{document:doc,matchMedia:()=>({matches:false}),devicePixelRatio:1,ResizeObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({color:'#fff',fontFamily:'Delight'}),requestAnimationFrame:f=>frame=f,cancelAnimationFrame(){}});
+vm.runInNewContext(fs.readFileSync('assets/js/features/utility-pages.js','utf8'),{createPongLeaderboard:()=>({startRound(){},finishRound(){}}),document:doc,matchMedia:()=>({matches:false}),devicePixelRatio:1,ResizeObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({color:'#fff',fontFamily:'Delight'}),requestAnimationFrame:f=>frame=f,cancelAnimationFrame(){}});
 assert.ok(rootClasses.has('error_game_ready'),'The poster hands off after the first canvas draw');
 assert.ok(!rootClasses.has('error_game_in_progress'));
 frame(0);assert.equal(lastText.y,300,'Idle glyph begins at the viewport top without an 80px inset');assert.match(fonts[0],/^600 /);

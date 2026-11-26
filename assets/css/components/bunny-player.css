@@ -131,6 +131,7 @@
 
 
 [data-mini-showreel-status="active"] .showreel_stage {
+  --showreel-expanded: 1;
   border-radius: var(--radius--radius, .75rem);
 }
 

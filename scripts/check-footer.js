@@ -5,7 +5,7 @@ let revealing=false,pageY=0;
 let panelTop=1000,stageTop=2200,paint,cleanup;
 const inner={style:style(),querySelector:()=>null},tint={style:{}},name={offsetHeight:400,style:style()};
 const stage={getBoundingClientRect:()=>({top:stageTop}),querySelector:()=>name};
-const wrap={style:style(),querySelector:()=>stage};
+const wrap={style:style(),querySelector:()=>stage,getAttribute:()=> 'base'};
 const panel={closest:()=>wrap,getBoundingClientRect:()=>({top:panelTop}),querySelector:s=>s==='.footer_editorial_wrap'?inner:s.includes('tint')?tint:null};
 const page={hasAttribute:()=>revealing,querySelectorAll:()=>[panel],contains:e=>e===panel};
 const context={innerHeight:800,document:{...page,readyState:'complete',addEventListener(){},querySelector:()=>null},window:{gsap:true,ScrollTrigger:true},ResizeObserver:class{observe(){}disconnect(){}},gsap:{getProperty:()=>pageY,ticker:{add:f=>paint=f,remove:()=>{}},matchMedia:()=>({add:(q,f)=>cleanup=f(),revert:()=>cleanup()})}};
@@ -18,4 +18,9 @@ revealing=true;pageY=96;stageTop=696;paint();assert.equal(name.style.values['--f
 stageTop=400;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');assert.equal(name.style.values['--footer-reveal-shade'],'0');
 name.offsetHeight=600;context.innerHeight=900;stageTop=300;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');
 context.window.JKFooter.freeze(page);panelTop=900;stageTop=1800;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');assert.equal(inner.style.values['--footer-entry-y'],undefined);
+// The case-study footer is hidden at desktop widths and needs no parallax observer or ticker.
+wrap.getAttribute=()=> 'project-mobile';
+context.ResizeObserver=class { constructor(){assert.fail('Mobile-only footer created a parallax observer');} };
+context.gsap.ticker.add=()=>assert.fail('Mobile-only footer registered a parallax ticker');
+vm.runInNewContext(fs.readFileSync('assets/js/features/footer-parallax.js','utf8'),context);
 console.log('Footer normal flow, glyph overlap, resize endpoint and navigation freeze passed.');

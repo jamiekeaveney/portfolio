@@ -34,7 +34,10 @@
       paddle=clamp(paddle||width/2,paddleWidth()/2,width-paddleWidth()/2);x=clamp(x,0,width);y=clamp(y,0,height);
     };
     const observer=new ResizeObserver(resize);observer.observe(court);resize();showState();
-    function begin(){countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
+    const board = createPongLeaderboard(root, () => {
+      if (playing && !paused) { paused = true; showState(); }
+    });
+    function begin(){board.startRound();countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
     function toggle(e){e?.preventDefault();if(!playing){begin();return;}paused=!paused;showState();if(!paused)canvas.focus({preventScroll:true});}
     start.addEventListener('click',toggle);
     start.addEventListener('keydown',e=>{if(e.key===' '&&start.tagName!=='BUTTON')toggle(e);});
@@ -79,6 +82,7 @@
           }
           if(y>height+r){
             playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';setLabel('Play again');
+            board.finishRound(score);
             x=width*.12;y=height*.3;vx=170;vy=115;
           }
         }

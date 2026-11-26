@@ -49,10 +49,12 @@
       item: item,
       link: item.querySelector("[data-scroll-next-link]")
     }))).filter((r => r.link));
-    const title = page.querySelector("h1")?.textContent.trim();
-    const index = records.findIndex((r => r.link.querySelector(".case_index_title")?.textContent.trim() === title));
-    s.next = records.length > 1 ? records[(index + 1 + records.length) % records.length] : null;
-    s.prev = records.length > 1 ? records[(index - 1 + records.length) % records.length] : null;
+    const currentPath = new URL(page.querySelector('.case_index_card[aria-current="page"]')?.href || location.href).pathname;
+    const index = records.findIndex(record => new URL(record.link.href).pathname === currentPath);
+    s.related = index < 0 ? records : records.slice(index + 1).concat(records.slice(0, index + 1));
+    const alternatives = s.related.filter(record => new URL(record.link.href).pathname !== currentPath);
+    s.next = alternatives[0];
+    s.prev = alternatives[alternatives.length - 1];
     records.forEach((r => r.item.style.display = ""));
     page.querySelectorAll("[data-case-native-nav]").forEach((a => {
       const dest = a.dataset.caseDirection === "prev" ? s.prev : s.next;
