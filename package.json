@@ -1,14 +1,15 @@
 {
-  "name": "jamie-keaveney-portfolio",
-  "version": "1.3.1",
+  "name": "portfolio-pong-scores",
   "private": true,
-  "description": "Webflow portfolio interactions and custom state styles",
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
   "scripts": {
-    "build": "node build.js",
-    "check": "node scripts/check.js"
+    "dev": "astro dev",
+    "build": "astro build",
+    "test": "node --test test/api.test.mjs"
   },
-  "devDependencies": {
-    "@csstools/css-tokenizer": "3.0.4",
-    "terser": "5.39.0"
+  "dependencies": {
+    "@astrojs/cloudflare": "13.7.0",
+    "astro": "6.4.8"
   }
 }
