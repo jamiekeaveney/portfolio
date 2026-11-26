@@ -1,4 +1,13 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const nameContext = {};
+vm.runInNewContext(fs.readFileSync('assets/js/features/error-leaderboard.js', 'utf8'), nameContext);
+for (const name of ['李小龍', 'عبد الرحمن', 'Scunthorpe', 'Lunar Fox']) {
+  assert.equal(nameContext.pongPlayerName(name), name);
+}
+assert.equal(nameContext.pongPlayerName(' Ma\u0301ire   O’Rourke '), 'Máire O’Rourke');
+for (const name of ['', 'x'.repeat(25), 'a\u202eb', 'name@example.com', 'f u c k']) {
+  assert.equal(nameContext.pongPlayerName(name), '');
+}
 let frame,lastBall,lastText,fonts=[],texts=[];
 function el(){return {style:{},events:{},setAttribute(){},addEventListener(k,f){this.events[k]=f},append(){},after(){},focus(){},setPointerCapture(){},getBoundingClientRect:()=>({left:0})};}
 const ctx={clearRect(){},setTransform(){},fillRect(){},beginPath(){},arc(x,y,r){lastBall={x,y,r}},fill(){},measureText:()=>({actualBoundingBoxLeft:0,actualBoundingBoxRight:720,actualBoundingBoxAscent:300,actualBoundingBoxDescent:0,width:720}),fillText(t,x,y){lastText={t,x,y};texts.push(t);fonts.push(this.font)}};

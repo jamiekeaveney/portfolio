@@ -6,6 +6,19 @@ const vm = require('node:vm');
 const scrollContext = {window: {}};
 vm.runInNewContext(fs.readFileSync('assets/js/core/scroll-media-motion.js', 'utf8'), scrollContext);
 const scrollMotion = scrollContext.window.JKScrollMediaMotion;
+// Moving the page or reversing the scroll must never change a given flight fraction.
+const from = {left: 70, top: 190, width: 200, height: 112.5};
+const to = {left: 150, top: 790, width: 600, height: 337.5};
+const root = {left: 70, top: 165};
+const flight = {style: {}};
+for (const progress of [0, .25, .5, 1, .5, .25, 0]) {
+  scrollMotion.place(flight, from, to, root, progress);
+  assert.deepEqual(flight.style, {
+    left: 80 * progress + 'px', top: 25 + 600 * progress + 'px',
+    width: 200 + 400 * progress + 'px', height: 112.5 + 225 * progress + 'px'
+  });
+}
+
 let positive = 0, negative = 0;
 for (let frame = 0; frame < 180; frame++) {
   positive = scrollMotion.approach(positive, 10000, 1000 / 60);

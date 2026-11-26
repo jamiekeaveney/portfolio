@@ -1,12 +1,25 @@
-/* Loaded only with the 404 game. Player names are assembled from approved words. */
+/* Keep the public handle policy identical in the 404 bundle and the score service. */
+function pongPlayerName(value) {
+  if (typeof value !== "string" || value.length > 96) return "";
+  const name = value.normalize("NFC").replace(/\p{Zs}+/gu, " ").replace(/^ | $/g, "");
+  const words = /^[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:[ '_’·・‐‑-][\p{L}\p{N}][\p{L}\p{M}\p{N}]*)*$/u;
+  if (!words.test(name) || [...name].length > 24 || /\p{Default_Ignorable_Code_Point}/u.test(name)) return "";
+
+  // Match complete words to avoid rejecting names such as Scunthorpe or Cassidy.
+  const folded = name.replace(/([a-z])([A-Z])/g, "$1 $2").normalize("NFKD")
+    .toLowerCase().replace(/\p{M}/gu, "").replace(/[013457]/g, ch => ({"0":"o", "1":"i", "3":"e", "4":"a", "5":"s", "7":"t"})[ch]);
+  const tokens = folded.split(/[^\p{L}\p{N}]+/u);
+  const blocked = /^(?:fuck(?:s|ed|er|ers|ing|head|face)?|motherfuck(?:er|ers|ing)?|shit(?:s|ty|head|heads)?|bullshit|assholes?|arseholes?|bitch(?:es)?|bastards?|cunts?|dickheads?|wankers?|nigg(?:er|ers|a|as)|faggots?|kikes?)$/;
+  if (tokens.some(token => blocked.test(token)) || blocked.test(tokens.join(""))) return "";
+  return name;
+}
+
 function createPongLeaderboard(root, pauseGame) {
   const key = "jk-pong-board-v1";
-  const firstNames = ["Amber", "Cobalt", "Copper", "Crimson", "Golden", "Indigo", "Lunar", "Neon", "Silver", "Solar", "Velvet", "Violet"];
-  const lastNames = ["Arc", "Comet", "Echo", "Finch", "Fox", "Lynx", "Orbit", "Otter", "Pixel", "Ray", "Star", "Wolf"];
   const houseScores = [
-    { name: "House I", score: 32 },
-    { name: "House II", score: 24 },
-    { name: "House III", score: 16 }
+    { name: "FrameGhost", score: 32, preset: true },
+    { name: "RasterFox", score: 24, preset: true },
+    { name: "SpliceKid", score: 16, preset: true }
   ];
   const maxRecords = 10;
   let memory = { name: "", scores: [] };
@@ -33,7 +46,11 @@ function createPongLeaderboard(root, pauseGame) {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
       });
       const response = await fetch(new URL(resource, api), options);
-      if (!response.ok) throw new Error("Scores unavailable");
+      if (!response.ok) {
+        const error = new Error("Scores unavailable");
+        if (response.status === 422) error.invalidName = true;
+        throw error;
+      }
       return await response.json();
     } finally { clearTimeout(timeout); }
   }
@@ -52,7 +69,7 @@ function createPongLeaderboard(root, pauseGame) {
   function validScores(result) {
     if (!Array.isArray(result?.scores)) throw new Error("Invalid scores");
     return result.scores.slice(0, maxRecords).filter(
-      row => row && validName(row.name) && Number.isSafeInteger(row.score) && row.score > 0 && row.score <= 9999
+      row => row && pongPlayerName(row.name) && Number.isSafeInteger(row.score) && row.score > 0 && row.score <= 9999
     );
   }
 
@@ -73,12 +90,6 @@ function createPongLeaderboard(root, pauseGame) {
     }
   }
 
-  function validName(name) {
-    if (typeof name !== "string") return false;
-    const words = name.split(" ");
-    return words.length === 2 && firstNames.includes(words[0]) && lastNames.includes(words[1]);
-  }
-
   function ordered(scores) {
     return scores.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   }
@@ -93,8 +104,8 @@ function createPongLeaderboard(root, pauseGame) {
       const saved = JSON.parse(raw);
       const scores = Array.isArray(saved.scores) ? saved.scores.slice(0, maxRecords) : [];
       memory = {
-        name: validName(saved.name) ? saved.name : "",
-        scores: ordered(scores.filter(row => row && validName(row.name) && Number.isSafeInteger(row.score) && row.score > 0))
+        name: pongPlayerName(saved.name),
+        scores: ordered(scores.filter(row => row && pongPlayerName(row.name) && Number.isSafeInteger(row.score) && row.score > 0))
       };
     } catch {
       // Storage may be disabled, full or contain data from an incomplete write.
@@ -102,45 +113,81 @@ function createPongLeaderboard(root, pauseGame) {
     return memory;
   }
 
-  const openButton = document.createElement("button");
-  openButton.type = "button";
-  openButton.className = "pong_scores_toggle";
-  openButton.textContent = "High scores";
+  const buttonSkin = root.querySelector(":scope > a.button_wrap > .button_main");
+  const buttonTemplate = document.createElement("template");
+  if (buttonSkin) {
+    buttonTemplate.content.append(buttonSkin.cloneNode(true));
+    // The shared link component uses divs. Preserve its classes and SVGs with phrasing content inside buttons.
+    for (const div of buttonTemplate.content.querySelectorAll("div")) {
+      const span = document.createElement("span");
+      for (const attribute of div.attributes) span.setAttribute(attribute.name, attribute.value);
+      span.append(...div.childNodes);
+      div.replaceWith(span);
+    }
+  }
+
+  function gameButton(className, label, type = "button") {
+    const button = document.createElement("button");
+    button.className = className + " button_wrap";
+    button.type = type;
+    button.setAttribute("data-trigger", "hover focus");
+    button.setAttribute("data-wf--button--variant", "button-small");
+    button.append(buttonTemplate.content.cloneNode(true));
+    setButtonLabel(button, label);
+    return button;
+  }
+
+  function setButtonLabel(button, label) {
+    const copies = button.querySelectorAll(".button_text");
+    if (copies.length) copies.forEach(copy => { copy.textContent = label; });
+    else button.textContent = label;
+  }
+
+  const openButton = gameButton("pong_scores_toggle", "High scores");
   openButton.setAttribute("aria-haspopup", "dialog");
+  openButton.setAttribute("aria-controls", "pong-scores");
   const dialog = document.createElement("dialog");
+  dialog.id = "pong-scores";
   dialog.className = "pong_scores_dialog";
   dialog.setAttribute("aria-labelledby", "pong-scores-title");
   dialog.innerHTML = `
-    <header class="pong_scores_header">
-      <h2 id="pong-scores-title">High scores</h2>
-      <button class="pong_scores_close" type="button" aria-label="Close high scores" autofocus>Close</button>
-    </header>
+    <header class="pong_scores_header"><h2 id="pong-scores-title">High scores</h2></header>
     <div class="pong_scores_labels"><span>Player</span><span>Returns</span></div>
     <ol class="pong_scores_list"></ol>
     <p class="pong_scores_note"></p>
     <form class="pong_scores_form" hidden>
       <p class="pong_scores_result"></p>
-      <fieldset><legend>Choose a player name</legend>
-        <select aria-label="First part of player name"></select>
-        <select aria-label="Second part of player name"></select>
-      </fieldset>
-      <button class="pong_scores_save" type="submit">Save score</button>
+      <label for="pong-player-name">Player name</label>
+      <input id="pong-player-name" name="nickname" type="text" dir="auto" maxlength="96"
+        autocomplete="nickname" spellcheck="false" required aria-describedby="pong-name-help pong-name-error">
+      <p class="pong_scores_help" id="pong-name-help"></p>
+      <p class="pong_scores_error" id="pong-name-error" aria-live="polite"></p>
     </form>
     <p class="pong_scores_feedback" role="status"></p>
   `;
-  root.append(openButton, dialog);
+  const closeButton = gameButton("pong_scores_close", "Close");
+  closeButton.setAttribute("aria-label", "Close high scores");
+  closeButton.autofocus = true;
+  dialog.querySelector("header").append(closeButton);
   const form = dialog.querySelector("form");
+  form.append(gameButton("pong_scores_save", "Save score", "submit"));
+  const input = form.elements.nickname;
   const feedback = dialog.querySelector(".pong_scores_feedback");
-  const [firstSelect, lastSelect] = form.querySelectorAll("select");
-  function fill(select, names) {
-    for (const name of names) {
-      const option = document.createElement("option");
-      option.value = option.textContent = name;
-      select.append(option);
-    }
+  const nameError = dialog.querySelector(".pong_scores_error");
+  dialog.querySelector(".pong_scores_help").textContent = api
+    ? "Up to 24 characters. This name will be public." : "Up to 24 characters.";
+  root.append(openButton, dialog);
+
+  function askForName(message) {
+    input.setAttribute("aria-invalid", "true");
+    nameError.textContent = message;
+    input.focus();
   }
-  fill(firstSelect, firstNames);
-  fill(lastSelect, lastNames);
+
+  input.addEventListener("input", () => {
+    input.removeAttribute("aria-invalid");
+    nameError.textContent = "";
+  });
 
   function render() {
     const { scores } = read();
@@ -151,7 +198,15 @@ function createPongLeaderboard(root, pauseGame) {
       const entry = document.createElement("li");
       const player = document.createElement("span");
       const score = document.createElement("span");
-      player.textContent = row.name;
+      const name = document.createElement("bdi");
+      name.textContent = row.name;
+      player.append(name);
+      if (row.preset) {
+        const label = document.createElement("small");
+        label.className = "pong_scores_preset";
+        label.textContent = "Preset";
+        player.append(label);
+      }
       score.textContent = String(row.score).padStart(2, "0");
       entry.append(player, score);
       list.append(entry);
@@ -160,7 +215,7 @@ function createPongLeaderboard(root, pauseGame) {
       ? (storageAvailable ? "Showing scores on this device." : "Showing scores for this visit.")
       : "Player scores are shared across the portfolio.";
     const note = loadingShared ? "Loading shared scores…" : scope;
-    dialog.querySelector(".pong_scores_note").textContent = "House scores are preset targets. " + note;
+    dialog.querySelector(".pong_scores_note").textContent = note;
     form.hidden = !pendingScore || submitted;
     dialog.querySelector(".pong_scores_result").textContent =
       pendingScore + (pendingScore === 1 ? " return" : " returns") + " this round";
@@ -169,8 +224,9 @@ function createPongLeaderboard(root, pauseGame) {
   function open() {
     if (dialog.open) return;
     pauseGame();
-    const saved = read().name;
-    if (saved) [firstSelect.value, lastSelect.value] = saved.split(" ");
+    input.value = read().name;
+    input.removeAttribute("aria-invalid");
+    nameError.textContent = "";
     feedback.textContent = "";
     render();
     dialog.showModal();
@@ -178,12 +234,16 @@ function createPongLeaderboard(root, pauseGame) {
   }
 
   openButton.addEventListener("click", open);
-  dialog.querySelector(".pong_scores_close").addEventListener("click", () => dialog.close());
+  closeButton.addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", () => openButton.focus({preventScroll: true}));
   form.addEventListener("submit", async event => {
     event.preventDefault();
-    const name = firstSelect.value + " " + lastSelect.value;
-    if (submitted || !pendingScore || !validName(name)) return;
+    if (submitted || !pendingScore) return;
+    const name = pongPlayerName(input.value);
+    if (!name) {
+      askForName("Choose another name, using up to 24 letters, numbers, spaces, apostrophes, hyphens or underscores.");
+      return;
+    }
     submitted = true;
     const score = pendingScore;
     const round = roundNumber;
@@ -201,11 +261,7 @@ function createPongLeaderboard(root, pauseGame) {
       catch { storageAvailable = false; }
       render();
     }
-    if (navigator.locks) {
-      try { await navigator.locks.request(key, save); }
-      catch { save(); }
-    } else save();
-
+    let deviceFallback = false;
     try {
       const token = await ticket;
       if (!token) throw new Error("Round unavailable");
@@ -214,21 +270,35 @@ function createPongLeaderboard(root, pauseGame) {
       loadingShared = false;
       sharedScores = result;
       if (round === roundNumber) feedback.textContent = "Score submitted for " + name + ".";
-    } catch {
+    } catch (error) {
+      if (error.invalidName) {
+        if (round === roundNumber) {
+          submitted = false;
+          feedback.textContent = "";
+          render();
+          askForName("Choose another player name to post this score.");
+        }
+        return;
+      }
       ++sharedRevision;
       loadingShared = false;
       sharedScores = null;
-      if (round === roundNumber) {
+      deviceFallback = true;
+    }
+    if (navigator.locks) {
+      try { await navigator.locks.request(key, save); }
+      catch { save(); }
+    } else save();
+    if (round === roundNumber) {
+      if (deviceFallback) {
         const scope = storageAvailable ? "on this device" : "for this visit";
         const ranked = memory.scores.some(row => row.name === name);
         feedback.textContent = (api ? "Shared scores unavailable. " : "") +
           (ranked ? "Your personal best is saved " + scope + "." : "This round finished outside the top ten " + scope + ".");
       }
-    }
-    if (round === roundNumber) {
-      openButton.textContent = "High scores";
+      setButtonLabel(openButton, "High scores");
       render();
-      if (dialog.open) dialog.querySelector(".pong_scores_close").focus();
+      if (dialog.open) closeButton.focus();
     }
   });
 
@@ -237,7 +307,7 @@ function createPongLeaderboard(root, pauseGame) {
       ++roundNumber;
       pendingScore = 0;
       submitted = false;
-      openButton.textContent = "High scores";
+      setButtonLabel(openButton, "High scores");
       roundTicket = api
         ? Promise.resolve().then(() => request("rounds", {player: player()})).then(result => result.token).catch(() => null)
         : null;
@@ -246,7 +316,7 @@ function createPongLeaderboard(root, pauseGame) {
       pendingScore = score;
       submitted = false;
       if (score > 0) {
-        openButton.textContent = "Save score";
+        setButtonLabel(openButton, "Save score");
         open();
       }
     }

@@ -302,28 +302,24 @@
         a.dataset.anchorAlign = "start";
         a.setAttribute("aria-label", "Explore the page");
       }));
-      root.querySelectorAll("[data-accordion-toggle]").forEach((button => {
-        button.addEventListener("keydown", (e => {
-          if (e.key === " ") {
-            e.preventDefault();
-            button.click();
-          }
-        }), {
-          signal: abort.signal
-        });
-        button.addEventListener("click", (e => {
-          e.preventDefault();
-          const item = button.closest("[data-accordion-status]"), group = item.closest("[data-accordion-css-init]"), open = item.dataset.accordionStatus !== "active";
-          if (group.dataset.accordionCloseSiblings === "true") group.querySelectorAll("[data-accordion-status]").forEach((s => {
-            s.dataset.accordionStatus = "not-active";
-            s.querySelector("[data-accordion-toggle]").setAttribute("aria-expanded", "false");
-          }));
+      root.querySelectorAll("[data-accordion-css-init]").forEach(group => {
+        function expand(button, open) {
+          const item = button.closest("[data-accordion-status]");
+          const panel = item.querySelector("#" + CSS.escape(button.getAttribute("aria-controls")));
           item.dataset.accordionStatus = open ? "active" : "not-active";
           button.setAttribute("aria-expanded", String(open));
-        }), {
-          signal: abort.signal
-        });
-      }));
+          if (panel) panel.inert = !open;
+        }
+        group.addEventListener("click", event => {
+          const button = event.target.closest("[data-accordion-toggle]");
+          if (!button || button.closest("[data-accordion-css-init]") !== group) return;
+          const open = button.getAttribute("aria-expanded") !== "true";
+          if (open && group.dataset.accordionCloseSiblings === "true") {
+            group.querySelectorAll('[data-accordion-toggle][aria-expanded="true"]').forEach(other => expand(other, false));
+          }
+          expand(button, open);
+        }, {signal: abort.signal});
+      });
       root.querySelectorAll("[data-step-timeline-init]").forEach(initStepByStepTimeline);
       mm.add("(prefers-reduced-motion: no-preference)", (() => {
         const ctx = gsap.context((() => {

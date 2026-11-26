@@ -263,6 +263,8 @@ const initWorkSlider = (() => {
       if (window.JKWork === api) delete window.JKWork;
       killSlide();
       killList();
+      listLeft.replaceChildren(...listSources.left);
+      listRight.replaceChildren(...listSources.right);
       clearTimeout(wheelIdle);
       cancelAnimationFrame(resizeRaf);
       abort.abort();
@@ -486,19 +488,33 @@ const initWorkSlider = (() => {
         item.style.visibility = index === activeIdx ? "visible" : "hidden";
       });
     }
+    // Keep the CMS collections available when changing views or remounting this page.
+    const listSources = { left: [...listLeft.children], right: [...listRight.children] };
+    const listTemplates = {
+      left: $$(".w-dyn-item > .work_list_row", listLeft),
+      right: $$(".w-dyn-item > .work_list_row", listRight)
+    };
     var lDrag = false;
     var lLastY = 0, lStartY = 0, lStartX = 0, lMoved = false;
     var leftRows = null;
     var rightRows = null;
     var prevLeftLabel = null;
     var prevRightLabel = null;
-    function escapeText(value) {
-      const text = document.createElement("span");
-      text.textContent = value;
-      return text.innerHTML;
-    }
-    function row(side, index, label) {
-      return '<div class="work_list_row work_list_row_' + side + '" data-work-row-' + side + '="' + index + '">' + '<span class="work_list_label">' + escapeText(label) + "</span>" + "</div>";
+    function row(side, index, galleryText) {
+      const source = listTemplates[side][index];
+      const element = source?.cloneNode(true) || document.createElement("div");
+      let label = element.querySelector(".work_list_label");
+      if (!label) {
+        // Earlier Webflow collections contain bare CMS text, without a label wrapper.
+        label = document.createElement("span");
+        label.className = "work_list_label";
+        label.append(...element.childNodes);
+        if (!label.textContent) label.textContent = galleryText;
+        element.append(label);
+      }
+      element.classList.add("work_list_row", "work_list_row_" + side);
+      element.setAttribute("data-work-row-" + side, index);
+      return element.outerHTML;
     }
     function repeat(string, amount) {
       var out = "";

@@ -43,7 +43,7 @@
       const ready = () => {
         if (!abort.signal.aborted && entry.revision === revision && entry.playing) {
           if (video.parentElement?.classList.contains('media_preview')) video.setAttribute('data-preview-frame', '');
-          video.closest('.home_card_thumbnail,.work_card_poster')?.style.setProperty('--project-video-ready', '1');
+          video.closest('.work_card_poster')?.style.setProperty('--project-video-ready', '1');
         }
       };
       video.play().then(() => {
