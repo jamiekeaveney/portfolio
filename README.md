@@ -94,4 +94,4 @@ Light secondary text uses neutral RGB values, with separate lighter large labels
 
 The 404 uses measured glyph bounds and a 12-column control layout. Pong sets its base speed from the court height (455–780 CSS pixels per second). Each return increases ball speed as a function of the score and active rally time, approaching a cap of 2.75 times the base speed.
 
-The leaderboard ranks up to ten players against ten fictional starting scores. Submitted scores win ties with starting scores. Short displays scroll the list inside the dialog. The score service keeps the best result per player and the client keeps a local fallback. The dialog closes with its Close control, Escape or a press on the backdrop.
+The leaderboard ranks up to ten players against ten fictional starting scores. A submitted alias replaces its fictional namesake, and submitted scores win ties with starting scores. Short displays scroll the list inside the dialog. The score service keeps the best result per player and the client keeps a local fallback. The dialog closes with its Close control, Escape or a press on the backdrop.

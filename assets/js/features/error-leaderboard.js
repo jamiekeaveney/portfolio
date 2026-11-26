@@ -14,6 +14,13 @@ function pongPlayerName(value) {
   return name;
 }
 
+function rankPongScores(players, startingScores, limit) {
+  const playerNames = new Set(players.map(player => pongPlayerName(player.name).toLowerCase()));
+  const availableSeeds = startingScores.filter(seed => !playerNames.has(seed.name.toLowerCase()));
+  // A stable sort preserves the server's player order and gives genuine scores priority on ties.
+  return [...players, ...availableSeeds].sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
 // The 404 controls reuse the same two-line mask and CSS trigger as Webflow’s text links.
 function setPongActionLabel(button, label) {
   let mask = button.querySelector(".button_text_mask");
@@ -197,10 +204,7 @@ function createPongLeaderboard(root, pauseGame) {
 
   function render() {
     const { scores } = read();
-    // Stable sorting keeps server-ranked players ahead of starting scores on a tie.
-    const rows = [...(sharedScores ?? scores), ...startingScores]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, maxRecords);
+    const rows = rankPongScores(sharedScores ?? scores, startingScores, maxRecords);
     const list = dialog.querySelector("ol");
     list.replaceChildren();
     for (const row of rows) {

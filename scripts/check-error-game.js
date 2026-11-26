@@ -8,6 +8,13 @@ assert.equal(nameContext.pongPlayerName(' Ma\u0301ire   O’Rourke '), 'Máire O
 for (const name of ['', 'x'.repeat(25), 'a\u202eb', 'name@example.com', 'f u c k']) {
   assert.equal(nameContext.pongPlayerName(name), '');
 }
+const startingScores = [{ name: "Nina Walsh", score: 32 }, { name: "Sam Patel", score: 25 }];
+const matchingPlayer = { name: "nina WALSH", score: 2 };
+const tiedPlayer = { name: "Little Jim", score: 25 };
+const ranked = nameContext.rankPongScores([matchingPlayer, tiedPlayer], startingScores, 10);
+assert.deepEqual(Array.from(ranked, row => row.name), ["Little Jim", "Sam Patel", "nina WALSH"]);
+assert.equal(ranked[2].score, 2, "Submitting under a starting alias keeps the real result");
+assert.equal(nameContext.rankPongScores([matchingPlayer, tiedPlayer], startingScores, 2).length, 2);
 let frame,lastBall,lastText,fonts=[],texts=[];
 function el(){return {style:{},events:{},setAttribute(){},addEventListener(k,f){this.events[k]=f},append(){},after(){},focus(){},setPointerCapture(){},getBoundingClientRect:()=>({left:0})};}
 const ctx={clearRect(){},setTransform(){},fillRect(){},beginPath(){},arc(x,y,r){lastBall={x,y,r}},fill(){},measureText:()=>({actualBoundingBoxLeft:0,actualBoundingBoxRight:720,actualBoundingBoxAscent:300,actualBoundingBoxDescent:0,width:720}),fillText(t,x,y){lastText={t,x,y};texts.push(t);fonts.push(this.font)}};
