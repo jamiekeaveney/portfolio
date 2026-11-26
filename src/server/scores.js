@@ -12,7 +12,7 @@ function response(status, value, origin, headers = {}) {
   return new Response(value === null ? null : JSON.stringify(value), {
     status,
     headers: {
-      "Content-Type": "application/json", "X-Content-Type-Options": "nosniff",
+      "Content-Type": "application/json", "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex",
       "Cache-Control": "no-store", Vary: "Origin",
       ...(origin ? { "Access-Control-Allow-Origin": origin } : {}), ...headers
     }
@@ -101,7 +101,15 @@ export default {
     const origin = request.headers.get("Origin");
     const path = resourcePath || new URL(request.url).pathname;
     if (!["/v1/scores","/v1/rounds"].includes(path)) return response(404,{error:"Not found."},null);
-    if (!origins.has(origin) && !(origin === null && request.method === "GET")) return response(403,{error:"Unsupported origin."},null);
+    // Browsers can omit Origin on same-origin requests. Fetch Metadata is set by the browser.
+    // An explicit foreign or opaque origin must still pass the same allowlist as a preflight.
+    const sameSiteRequest = origin === null &&
+      request.headers.get("Sec-Fetch-Site") === "same-origin" &&
+      origins.has(new URL(request.url).origin);
+    const publicRead = origin === null && request.method === "GET";
+    if (!origins.has(origin) && !sameSiteRequest && !publicRead) {
+      return response(403, {error:"Unsupported origin."}, null);
+    }
     if (request.method === "OPTIONS") return response(204,null,origin,{
       "Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type",
       "Access-Control-Max-Age":"86400"
