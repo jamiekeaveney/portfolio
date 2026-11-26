@@ -14,6 +14,7 @@ function createPongLeaderboard(root, pauseGame) {
   let pendingScore = 0;
   let submitted = false;
   let sharedScores = null;
+  let loadingShared = false;
   let sharedRevision = 0;
   let roundTicket = null;
   let roundNumber = 0;
@@ -24,9 +25,10 @@ function createPongLeaderboard(root, pauseGame) {
 
   async function request(resource, data) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4500);
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
       const options = { credentials: "omit", signal: controller.signal };
+      if (!data) options.cache = "no-store";
       if (data) Object.assign(options, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
       });
@@ -57,13 +59,18 @@ function createPongLeaderboard(root, pauseGame) {
   async function refreshShared() {
     if (!api) return;
     const revision = ++sharedRevision;
+    loadingShared = true;
+    if (dialog.open) render();
     try {
       const scores = validScores(await request("scores"));
       if (revision === sharedRevision) sharedScores = scores;
     } catch {
       if (revision === sharedRevision) sharedScores = null;
     }
-    if (dialog.open) render();
+    if (revision === sharedRevision) {
+      loadingShared = false;
+      if (dialog.open) render();
+    }
   }
 
   function validName(name) {
@@ -152,7 +159,8 @@ function createPongLeaderboard(root, pauseGame) {
     const scope = sharedScores === null
       ? (storageAvailable ? "Showing scores on this device." : "Showing scores for this visit.")
       : "Player scores are shared across the portfolio.";
-    dialog.querySelector(".pong_scores_note").textContent = "House scores are preset targets. " + scope;
+    const note = loadingShared ? "Loading shared scores…" : scope;
+    dialog.querySelector(".pong_scores_note").textContent = "House scores are preset targets. " + note;
     form.hidden = !pendingScore || submitted;
     dialog.querySelector(".pong_scores_result").textContent =
       pendingScore + (pendingScore === 1 ? " return" : " returns") + " this round";
@@ -203,10 +211,12 @@ function createPongLeaderboard(root, pauseGame) {
       if (!token) throw new Error("Round unavailable");
       const result = validScores(await request("scores", {player: player(), token, score, name}));
       ++sharedRevision;
+      loadingShared = false;
       sharedScores = result;
       if (round === roundNumber) feedback.textContent = "Score submitted for " + name + ".";
     } catch {
       ++sharedRevision;
+      loadingShared = false;
       sharedScores = null;
       if (round === roundNumber) {
         const scope = storageAvailable ? "on this device" : "for this visit";
