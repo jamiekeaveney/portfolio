@@ -528,6 +528,9 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   .nav_menu { color: #fff !important; }
   .nav_layout { mix-blend-mode: difference; }
   .nav_mobile_panel { transition-delay: var(--nav-panel-delay, .45s); }
+  .nav_wrap:has(.nav_mobile_wrap :focus-visible) :is(.nav_mobile_panel, .nav_mobile_row, .nav_mobile_details, .nav_mobile_group) {
+    transition: none;
+  }
   .nav_mobile_wrap {
     min-height: 0;
     height: auto;
