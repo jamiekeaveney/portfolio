@@ -14,8 +14,8 @@
         frames: ['6aff6c697439e11a3cca1966_composite-before.webp','6aff6c6a3e55f9821757b7e8_composite-after.webp']
       }
     };
-    page.querySelectorAll('.services_video_embed video[data-src]').forEach(video => {
-      const service = /\/services\/(colour|composite)\.mp4(?:[?#]|$)/.exec(video.dataset.src)?.[1];
+    page.querySelectorAll('.services_thumbnail video, .services_video_wrap video').forEach(video => {
+      const service = /\/services\/(colour|composite)\.mp4(?:[?#]|$)/.exec(portfolioPreviewSource(video))?.[1];
       if (!service) return;
       const comparison = comparisons[service];
       const box = video.parentElement;

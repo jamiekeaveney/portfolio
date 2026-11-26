@@ -30,7 +30,7 @@ The empty CSS/JS placeholders and checked-in `node_modules` from the previous st
 
 Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, SplitText and CustomEase. Webflow loads those before the custom footer. Barba and Lenis are pinned in the footer snippet. The app includes the Dublin clock and the site’s shared interaction scripts. Font smoothing is in the shared CSS.
 
-Runtime/CSS embeds in Global, Home, Projects and About have been migrated. CMS-bound video markup stays in Webflow because it needs each item's field bindings. Those markup embeds are not duplicate script owners.
+The native Media Preview component binds a responsive poster, film slug and optional project slug in Webflow. Its shared playback helper resolves the Bunny video URL when playback is requested. Service previews use the service slug, and project previews use the referenced project and film slugs.
 
 Edit layout and Button variants in Webflow. Footer Navigation, Copy Email Footer and Footer Back To Top share the Button component. The native variants own the label and arrow motion and interaction colours. Global Styles supplies the hover, keyboard and status values that those styles consume.
 

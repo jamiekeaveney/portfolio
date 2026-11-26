@@ -53,8 +53,10 @@
     const index = records.findIndex(record => new URL(record.link.href).pathname === currentPath);
     s.related = index < 0 ? records : records.slice(index + 1).concat(records.slice(0, index + 1));
     const alternatives = s.related.filter(record => new URL(record.link.href).pathname !== currentPath);
-    s.next = alternatives[0];
-    s.prev = alternatives[alternatives.length - 1];
+    if (index >= 0) {
+      s.next = alternatives[0];
+      s.prev = alternatives[alternatives.length - 1];
+    }
     records.forEach((r => r.item.style.display = ""));
     page.querySelectorAll("[data-case-native-nav]").forEach((a => {
       const dest = a.dataset.caseDirection === "prev" ? s.prev : s.next;

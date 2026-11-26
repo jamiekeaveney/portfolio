@@ -35,13 +35,14 @@
       if (!play) { video.pause(); return; }
       const mobilePreview = video.dataset.previewSource && matchMedia('(max-width: 767px)').matches
         ? video.closest('[data-preview-small]')?.dataset.previewSmall : '';
-      const source = mobilePreview || video.dataset.previewSource || video.dataset.src;
+      const source = mobilePreview || video.dataset.previewSource || portfolioPreviewSource(video);
       if (!video.getAttribute('src') && source) {
         video.src = source;
         video.load();
       }
       const ready = () => {
         if (!abort.signal.aborted && entry.revision === revision && entry.playing) {
+          if (video.parentElement?.classList.contains('media_preview')) video.setAttribute('data-preview-frame', '');
           video.closest('.home_card_thumbnail,.work_card_poster')?.style.setProperty('--project-video-ready', '1');
         }
       };

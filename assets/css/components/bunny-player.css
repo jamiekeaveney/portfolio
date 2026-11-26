@@ -158,3 +158,6 @@
   content: "Close video"; position: absolute; top: 1rem; right: 1rem;
   background: #151515; color: white; padding: .5em .8em; outline: 2px solid white;
 }
+
+/* Show the responsive CMS poster until the actual first playback frame is ready. */
+.media_preview > video:not([data-preview-frame]) { opacity: 0; }

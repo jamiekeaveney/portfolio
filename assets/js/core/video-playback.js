@@ -1,3 +1,20 @@
+// CMS images stay responsive in the Designer. Film requests start on playback intent.
+function portfolioPreviewSource(video) {
+  if (!video) return '';
+  const explicit = video.getAttribute('data-src') || video.getAttribute('src');
+  if (explicit) return explicit;
+  const slug = video.dataset.mediaSlug;
+  if (!slug) return video.querySelector('source')?.getAttribute('src') || '';
+  const project = video.dataset.mediaProject;
+  const folder = project ? 'projects/' + encodeURIComponent(project) : 'services';
+  return 'https://jamie-keaveney-portfolio-videos.b-cdn.net/' + folder + '/' + encodeURIComponent(slug) + '.mp4';
+}
+function portfolioPreviewPoster(video) {
+  if (!video) return '';
+  const image = video.parentElement?.querySelector('.media_preview_poster');
+  return video.getAttribute('poster') || image?.currentSrc || image?.getAttribute('src') || '';
+}
+
 // Keep native playback synchronous with the activating gesture. Only HLS browsers
 // that need MediaSource download the player adapter.
 let hlsLibrary;

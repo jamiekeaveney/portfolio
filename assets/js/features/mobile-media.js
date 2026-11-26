@@ -11,11 +11,11 @@
   function open(source,trigger,overrideURL) {
     if(!mobile.matches||!source)return;
     close(true);
-    const url=overrideURL||source.currentSrc||source.getAttribute('data-src')||source.src;
+    const url=overrideURL||source.currentSrc||portfolioPreviewSource(source);
     if(!url)return;
     const dialog=document.createElement('dialog'),video=document.createElement('video');
     dialog.className='mobile_media';video.className='mobile_media_video';dialog.setAttribute('aria-label','Video player');
-    video.controls=true;video.playsInline=true;video.poster=source.poster||'';video.preload='metadata';
+    video.controls=true;video.playsInline=true;video.poster=portfolioPreviewPoster(source);video.preload='metadata';
     video.style.aspectRatio=(source.videoWidth||16)+' / '+(source.videoHeight||9);
     dialog.append(video);document.body.append(dialog);
     let closing=false,gesture=null,suppressClick=false;

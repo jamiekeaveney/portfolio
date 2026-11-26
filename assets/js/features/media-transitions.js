@@ -369,7 +369,8 @@
       video.className = "case_index_video";
       video.muted = true;
       video.playsInline = true;
-      if (!video.getAttribute("src")) video.src = video.dataset.src || "";
+      const previewSource = portfolioPreviewSource(video);
+      if (!video.getAttribute("src") && previewSource) video.src = previewSource;
       video.preload = "auto";
       const matchTime = () => {
         try {

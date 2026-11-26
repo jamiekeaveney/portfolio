@@ -14,10 +14,28 @@ JKProject.register((s => {
     navHideStart: "top 85%"
   };
   const wrap = s.page.querySelector("[data-scroll-next-wrap]"), source = s.page.querySelector("[data-case-next-source]");
-  if (!wrap || !source || !s.next) return;
+  if (!wrap || !source) return;
   const grid = source.querySelector(".case_index_grid");
-  const items = [...grid.children];
+  const items = [...(grid?.children || [])];
   const featured = s.related.slice(0, SETTINGS.visibleProjects);
+  if (!s.next) {
+    // Without a CMS neighbour, keep ordinary links and omit the automatic handoff.
+    const status = wrap.querySelector(".case_index_status");
+    const archive = document.createElement("a");
+    archive.className = "case_index_archive_link";
+    archive.href = "/projects";
+    archive.textContent = "View all projects";
+    status?.after(archive);
+    const others = featured.filter(record => !record.link.matches('[aria-current="page"]'));
+    grid?.replaceChildren(...others.map(record => record.item));
+    s.page.setAttribute("data-case-archive", "");
+    s.cleanups.push(() => {
+      s.page.removeAttribute("data-case-archive");
+      archive.remove();
+      grid?.replaceChildren(...items);
+    });
+    return;
+  }
   const cards = featured.map(record => record.link);
   const compact = !matchMedia("(min-width:62rem)").matches;
   grid.replaceChildren(...featured.map(record => record.item));
@@ -133,10 +151,10 @@ JKProject.register((s => {
       if (!r.ok) throw Error(r.status);
       return r.text();
     })).then((html => {
-      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured video") || doc.querySelector(".case_media_wrap video");
+      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured .media_preview video") || doc.querySelector(".case_featured video") || doc.querySelector(".case_media_wrap video");
       return v ? {
-        src: v.getAttribute("data-src") || v.getAttribute("src"),
-        poster: v.getAttribute("poster")
+        src: portfolioPreviewSource(v),
+        poster: portfolioPreviewPoster(v)
       } : null;
     })).catch((() => null)));
     return cache.get(card.href).then((data => {

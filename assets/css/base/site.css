@@ -394,6 +394,11 @@ body:has([data-mini-showreel-status="active"]) .progressive_blur { visibility:hi
 }
 @media(prefers-reduced-motion:reduce){[data-reveal-effect="inline-media"]{transform:none!important;opacity:1!important;}}
 
+/* A CMS entry outside the rendered list links to the archive without a scroll handoff. */
+[data-case-archive] .case_next_wrap,[data-case-archive] .case_next_sticky{min-height:0;position:relative;}
+[data-case-archive] .case_index_status,[data-case-archive] .case_nav_controls{display:none;}
+.case_index_archive_link{display:table;margin-block:var(--site--gutter,1.5rem);color:inherit;text-decoration:underline;text-underline-offset:.2em;}
+
 /* Shared responsive token and component state overrides. Geometry is native. */
 @media(max-width:61.9375rem){
  .case_next_wrap:has(.case_index_next_link){padding-bottom:clamp(8rem,25svh,14rem);}
