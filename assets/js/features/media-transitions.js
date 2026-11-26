@@ -316,6 +316,10 @@
       scale: 1,
       opacity: 1
     });
+    // The cloned preview has its own poster beneath the cover. Remove that layer
+    // before bringing the incoming film behind the cover for the crossfade.
+    const preview = oldMedia.querySelector(".media_preview");
+    if (preview && image && !preview.contains(image)) preview.remove();
     oldMedia.querySelectorAll("video").forEach((v => v.remove()));
     const heldFrame = source.frame;
     if (heldFrame) {

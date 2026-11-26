@@ -60,7 +60,6 @@
 }
 
 .nav_contact { color: var(--_theme---color--text-muted); }
-.nav_contact:has(.button_wrap:focus-visible) { color: var(--_theme---color--foreground); }
 
 .page_theme_light {
   --nav-dot-active-offset: .75rem;
@@ -113,7 +112,6 @@
 }
 @media (hover: hover) {
   .nav_brand:hover { --nav-logo-offset: calc(-100% - .12em); }
-  .nav_contact:has(.button_wrap:hover) { color: var(--_theme---color--foreground); }
 }
 @media (hover: hover) and (pointer: fine) {
   .theme_toggle_wrap { --nav-dot-offset: .375rem; --nav-theme-track: transparent; }

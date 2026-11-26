@@ -14,12 +14,39 @@ function pongPlayerName(value) {
   return name;
 }
 
+// The 404 controls reuse the same two-line mask and CSS trigger as Webflow’s text links.
+function setPongActionLabel(button, label) {
+  let mask = button.querySelector(".button_text_mask");
+  if (!mask) {
+    button.classList.add("pong_action");
+    button.setAttribute("data-trigger", "hover focus");
+    mask = document.createElement("span");
+    mask.className = "button_text_mask";
+    const text = document.createElement("span");
+    text.className = "button_text";
+    const alternate = text.cloneNode();
+    alternate.classList.add("is-alternate-text");
+    alternate.setAttribute("aria-hidden", "true");
+    mask.append(text, alternate);
+    button.replaceChildren(mask);
+  }
+  if (mask.firstChild.textContent === label) return;
+  for (const text of mask.children) text.textContent = label;
+}
+
 function createPongLeaderboard(root, pauseGame) {
   const key = "jk-pong-board-v1";
-  const houseScores = [
-    { name: "FrameGhost", score: 32, preset: true },
-    { name: "RasterFox", score: 24, preset: true },
-    { name: "SpliceKid", score: 16, preset: true }
+  const startingScores = [
+    { name: "Nina Walsh", score: 32 },
+    { name: "Sam Patel", score: 25 },
+    { name: "Marta Silva", score: 20 },
+    { name: "Eli Brooks", score: 18 },
+    { name: "Aoife Byrne", score: 15 },
+    { name: "Theo Park", score: 12 },
+    { name: "Lucy Bell", score: 10 },
+    { name: "Ben O’Shea", score: 8 },
+    { name: "Maya Chen", score: 6 },
+    { name: "Tom Ellis", score: 4 }
   ];
   const maxRecords = 10;
   let memory = { name: "", scores: [] };
@@ -113,34 +140,12 @@ function createPongLeaderboard(root, pauseGame) {
     return memory;
   }
 
-  const buttonSkin = root.querySelector(":scope > a.button_wrap > .button_main");
-  const buttonTemplate = document.createElement("template");
-  if (buttonSkin) {
-    buttonTemplate.content.append(buttonSkin.cloneNode(true));
-    // The shared link component uses divs. Preserve its classes and SVGs with phrasing content inside buttons.
-    for (const div of buttonTemplate.content.querySelectorAll("div")) {
-      const span = document.createElement("span");
-      for (const attribute of div.attributes) span.setAttribute(attribute.name, attribute.value);
-      span.append(...div.childNodes);
-      div.replaceWith(span);
-    }
-  }
-
   function gameButton(className, label, type = "button") {
     const button = document.createElement("button");
-    button.className = className + " button_wrap";
+    button.className = className;
     button.type = type;
-    button.setAttribute("data-trigger", "hover focus");
-    button.setAttribute("data-wf--button--variant", "button-small");
-    button.append(buttonTemplate.content.cloneNode(true));
-    setButtonLabel(button, label);
+    setPongActionLabel(button, label);
     return button;
-  }
-
-  function setButtonLabel(button, label) {
-    const copies = button.querySelectorAll(".button_text");
-    if (copies.length) copies.forEach(copy => { copy.textContent = label; });
-    else button.textContent = label;
   }
 
   const openButton = gameButton("pong_scores_toggle", "High scores");
@@ -149,11 +154,12 @@ function createPongLeaderboard(root, pauseGame) {
   const dialog = document.createElement("dialog");
   dialog.id = "pong-scores";
   dialog.className = "pong_scores_dialog";
+  dialog.setAttribute("closedby", "any");
   dialog.setAttribute("aria-labelledby", "pong-scores-title");
   dialog.innerHTML = `
     <header class="pong_scores_header"><h2 id="pong-scores-title">High scores</h2></header>
     <div class="pong_scores_labels"><span>Player</span><span>Returns</span></div>
-    <ol class="pong_scores_list"></ol>
+    <ol class="pong_scores_list" role="list" aria-label="Top ten scores" tabindex="0"></ol>
     <p class="pong_scores_note"></p>
     <form class="pong_scores_form" hidden>
       <p class="pong_scores_result"></p>
@@ -191,29 +197,24 @@ function createPongLeaderboard(root, pauseGame) {
 
   function render() {
     const { scores } = read();
-    const rows = ordered([...(sharedScores ?? scores), ...houseScores]).slice(0, maxRecords);
+    // Stable sorting keeps server-ranked players ahead of starting scores on a tie.
+    const rows = [...(sharedScores ?? scores), ...startingScores]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, maxRecords);
     const list = dialog.querySelector("ol");
     list.replaceChildren();
     for (const row of rows) {
       const entry = document.createElement("li");
-      const player = document.createElement("span");
+      const player = document.createElement("bdi");
       const score = document.createElement("span");
-      const name = document.createElement("bdi");
-      name.textContent = row.name;
-      player.append(name);
-      if (row.preset) {
-        const label = document.createElement("small");
-        label.className = "pong_scores_preset";
-        label.textContent = "Preset";
-        player.append(label);
-      }
+      player.textContent = row.name;
       score.textContent = String(row.score).padStart(2, "0");
       entry.append(player, score);
       list.append(entry);
     }
     const scope = sharedScores === null
       ? (storageAvailable ? "Showing scores on this device." : "Showing scores for this visit.")
-      : "Player scores are shared across the portfolio.";
+      : "Top 10 · Best score per player";
     const note = loadingShared ? "Loading shared scores…" : scope;
     dialog.querySelector(".pong_scores_note").textContent = note;
     form.hidden = !pendingScore || submitted;
@@ -224,7 +225,7 @@ function createPongLeaderboard(root, pauseGame) {
   function open() {
     if (dialog.open) return;
     pauseGame();
-    input.value = read().name;
+    if (!pendingScore || submitted) input.value = read().name;
     input.removeAttribute("aria-invalid");
     nameError.textContent = "";
     feedback.textContent = "";
@@ -235,6 +236,22 @@ function createPongLeaderboard(root, pauseGame) {
 
   openButton.addEventListener("click", open);
   closeButton.addEventListener("click", () => dialog.close());
+  // Older dialog implementations need explicit light dismissal. A drag that starts
+  // inside the panel should still let the player select text or scroll the list.
+  if (!("closedBy" in dialog)) {
+    let beganOutside = false;
+    function isBackdrop(event) {
+      if (event.target !== dialog) return false;
+      const bounds = dialog.getBoundingClientRect();
+      return event.clientX < bounds.left || event.clientX >= bounds.right ||
+        event.clientY < bounds.top || event.clientY >= bounds.bottom;
+    }
+    dialog.addEventListener("pointerdown", event => { beganOutside = isBackdrop(event); });
+    dialog.addEventListener("click", event => {
+      if (beganOutside && isBackdrop(event)) dialog.close();
+      beganOutside = false;
+    });
+  }
   dialog.addEventListener("close", () => openButton.focus({preventScroll: true}));
   form.addEventListener("submit", async event => {
     event.preventDefault();
@@ -296,7 +313,7 @@ function createPongLeaderboard(root, pauseGame) {
         feedback.textContent = (api ? "Shared scores unavailable. " : "") +
           (ranked ? "Your personal best is saved " + scope + "." : "This round finished outside the top ten " + scope + ".");
       }
-      setButtonLabel(openButton, "High scores");
+      setPongActionLabel(openButton, "High scores");
       render();
       if (dialog.open) closeButton.focus();
     }
@@ -305,9 +322,10 @@ function createPongLeaderboard(root, pauseGame) {
   return {
     startRound() {
       ++roundNumber;
+      input.value = read().name;
       pendingScore = 0;
       submitted = false;
-      setButtonLabel(openButton, "High scores");
+      setPongActionLabel(openButton, "High scores");
       roundTicket = api
         ? Promise.resolve().then(() => request("rounds", {player: player()})).then(result => result.token).catch(() => null)
         : null;
@@ -316,7 +334,7 @@ function createPongLeaderboard(root, pauseGame) {
       pendingScore = score;
       submitted = false;
       if (score > 0) {
-        setButtonLabel(openButton, "Save score");
+        setPongActionLabel(openButton, "Save score");
         open();
       }
     }

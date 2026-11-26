@@ -102,7 +102,6 @@
 }
 
 .error_game_control {
-  --pong-label-offset: 0%;
   right: var(--error-gutter);
   left: auto;
   min-width: 0;
@@ -117,9 +116,11 @@
   border-radius: 0;
 }
 
-.error_game_control:is(:hover, :focus-visible) { --pong-label-offset: -100%; }
-.error_game_control_label { display: block; translate: 0 var(--pong-label-offset); }
-.error_control_label_duplicate { position: absolute; top: 100%; left: 0; }
+.pong_action { --button-shift: var(--trigger-self-active, 0); }
+.pong_action .is-alternate-text,
+.error_game_wrap > a.button_wrap .is-alternate-text {
+  color: var(--_theme---color--text-muted, #8a8a8a);
+}
 
 .error_game_court_playing::after {
   content: "";
@@ -192,6 +193,9 @@
 }
 
 .pong_scores_toggle, .pong_scores_close, .pong_scores_save {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.5rem;
   appearance: none;
   border: 0;
   padding: 0;
@@ -206,7 +210,7 @@
   right: var(--error-gutter);
   z-index: 2;
 }
-.pong_scores_dialog :is(button,input):focus-visible, .pong_scores_toggle:focus-visible {
+.pong_scores_dialog :is(button, input, ol):focus-visible, .pong_scores_toggle:focus-visible {
   outline: .125rem solid currentColor;
   outline-offset: .2rem;
 }
@@ -221,17 +225,29 @@
   background: var(--_theme---color--background, #101010);
   overflow: auto;
 }
+.pong_scores_dialog[open] { display: flex; flex-direction: column; }
+.pong_scores_dialog > * { flex-shrink: 0; }
 .pong_scores_dialog::backdrop { background: rgb(0 0 0 / .68); }
 .pong_scores_header, .pong_scores_labels, .pong_scores_list li { display: flex; align-items: baseline; gap: 1rem; }
 .pong_scores_header, .pong_scores_labels { justify-content: space-between; }
 .pong_scores_header { margin-bottom: 1.75rem; }
 .pong_scores_header h2 { margin: 0; font-size: clamp(1.75rem, 4vw, 2.4rem); line-height: 1.05; font-weight: 500; }
-.pong_scores_labels, .pong_scores_note, .pong_scores_help, .pong_scores_preset { color: var(--_theme---color--text-muted, #aaa); font-size: .875rem; }
-.pong_scores_list { margin: .5rem 0 .875rem; padding: 0; list-style: none; counter-reset: rank; }
+.pong_scores_labels, .pong_scores_note, .pong_scores_help { color: var(--_theme---color--text-muted, #aaa); font-size: .875rem; }
+.pong_scores_list {
+  flex-shrink: 1;
+  min-height: 2.75rem;
+  max-height: min(25rem, 42dvh);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  margin: .5rem 0 .875rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: rank;
+}
 .pong_scores_list li { border-top: 1px solid var(--_theme---color--border, #444); padding: .45rem 0; counter-increment: rank; }
 .pong_scores_list li::before { content: counter(rank, decimal-leading-zero); font-size: .875rem; color: var(--_theme---color--text-muted, #aaa); }
-.pong_scores_list bdi { overflow-wrap: anywhere; }
-.pong_scores_preset { margin-inline-start: .5em; font-size: .75rem; }
+.pong_scores_list bdi { min-width: 0; overflow-wrap: anywhere; }
 .pong_scores_list li > :last-child { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
 .pong_scores_note, .pong_scores_feedback { margin: 0; }
 .pong_scores_form { margin-top: 1.3rem; }

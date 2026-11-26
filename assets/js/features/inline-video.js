@@ -1,6 +1,24 @@
 /* Muted previews share viewport, hover and keyboard playback policies. */
 (() => {
   const states = new WeakMap();
+  // Related cards preview the destination's opening shot. The gallery can use a
+  // different editorial clip, and some projects have no opening video at all.
+  const openingFilms = new Map();
+  function openingFilm(url) {
+    if (!openingFilms.has(url)) {
+      const existing = window.barba?.cache?.get(url)?.request;
+      const html = existing ? existing.then(page => page.html) : fetch(url).then(response => {
+        if (!response.ok) throw new Error('Project unavailable');
+        return response.text();
+      });
+      const film = html.then(content => {
+        const page = new DOMParser().parseFromString(content, 'text/html');
+        return portfolioPreviewSource(page.querySelector('.case_featured video, .case_media_wrap video'));
+      }).catch(() => { openingFilms.delete(url); return ''; });
+      openingFilms.set(url, film);
+    }
+    return openingFilms.get(url);
+  }
   function init(page) {
     if (!page || states.has(page)) return;
     const abort = new AbortController();
@@ -21,7 +39,7 @@
       if (list && list.dataset.workState !== 'active') return false;
       return entry.host.matches(':hover') || entry.host.contains(document.activeElement);
     }
-    function sync(video, entry) {
+    async function sync(video, entry) {
       const play = wanted(video, entry);
       if (!play && video.dataset.previewSource && video.hasAttribute('src') &&
           (motion.matches || dataPreference.matches || connection?.saveData)) {
@@ -35,7 +53,12 @@
       if (!play) { video.pause(); return; }
       const mobilePreview = video.dataset.previewSource && matchMedia('(max-width: 767px)').matches
         ? video.closest('[data-preview-small]')?.dataset.previewSmall : '';
-      const source = mobilePreview || video.dataset.previewSource || portfolioPreviewSource(video);
+      let source = mobilePreview || video.dataset.previewSource || portfolioPreviewSource(video);
+      if (!source && entry.host.matches('.case_index_card')) {
+        source = await openingFilm(entry.host.href);
+        if (entry.revision !== revision || abort.signal.aborted) return;
+        if (!source) { entry.playing = false; return; }
+      }
       if (!video.getAttribute('src') && source) {
         video.src = source;
         video.load();
@@ -61,9 +84,9 @@
       });
     }, {threshold: [0, .01]});
     function register(video) {
-      if (entries.has(video) || video.controls || video.closest('.case_index_card,[data-video-ignore],[data-bunny-player-init],[role="dialog"]')) return;
+      if (entries.has(video) || video.controls || video.closest('[data-video-ignore],[data-bunny-player-init],[role="dialog"]')) return;
       if (!(video.muted || video.hasAttribute('muted') || video.closest('[data-video="playpause"]'))) return;
-      const host = video.closest('.work_list_center') || video.closest('.work_card_thumb,.home_card_visual') || video.parentElement;
+      const host = video.closest('.work_list_center') || video.closest('.work_card_thumb,.home_card_visual,.case_index_card') || video.parentElement;
       video.autoplay = false;
       entries.set(video, {host, visible:false, playing:undefined, revision:0});
       observer.observe(video);

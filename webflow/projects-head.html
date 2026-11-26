@@ -1,0 +1,14 @@
+<meta property="og:url" content="https://www.jamiekeaveneyportfolio.com/projects">
+<script>
+(() => {
+  const observer = new MutationObserver(() => {
+    const image = document.querySelector(".work_gallery_track .work_card_image");
+    if (!image) return;
+    image.fetchPriority = "high";
+    image.loading = "eager";
+    observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  document.addEventListener("DOMContentLoaded", () => observer.disconnect(), { once: true });
+})();
+</script>

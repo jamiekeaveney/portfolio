@@ -1,6 +1,6 @@
 {
   "name": "jamie-keaveney-portfolio",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "private": true,
   "description": "Webflow portfolio interactions and custom state styles",
   "scripts": {
@@ -8,7 +8,7 @@
     "check": "node scripts/check.js"
   },
   "devDependencies": {
-    "@csstools/css-tokenizer": "3.0.4",
+    "esbuild": "0.28.2",
     "terser": "5.39.0"
   }
 }

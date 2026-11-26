@@ -1,0 +1,35 @@
+@media (min-width: 62rem) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .approach_marquee_item {
+    position: relative;
+  }
+
+  /* Thin caps transform independently of the media, its hit area and its scroll position. */
+  :where(.approach_marquee_item, .home_card_visual > .project_card_visual, .split_section_image, [data-case-media-rail] .media_preview) {
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 3;
+      height: 6%;
+      max-height: 2.25rem;
+      background: var(--_theme---color--background);
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      pointer-events: none;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform .18s cubic-bezier(.22, .61, .36, 1);
+    }
+
+    &::after {
+      inset: auto 0 0;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      transform-origin: bottom;
+    }
+
+    &[data-scroll-edge="down"]::before,
+    &[data-scroll-edge="up"]::after {
+      transform: scaleY(1);
+    }
+  }
+}

@@ -9,23 +9,16 @@
     canvas.setAttribute('aria-label','Pong. Move or drag your paddle, or use the left and right arrow keys. Escape pauses.');
     canvas.className='error_game_canvas';canvas.tabIndex=0;court.append(canvas);status.className='error_game_status';status.setAttribute('role','status');court.after(status);
     const reduced=matchMedia('(prefers-reduced-motion:reduce)');
-    let countdown=0;
+    let countdown=0,rallySeconds=0;
     let width=0,height=0,x=0,y=0,vx=170,vy=115,paddle=0,score=0,playing=false,paused=false,last=0,raf,keys={};
     const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
     const radius=()=>clamp(width*.007,10,16),paddleWidth=()=>clamp(width*.085,104,172);
     const baseSpeed=()=>clamp(height*.73,455,780);
-    const label=document.createElement('span'),replacement=document.createElement('span');
-    label.className='button_text error_game_control_label';
-    replacement.className='button_text error_game_control_label error_control_label_duplicate';
-    replacement.setAttribute('aria-hidden','true');
-    start.textContent='';
-    start.append(label,replacement);
-    function setLabel(value){label.textContent=replacement.textContent=value;}
     function showState(){
       root.classList.toggle('error_game_in_progress',playing);
       court.classList.toggle('error_game_court_playing',playing);
       root.dataset.gameState=playing?(paused?'paused':'playing'):'idle';
-      setLabel(playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong'));
+      setPongActionLabel(start,playing?(paused?'Resume Pong':'Pause Pong'):(score?'Play again':'Play Pong'));
       status.textContent=playing?((paused?'Paused · ':'')+String(score).padStart(2,'0')+' returns'):'';
     }
     const resize=()=>{
@@ -37,7 +30,7 @@
     const board = createPongLeaderboard(root, () => {
       if (playing && !paused) { paused = true; showState(); }
     });
-    function begin(){board.startRound();countdown=3;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
+    function begin(){board.startRound();countdown=3;rallySeconds=0;playing=true;paused=false;score=0;x=width/2;y=height*.28;vx=baseSpeed()*.32;vy=baseSpeed();paddle=width/2;last=0;showState();canvas.focus({preventScroll:true});}
     function toggle(e){e?.preventDefault();if(!playing){begin();return;}paused=!paused;showState();if(!paused)canvas.focus({preventScroll:true});}
     start.addEventListener('click',toggle);
     start.addEventListener('keydown',e=>{if(e.key===' '&&start.tagName!=='BUTTON')toggle(e);});
@@ -66,6 +59,7 @@
           }
         }
         if(!paused&&!document.hidden){
+          rallySeconds+=dt;
           paddle=clamp(paddle+((keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0))*width*1.1*dt,pw/2,width-pw/2);
           const oldX=x,oldY=y;x+=vx*dt;y+=vy*dt;
           if(x<r||x>width-r){x=clamp(x,r,width-r);vx=-vx;}
@@ -76,12 +70,15 @@
             if(Math.abs(hitX-paddle)<=pw/2+r){
               x=clamp(hitX,r,width-r);y=floor-r;score++;
               const angle=clamp((hitX-paddle)/(pw/2),-.95,.95)*1.05;
-              const speed=Math.min(baseSpeed()*1.9,baseSpeed()*(1+.085*score));
+              // Continue gaining pace beyond the opening returns. The upper limit
+              // preserves reaction time, including on a short landscape court.
+              const progress = 1 - Math.exp(-(score + rallySeconds / 12) / 20);
+              const speed = baseSpeed() * (1 + 1.75 * progress);
               vx=Math.sin(angle)*speed;vy=-Math.cos(angle)*speed;showState();
             }
           }
           if(y>height+r){
-            playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';setLabel('Play again');
+            playing=false;showState();status.textContent=String(score).padStart(2,'0')+' returns · One more?';setPongActionLabel(start,'Play again');
             board.finishRound(score);
             x=width*.12;y=height*.3;vx=170;vy=115;
           }

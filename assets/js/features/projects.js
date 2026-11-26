@@ -54,8 +54,7 @@ const initWorkSlider = (() => {
     };
     var EASE = "expo.out";
     var DUR = 1;
-    var COPIES = 4;
-    /* clone sets on each side of the originals */    var DRAG_THRESHOLD = 5;
+    var DRAG_THRESHOLD = 5;
     /* px before a pointerdown counts as a drag */    var SNAP_DEBOUNCE = 80;
     var FADE_MS = 400;
     var STORAGE_KEY = "work-view-mode";
@@ -96,6 +95,9 @@ const initWorkSlider = (() => {
     var originals = $$("[data-work-item]:not([data-work-clone])", track);
     var N = originals.length;
     if (!N) return;
+    // Preserve the small gallery's loop runway without cloning an entire long collection.
+    const galleryBuffer = Math.min(12, 4 * N);
+    const listCopies = Math.min(4, Math.max(2, Math.ceil(12 / N)));
     // The real text exposes one current number. The clipped visual reel can reverse
     // from its existing position even when another project is selected mid-tween.
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -265,6 +267,7 @@ const initWorkSlider = (() => {
       killList();
       listLeft.replaceChildren(...listSources.left);
       listRight.replaceChildren(...listSources.right);
+      listCenter.replaceChildren(...listSources.center);
       clearTimeout(wheelIdle);
       cancelAnimationFrame(resizeRaf);
       abort.abort();
@@ -329,6 +332,11 @@ const initWorkSlider = (() => {
     function cloneItem(el) {
       var clone = el.cloneNode(true);
       clone.setAttribute("data-work-clone", "");
+      const priorityImage = clone.querySelector('img[fetchpriority="high"]');
+      if (priorityImage) {
+        priorityImage.removeAttribute("fetchpriority");
+        priorityImage.loading = "lazy";
+      }
       [ clone, ...clone.querySelectorAll("[id]") ].forEach((node => node.removeAttribute("id")));
       clone.querySelectorAll("[data-flip-id]").forEach((node => node.removeAttribute("data-flip-id")));
       return clone;
@@ -336,13 +344,12 @@ const initWorkSlider = (() => {
     function buildSlide() {
       track.innerHTML = "";
       var frag = document.createDocumentFragment();
-      var i, j;
-      for (i = 0; i < COPIES; i++) {
-        for (j = 0; j < N; j++) frag.appendChild(cloneItem(originals[j]));
+      for (let offset = galleryBuffer; offset > 0; offset--) {
+        frag.appendChild(cloneItem(originals[(N - offset % N) % N]));
       }
-      for (j = 0; j < N; j++) frag.appendChild(originals[j]);
-      for (i = 0; i < COPIES; i++) {
-        for (j = 0; j < N; j++) frag.appendChild(cloneItem(originals[j]));
+      frag.append(...originals);
+      for (let offset = 0; offset < galleryBuffer; offset++) {
+        frag.appendChild(cloneItem(originals[offset % N]));
       }
       for (const card of frag.children) {
         card.removeAttribute("data-work-current");
@@ -361,8 +368,9 @@ const initWorkSlider = (() => {
       S.pitch = cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left;
       if (!S.pitch) return;
       var span = S.pitch * N;
-      S.wrap = gsap.utils.wrap(-span * (COPIES + 1), -span * COPIES);
-      S.cur = S.tgt = -span * COPIES - activeIdx * S.pitch;
+      const wrap = gsap.utils.wrap(-span, 0);
+      S.wrap = position => wrap(position) - galleryBuffer * S.pitch;
+      S.cur = S.tgt = -activeIdx * S.pitch;
       if (!frozen && !fading) gsap.ticker.add(slideTick);
     }
     function slideTick(time, deltaTime = 16.667) {
@@ -489,7 +497,8 @@ const initWorkSlider = (() => {
       });
     }
     // Keep the CMS collections available when changing views or remounting this page.
-    const listSources = { left: [...listLeft.children], right: [...listRight.children] };
+    const listSources = { left: [...listLeft.children], right: [...listRight.children], center: [...listCenter.children] };
+    const listVisual = listCenter.querySelector('.project_card_visual');
     const listTemplates = {
       left: $$(".w-dyn-item > .work_list_row", listLeft),
       right: $$(".w-dyn-item > .work_list_row", listRight)
@@ -529,8 +538,25 @@ const initWorkSlider = (() => {
       originals.forEach((function(item, index) {
         var sourceThumb = $(".work_card_thumb", item);
         if (!sourceThumb) return;
-        var thumb = sourceThumb.cloneNode(true);
-        thumb.querySelectorAll(".work_card_meta").forEach((el => el.remove()));
+        const visual = listVisual?.cloneNode(true);
+        const thumb = sourceThumb.cloneNode(!visual);
+        if (visual) {
+          // Apply the current project's media to the native List variant.
+          for (const selector of ['.work_card_image', '.project_preview_poster', '.media_preview_poster', 'video']) {
+            const source = sourceThumb.querySelector(selector);
+            const target = visual.querySelector(selector);
+            if (!source || !target) continue;
+            const attributes = selector === 'video' ? ['data-src', 'data-media-project', 'data-media-slug'] : ['srcset', 'sizes', 'src', 'alt'];
+            for (const name of attributes) {
+              if (source.hasAttribute(name)) target.setAttribute(name, source.getAttribute(name));
+              else target.removeAttribute(name);
+            }
+          }
+          thumb.append(visual);
+        } else {
+          // Cached Webflow pages may have no List variant. Reuse their gallery frame.
+          thumb.querySelectorAll('.work_card_meta').forEach(meta => meta.remove());
+        }
         thumb.classList.add("work_list_media");
         thumb.removeAttribute("data-video-ignore");
         thumb.querySelectorAll('[id],[data-flip-id]').forEach(el=>{el.removeAttribute('id');el.removeAttribute('data-flip-id');});
@@ -558,7 +584,7 @@ const initWorkSlider = (() => {
             for (var index = N - 1; index >= 0; index--) {
         rightMarkup += row("right", index, $("[data-work-client]", originals[index]).textContent);
       }
-      var repetitions = 2 * COPIES + 1;
+      var repetitions = 2 * listCopies + 1;
       listLeft.innerHTML = repeat(leftMarkup, repetitions);
       listRight.innerHTML = repeat(rightMarkup, repetitions);
       numLeft.innerHTML = repeat(numberMarkup, repetitions);
@@ -576,7 +602,7 @@ const initWorkSlider = (() => {
         el.style.height = L.rowH + "px";
       }));
       L.span = L.rowH * N;
-      L.off0 = COPIES * L.span;
+      L.off0 = listCopies * L.span;
       /* Centre one row vertically; computed once per setup, not per frame. */      L.align = (parseFloat(listEl.style.getPropertyValue('--list-midpoint'))||listEl.clientHeight/2)-L.rowH/2;
       L.cur = L.tgt = L.off0 + activeIdx * L.rowH;
       L.prevIdx = -1;
