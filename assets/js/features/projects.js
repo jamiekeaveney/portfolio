@@ -82,7 +82,6 @@ const initWorkSlider = (() => {
       return frozen || transitioning || document.documentElement.hasAttribute("data-transitioning") || document.documentElement.style.overflow === "hidden";
     };
     var track = $("[data-work-track]");
-    var counterEl = $("[data-work-counter]");
     var listEl = $("[data-work-list]");
     var listLeft = $('[data-work-list-track="left"]');
     var listRight = $('[data-work-list-track="right"]');
@@ -97,6 +96,57 @@ const initWorkSlider = (() => {
     var originals = $$("[data-work-item]:not([data-work-clone])", track);
     var N = originals.length;
     if (!N) return;
+    // The real text exposes one current number. The clipped visual reel can reverse
+    // from its existing position even when another project is selected mid-tween.
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const currentNumber = $("[data-work-counter-current]");
+    const totalNumber = $("[data-work-counter-total]");
+    const numberValue = document.createElement("span");
+    const numberReel = document.createElement("span");
+    const numberMotion = { position: 0 };
+    let numberIndex = null, numberTarget = 0, paintedNumberStep;
+    if (totalNumber) totalNumber.textContent = pad(N);
+    if (currentNumber) {
+      numberValue.className = "work_counter_value";
+      numberValue.textContent = pad(1);
+      numberReel.className = "work_counter_reel";
+      numberReel.setAttribute("aria-hidden", "true");
+      currentNumber.replaceChildren(numberValue, numberReel);
+      drawNumber();
+    }
+    function drawNumber() {
+      const step = Math.floor(numberMotion.position);
+      if (step !== paintedNumberStep) {
+        const index = ((step % N) + N) % N;
+        numberReel.dataset.first = pad(index + 1);
+        numberReel.dataset.second = pad((index + 1) % N + 1);
+        paintedNumberStep = step;
+      }
+      numberReel.style.transform = "translateY(" + ((step - numberMotion.position) * 100) + "%)";
+    }
+    function settleNumber() {
+      gsap.killTweensOf(numberMotion);
+      numberMotion.position = numberTarget;
+      if (currentNumber) drawNumber();
+    }
+    function updateNumber(index, direction) {
+      if (!currentNumber || index === numberIndex) return;
+      numberValue.textContent = pad(index + 1);
+      if (numberIndex === null || !direction || reducedMotion.matches || frozen) {
+        numberTarget = index;
+        settleNumber();
+      } else {
+        const steps = ((direction * (index - numberIndex)) % N + N) % N;
+        numberTarget += direction * steps;
+        gsap.to(numberMotion, {
+          position: numberTarget, duration: DUR, ease: EASE, overwrite: true, onUpdate: drawNumber
+        });
+      }
+      numberIndex = index;
+    }
+    reducedMotion.addEventListener("change", event => {
+      if (event.matches) settleNumber();
+    }, sig);
     originals.forEach((function(item, i) {
       item.setAttribute("data-work-index", i);
       const link = item.querySelector("a[href]");
@@ -212,6 +262,8 @@ const initWorkSlider = (() => {
       if (dead) return;
       dead = true;
       cancelModeFlip();
+      settleNumber();
+      if (currentNumber) currentNumber.textContent = numberValue.textContent;
       if (window.JKWork === api) delete window.JKWork;
       killSlide();
       killList();
@@ -242,7 +294,6 @@ const initWorkSlider = (() => {
     var sPid = null;
     var markedSlideIdx = -1;
     let markedSlideStep;
-    const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
     function exposeSlide(card, exposed) {
       const link = card.querySelector("a[href]");
       if (exposed) {
@@ -253,8 +304,11 @@ const initWorkSlider = (() => {
         if (link) link.tabIndex = -1;
       }
     }
-    function markCurrentSlide(index, step) {
+    function markCurrentSlide(index, step, direction = 0) {
       if (index === markedSlideIdx && step === markedSlideStep) return;
+      if (step !== undefined && markedSlideStep !== undefined) {
+        direction = Math.sign(step - markedSlideStep);
+      }
       markedSlideIdx = index;
       markedSlideStep = step;
       if (step !== undefined) {
@@ -272,10 +326,7 @@ const initWorkSlider = (() => {
           }
         }
       }
-      if (counterEl) {
-        counterEl.querySelector("[data-work-counter-current]").textContent = pad(index + 1);
-        counterEl.querySelector("[data-work-counter-total]").textContent = pad(N);
-      }
+      updateNumber(index, direction);
     }
     function cloneItem(el) {
       var clone = el.cloneNode(true);
@@ -305,6 +356,7 @@ const initWorkSlider = (() => {
     function setupSlide() {
       killSlide();
       S.paintedPosition = null;
+      markedSlideStep = undefined;
       if (dead || isMobile()) return;
       var cards = $$(".work_card_wrap", track);
       if (cards.length < 2) return;
@@ -336,7 +388,7 @@ const initWorkSlider = (() => {
       var span = S.pitch * N;
       var offset = (-S.cur % span + span) % span;
       activeIdx = Math.round(offset / span * N) % N;
-      markCurrentSlide(activeIdx, Math.round(position / S.pitch));
+      markCurrentSlide(activeIdx, Math.round(-S.cur / S.pitch));
     }
     function snapSlideStep(direction) {
       if (!S.pitch) return;
@@ -532,6 +584,7 @@ const initWorkSlider = (() => {
         L.cur += (L.tgt - L.cur) * (1 - Math.exp(-9.05 * Math.min(deltaTime, 50) / 1e3));
         if (Math.abs(L.tgt - L.cur) < .5) L.cur = L.tgt;
       }
+      const direction = Math.sign(L.cur - (L.paintedValue ?? L.cur));
       while (L.cur > L.off0 + L.span) {
         L.cur -= L.span;
         L.tgt -= L.span;
@@ -541,10 +594,10 @@ const initWorkSlider = (() => {
         L.tgt += L.span;
       }
       if (L.cur === L.paintedValue && L.align === L.paintedAlign) return;
-      applyList(L.cur);
+      applyList(L.cur, direction);
       showListThumbnail();
     }
-    function applyList(value) {
+    function applyList(value, direction = 0) {
       L.paintedValue = value;
       L.paintedAlign = L.align;
       var leftY = -value + L.align;
@@ -572,7 +625,7 @@ const initWorkSlider = (() => {
       if (index === L.prevIdx) return;
       L.prevIdx = index;
       activeIdx = index;
-      markCurrentSlide(index);
+      markCurrentSlide(index, undefined, direction);
       var currentMedia = $('[data-work-list-media][data-work-state="active"]', listCenter);
       if (currentMedia) {
         currentMedia.removeAttribute("data-work-state");
@@ -760,6 +813,7 @@ const initWorkSlider = (() => {
         modeContentTween?.progress(1);
       }
       frozen = true;
+      settleNumber();
 
       killSlide();
       killList();

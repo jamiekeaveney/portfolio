@@ -8,8 +8,11 @@
     const entries = new Map();
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
 
+    const dataPreference = matchMedia('(prefers-reduced-data: reduce)');
+    const connection = navigator.connection;
+
     function wanted(video, entry) {
-      if (!video.isConnected || document.hidden || motion.matches || !entry.visible) return false;
+      if (!video.isConnected || document.hidden || motion.matches || dataPreference.matches || connection?.saveData || !entry.visible) return false;
       if (video.closest('[data-video-ignore],[role="dialog"]')) return false;
       const mode = video.dataset.videoMode || 'viewport';
       if (mode.includes('active') && !video.closest('.is-active,[data-work-state="active"]')) return false;
@@ -20,12 +23,21 @@
     }
     function sync(video, entry) {
       const play = wanted(video, entry);
+      if (!play && video.dataset.previewSource && video.hasAttribute('src') &&
+          (motion.matches || dataPreference.matches || connection?.saveData)) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      }
       if (play === entry.playing) return;
       entry.playing = play;
       const revision = ++entry.revision;
       if (!play) { video.pause(); return; }
-      if (!video.getAttribute('src') && video.dataset.src) {
-        video.src = video.dataset.src;
+      const mobilePreview = video.dataset.previewSource && matchMedia('(max-width: 767px)').matches
+        ? video.closest('[data-preview-small]')?.dataset.previewSmall : '';
+      const source = mobilePreview || video.dataset.previewSource || video.dataset.src;
+      if (!video.getAttribute('src') && source) {
+        video.src = source;
         video.load();
       }
       const ready = () => {
@@ -92,6 +104,8 @@
       }, options);
     }
     motion.addEventListener('change', update, options);
+    dataPreference.addEventListener('change', update, options);
+    connection?.addEventListener('change', update, options);
     document.addEventListener('visibilitychange', update, options);
     page.querySelectorAll('video').forEach(register);
     states.set(page, () => {

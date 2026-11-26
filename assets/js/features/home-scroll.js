@@ -12,15 +12,22 @@
     const end = page.querySelector('[data-flip-element="end"]');
     if (!target || !destination || !end) return;
     const originalStyle = target.getAttribute("style");
+    const staticMedia = matchMedia("(max-width: 61.9375rem), (prefers-reduced-motion: reduce)");
     const fade = [ ...page.querySelectorAll("[data-flip-fade]") ].filter((el => !el.matches("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask") && !el.querySelector("[data-home-scroll],[data-home-intro-exit],[data-home-arrow-exit],.scroll_arrow_mask")));
-    let timeline, render, timer, suspended = false, dead = false;
+    let timeline, render, timer, refreshFrame, suspended = false, dead = false;
     const restore = () => originalStyle === null ? target.removeAttribute("style") : target.setAttribute("style", originalStyle);
+    function afterRefresh() {
+      // ScrollTrigger can measure at scroll zero. Paint after it restores the viewport.
+      cancelAnimationFrame(refreshFrame);
+      refreshFrame = requestAnimationFrame(() => render?.());
+    }
     function build() {
       if (dead || suspended || target.dataset.miniShowreelStatus === "active") return;
       timeline?.scrollTrigger?.kill();
       timeline?.kill();
+      render = null;
       restore();
-      if (matchMedia("(max-width: 61.9375rem), (prefers-reduced-motion: reduce)").matches) return;
+      if (staticMedia.matches) return;
       // Interpolate one viewport rectangle. Scroll compensation is immediate;
       // only the A-to-B playhead is scrubbed, so vertical movement cannot lag twice.
       const startRect = target.getBoundingClientRect(), endRect = destination.getBoundingClientRect();
@@ -38,8 +45,8 @@
           width:from.w+(to.w-from.w)*p,height:from.h+(to.h-from.h)*p});
       };
       timeline=gsap.timeline({scrollTrigger:{id:'jk-home-showreel',trigger:end,
-        start:0,end:'bottom bottom',scrub:motion.settings.scrub,onUpdate:()=>render?.()}});
-      timeline.to(playhead,{value:1,duration:1,ease:'sine.inOut',onUpdate:()=>render?.()},0);
+        start:0,end:'bottom bottom',scrub:motion.settings.scrub,onUpdate:()=>render?.(),onRefresh:afterRefresh}});
+      timeline.to(playhead,{value:1,duration:1,ease:motion.flightEase,onUpdate:()=>render?.()},0);
       if (fade.length) timeline.fromTo(fade, {
         autoAlpha: 1
       }, {
@@ -74,15 +81,18 @@
       cleanup() {
         dead = true;
         clearTimeout(timer);
+        cancelAnimationFrame(refreshFrame);
         timeline?.scrollTrigger?.kill();
         timeline?.kill();
         window.removeEventListener("resize", resize);
+        staticMedia.removeEventListener("change", build);
         restore();
         instances.delete(home);
       }
     };
     instances.set(home, state);
     window.addEventListener("resize", resize);
+    staticMedia.addEventListener("change", build);
     build();
   }
   window.initFlipOnScroll = init;

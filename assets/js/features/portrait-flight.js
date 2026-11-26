@@ -35,7 +35,9 @@
         const rem = value => (value / remSize) + 'rem';
         const inFlight = p>0 && p<1;
         const from = origin.getBoundingClientRect();
-        slot.style.width = p>0 ? rem((from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * (1-Math.min(1,p/.65))) : '';
+        const remaining = Math.max(0, 1 - p / .65);
+        const slotScale = remaining * motion.edgeRamp(remaining, .15);
+        slot.style.width = p>0 ? rem((from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * slotScale) : '';
         image.style.visibility = p>0 ? 'hidden' : '';
         destination.style.visibility = p<1 ? 'hidden' : '';
         flight.hidden = !inFlight;
@@ -50,7 +52,7 @@
           borderRadius:rem(mix(parseFloat(style.borderTopLeftRadius)||0,parseFloat(getComputedStyle(target).borderTopLeftRadius)||0,p))
         });
       }
-      tween=gsap.to(progress,{value:1,ease:'sine.inOut',onUpdate:paint,scrollTrigger:{
+      tween=gsap.to(progress,{value:1,ease:motion.flightEase,onUpdate:paint,scrollTrigger:{
         trigger:slot,start:'center center',endTrigger:target,end:'center center',scrub:motion.settings.scrub,
         onRefresh:paint,invalidateOnRefresh:true
       }});

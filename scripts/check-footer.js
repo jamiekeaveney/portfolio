@@ -12,10 +12,10 @@ const context={innerHeight:800,document:{...page,readyState:'complete',addEventL
 vm.runInNewContext(fs.readFileSync('assets/js/features/footer-parallax.js','utf8'),context);
 assert.equal(inner.style.values['--footer-entry-y'],undefined);
 panelTop=400;stageTop=1600;paint();assert.equal(inner.style.values['--footer-entry-y'],undefined);
-panelTop=0;stageTop=800;paint();assert.equal(inner.style.values['--footer-entry-y'],undefined);assert.equal(name.style.values['--footer-reveal-y'],'-240px');
+panelTop=0;stageTop=800;paint();assert.equal(inner.style.values['--footer-entry-y'],undefined);assert.equal(name.style.values['--footer-reveal-y'],'-240px');assert.equal(name.style.values['--footer-reveal-shade'],'0.5');
 stageTop=600;paint();assert.equal(name.style.values['--footer-reveal-y'],'-120px');
 revealing=true;pageY=96;stageTop=696;paint();assert.equal(name.style.values['--footer-reveal-y'],'-120px','Loader pull must not advance footer parallax');revealing=false;pageY=0;
-stageTop=400;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');
+stageTop=400;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');assert.equal(name.style.values['--footer-reveal-shade'],'0');
 name.offsetHeight=600;context.innerHeight=900;stageTop=300;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');
 context.window.JKFooter.freeze(page);panelTop=900;stageTop=1800;paint();assert.equal(name.style.values['--footer-reveal-y'],'0px');assert.equal(inner.style.values['--footer-entry-y'],undefined);
 console.log('Footer normal flow, glyph overlap, resize endpoint and navigation freeze passed.');

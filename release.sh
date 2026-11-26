@@ -35,7 +35,7 @@ const fs = require('node:fs');
 const tag = process.argv[2];
 for (const file of ['webflow/head.html', 'webflow/footer.html']) {
   const source = fs.readFileSync(file, 'utf8');
-  const portfolioRef = /(https:\/\/cdn\.jsdelivr\.net\/gh\/jamiekeaveney\/portfolio@)(?:release-|v)?\d+\.\d+\.\d+(?=\/dist\/)/g;
+  const portfolioRef = /(https:\/\/cdn\.jsdelivr\.net\/gh\/jamiekeaveney\/portfolio@)(?:(?:release-|v)?\d+\.\d+\.\d+|[0-9a-f]{40})(?=\/dist\/)/g;
   if ([...source.matchAll(portfolioRef)].length !== 1) {
     throw new Error(file + ' must pin one portfolio asset.');
   }

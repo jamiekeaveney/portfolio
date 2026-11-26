@@ -77,7 +77,8 @@ for (const index of [0, 1, 2, 0]) {
 // Exercise the actual shared playback policy across hover/focus, active item,
 // hidden tab, reduced motion, offscreen, and detached-page cases.
 const inline = fs.readFileSync("assets/js/features/inline-video.js", "utf8");
-const policy = { document: { hidden: false, activeElement: null }, motion: { matches: false } };
+const policy = { document: { hidden: false, activeElement: null }, motion: { matches: false },
+  dataPreference: { matches: false }, connection: { saveData: false } };
 vm.createContext(policy);
 vm.runInContext(inline.slice(inline.indexOf("    function wanted("), inline.indexOf("    function sync(")), policy);
 let active = true, hover = false, focused = false;
@@ -97,7 +98,11 @@ policy.document.hidden = true;
 assert.equal(policy.wanted(video, entry), false, "Hidden tabs pause playback");
 policy.document.hidden = false; policy.motion.matches = true;
 assert.equal(policy.wanted(video, entry), false, "Reduced motion preserves the poster");
-policy.motion.matches = false; entry.visible = false;
+policy.motion.matches = false; policy.dataPreference.matches = true;
+assert.equal(policy.wanted(video, entry), false, "Reduced-data users keep the poster");
+policy.dataPreference.matches = false; policy.connection.saveData = true;
+assert.equal(policy.wanted(video, entry), false, "Connection data saver preserves the poster");
+policy.connection.saveData = false; entry.visible = false;
 assert.equal(policy.wanted(video, entry), false, "Hidden gallery/list modes pause playback");
 entry.visible = true; video.isConnected = false;
 assert.equal(policy.wanted(video, entry), false, "Detached pages pause playback");

@@ -173,7 +173,7 @@
     const pressed=document.querySelector('[data-animated-grid]')?.dataset.open==='true';
     for(const button of page.querySelectorAll(gridControl)){
       button.setAttribute('role','button');
-      button.setAttribute('aria-label','Toggle layout grid (Shift G)');
+      button.removeAttribute('aria-label');
       button.setAttribute('aria-keyshortcuts','Shift+G');
       button.setAttribute('aria-pressed',String(pressed));
       button.setAttribute('data-barba-prevent','all');

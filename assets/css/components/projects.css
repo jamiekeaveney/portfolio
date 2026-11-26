@@ -27,6 +27,35 @@
   cursor: inherit;
 }
 
+[data-work-counter-current] {
+  position: relative;
+  overflow: clip;
+}
+
+.work_counter_value {
+  opacity: 0;
+}
+
+.work_counter_reel,
+.work_counter_reel::before,
+.work_counter_reel::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.work_counter_reel::before,
+.work_counter_reel::after {
+  display: grid;
+  place-items: center;
+  content: attr(data-first);
+}
+
+.work_counter_reel::after {
+  content: attr(data-second);
+  transform: translateY(100%);
+}
+
 /* The current view stays bright until another control takes focus or hover. */
 [data-work-view] { color: var(--_theme---text-link--text); }
 [data-work-view][aria-pressed="true"] {

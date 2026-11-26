@@ -83,7 +83,11 @@
       const lines = heroPage.querySelectorAll("[data-home-intro-exit] .hero_scroll_line");
       if (!chars.length && !lines.length) return;
       heroTween = gsap.timeline({paused:true, defaults:{duration:SETTINGS.layoutDuration, ease:"none"}});
-      if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {yPercent:-120, stagger:.025}, 0);
+      // Keep the wordmark's original 1.05s scrubbed span. Each successive
+      // letter now starts later while the paragraph keeps its own timing.
+      if (chars.length) heroTween.fromTo(chars, {yPercent:0}, {
+        yPercent:-120, duration:.85, stagger:{amount:.20}, ease:"sine.inOut"
+      }, 0);
       if (lines.length) {
         const stagger = parseFloat(lines[0].closest("[data-home-intro-exit]").dataset.linesStagger) ||
           parseFloat(getComputedStyle(root).getPropertyValue("--motion-line-stagger")) || .1;

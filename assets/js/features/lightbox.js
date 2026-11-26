@@ -14,19 +14,19 @@ if(home){
   const info=home.querySelector(':scope > .showreel_info');
   if(info)root.querySelector('.showreel_card').appendChild(info);
 }
+const preview=root.querySelector('.showreel_poster');
 const hero=root.closest('.case_media_wrap');
 if(hero){
  const source=hero.querySelector(':scope > .case_media_inner video');
  const url=source&&(source.getAttribute('data-src')||source.getAttribute('src')||source.querySelector('source')?.getAttribute('src'));
  if(url){
   root.querySelector('[data-bunny-player-init]').setAttribute('data-player-src',url);
-  const preview=root.querySelector('.showreel_poster');
   const poster=source.getAttribute('poster')||'';
   if(preview){
    if(poster)preview.setAttribute('poster',poster);else preview.removeAttribute('poster');
    preview.removeAttribute('data-src');
    preview.muted=true;preview.loop=true;preview.playsInline=true;
-   if(preview.getAttribute('src')!==url){preview.src=url;preview.load();}
+   preview.dataset.previewSource=url;
   }
   source.setAttribute('data-video-ignore','');source.pause();source.closest('.case_media_inner').style.visibility='hidden';
  }

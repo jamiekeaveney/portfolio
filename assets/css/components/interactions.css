@@ -3,7 +3,6 @@
  .nav_mobile_panel{height:auto!important;min-height:0!important;max-height:calc(100dvh - 4rem)}
  .footer_wrap,.footer_sticky,.footer_editorial_panel,.footer_editorial_wrap{transform:none!important;translate:none!important}
  .footer_sticky{position:relative!important}
- .footer_editorial_panel{background:var(--_theme---color--background,#000)!important;backdrop-filter:none!important}
  .services_heading::before{content:"";position:absolute;z-index:-1;inset:0 calc(-1 * var(--site--margin,1.5rem));background:var(--_theme---color--background,#000)}
  .clients_credits a{text-decoration:underline;text-underline-offset:.2em;text-decoration-thickness:0.0625rem;box-decoration-break:clone;-webkit-box-decoration-break:clone;background-image:none!important}
  .clients_credits a:after{display:none!important}
@@ -58,6 +57,19 @@ html.is-lightbox-open,html.is-lightbox-open body{overflow:hidden!important}
 .transition_wrap{contain:layout size;overflow:clip}
 
 @media(min-width:62rem){
+ .home_hero_heading,.home_hero_heading [data-wordmark-end]{position:relative}
+ .home_hero_heading:not(:has([data-wordmark-end]))::after,
+ .home_hero_heading [data-wordmark-end]::after{
+   content:"©" / "";
+   position:absolute;
+   inset-block-start:.24em;
+   inset-inline-end:.12em;
+   font-size:.095em;
+   font-weight:var(--_typography---font--primary-medium,500);
+   line-height:1;
+   letter-spacing:0;
+   pointer-events:none;
+ }
  .footer_editorial_directory{padding-bottom:max(clamp(10rem,22vh,20rem),calc(var(--footer-overlap,18rem) - 3rem))}
  .section_wrap.is-home-hero .scroll_arrow_mask{margin-bottom:.3rem}
 }
@@ -68,11 +80,15 @@ html.is-lightbox-open,html.is-lightbox-open body{overflow:hidden!important}
 .footer_main{color:var(--_theme---color--foreground,#fff);transform:translateY(var(--footer-reveal-y,0rem))!important;translate:none!important}
 .marquee_name{color:inherit;overflow:visible;padding-right:0;margin-right:0}
 .marquee_collection{overflow:visible}
-.footer_editorial_panel:before,.footer_editorial_panel:after{content:none!important}
 @media(min-width:62rem) and (prefers-reduced-motion:no-preference){
- .footer_editorial_panel{min-height:calc(100svh + var(--footer-overlap,18rem));background:color-mix(in srgb,var(--_theme---color--background,#000) 12%,transparent);backdrop-filter:blur(1.5rem);-webkit-backdrop-filter:blur(1.5rem)}
+ .footer_editorial_panel{min-height:calc(100svh + var(--footer-overlap,18rem))}
  .footer_editorial_wrap{min-height:inherit;z-index:1;transform:none!important;translate:none!important}
  .footer_legal{margin-top:auto}
+}
+/* The wordmark emerges from the same neutral wash as the Approach exit. */
+@media(min-width:62rem) and (prefers-reduced-motion:no-preference){
+ .footer_main::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--_theme---neutral--700,#535353);opacity:var(--footer-reveal-shade,0)}
+ [data-theme-status="light"] .footer_main::after{background:#dadad7}
 }
 /* The reveal grows in both dimensions inside a slot that reserves block space. */
 .editorial_media_slot{display:inline-flex;align-items:flex-end;flex:0 0 auto}
@@ -80,7 +96,7 @@ html.is-lightbox-open,html.is-lightbox-open body{overflow:hidden!important}
 html.is-lightbox-open .nav_menu{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 html.is-lightbox-open .jk_close_cursor{display:none!important}
 
-/* Difference blending must live outside the backdrop-filter stacking context. */
+/* The legal links remain above the two moving footer surfaces. */
 .footer_legal_floating{position:absolute;z-index:20;mix-blend-mode:normal;color:var(--_theme---color--foreground,#fff);pointer-events:auto;margin:0}
 .marquee_text{padding-right:.24em;margin-right:0;overflow:visible}
 @media(max-width:61.9375rem),(hover:none),(pointer:coarse){.cv_row,.clients_credit{padding-left:0!important;padding-right:0!important}}

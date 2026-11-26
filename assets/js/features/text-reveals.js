@@ -87,11 +87,12 @@
           linesClass: "reveal_line",
           autoSplit: true,
           onSplit(split) {
-            if (el.hasAttribute("data-home-scroll")) split.chars.forEach((ch => {
+            if (el.hasAttribute("data-home-scroll")) split.chars.forEach(((ch, index) => {
               const wrap = document.createElement("span");
               wrap.className = "hero_scroll_char";
               ch.before(wrap);
               wrap.append(ch);
+              if (index === split.chars.length - 1) ch.setAttribute("data-wordmark-end", "");
             }));
             split.lines.forEach((l => {
               l.parentElement.classList.add("reveal_line_mask");

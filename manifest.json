@@ -37,6 +37,7 @@
     "assets/js/features/portfolio-controls.js"
   ],
   "css": [
+    "assets/css/vendor/lenis.css",
     "assets/css/components/loader.css",
     "assets/css/base/site.css",
     "assets/css/components/navigation.css",

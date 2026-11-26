@@ -22,16 +22,18 @@
       let loop, shift, trigger, resizeTimer, frozen = false, visible = false, direction = root.dataset.marqueeDirection === "right" ? -1 : 1;
       const baseDirection = direction;
       const entryStart = root.dataset.marqueeStart === "entry";
-      let started = !entryStart, phase = entryStart ? 0 : .5;
+      let phase = entryStart ? 0 : .5;
       const reduced = matchMedia("(prefers-reduced-motion: reduce)");
       function syncPlayback() {
-        loop?.paused(frozen || !started || !visible || reduced.matches || document.hidden || document.documentElement.hasAttribute('data-loader-active'));
+        loop?.paused(frozen || !visible || reduced.matches || document.hidden || document.documentElement.hasAttribute('data-loader-active'));
       }
-      function syncVisibility(self) {
-        visible = self.isActive;
-        if (visible) started = true;
+      // A pinned section above this marquee can change its scroll coordinates.
+      // Playback follows the visible element, including the footer's own parallax.
+      const visibility = new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
         syncPlayback();
-      }
+      });
+      visibility.observe(root);
       function build() {
         if (frozen) return;
         if (loop) phase = loop.progress();
@@ -96,10 +98,9 @@
           animation: shift,
           scrub: 0,
           invalidateOnRefresh: true,
-          onToggle: syncVisibility,
-          onRefresh: syncVisibility
+          refreshPriority: -1
         });
-        syncVisibility(trigger);
+        syncPlayback();
       }
       let lastWidth = innerWidth;
       const resize = () => {
@@ -132,6 +133,7 @@
         release: syncPlayback,
         freeze() {
           frozen = true;
+          visibility.disconnect();
           window.removeEventListener('scroll',followScroll);
           document.removeEventListener('visibilitychange', syncPlayback);
           reduced.removeEventListener('change', motionChanged);

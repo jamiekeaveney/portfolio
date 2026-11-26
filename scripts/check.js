@@ -88,3 +88,5 @@ require("./check-services.js");
 require("./check-motion.js");
 
 require("./check-video-playback.js");
+
+require("./check-marquee.js");

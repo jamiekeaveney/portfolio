@@ -317,7 +317,7 @@ function syncPageMetadata(html) {
   const head = html.match(/<head(?:\s[^>]*)?>([\s\S]*?)<\/head>/i);
   if (!head) return;
   const incoming = new DOMParser().parseFromString(head[0], 'text/html').head;
-  const fields = 'meta[name="description" i],meta[name="robots" i],meta[property^="og:" i],meta[name^="twitter:" i],meta[property^="twitter:" i],link[rel~="canonical" i]';
+  const fields = 'meta[name="description" i],meta[name="robots" i],meta[property^="og:" i],meta[name^="twitter:" i],meta[property^="twitter:" i],link[rel~="canonical" i],script[type="application/ld+json" i]';
   document.head.querySelectorAll(fields).forEach(node => node.remove());
   incoming.querySelectorAll(fields).forEach(node => document.head.append(document.importNode(node, true)));
 }
