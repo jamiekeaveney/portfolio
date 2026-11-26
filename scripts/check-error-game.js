@@ -8,6 +8,13 @@ assert.equal(nameContext.pongPlayerName(' Ma\u0301ire   O’Rourke '), 'Máire O
 for (const name of ['', 'x'.repeat(25), 'a\u202eb', 'name@example.com', 'f u c k']) {
   assert.equal(nameContext.pongPlayerName(name), '');
 }
+const startingScores = [{ name: "Nina Walsh", score: 32 }, { name: "Sam Patel", score: 25 }];
+const matchingPlayer = { name: "nina WALSH", score: 2 };
+const tiedPlayer = { name: "Little Jim", score: 25 };
+const ranked = nameContext.rankPongScores([matchingPlayer, tiedPlayer], startingScores, 10);
+assert.deepEqual(Array.from(ranked, row => row.name), ["Little Jim", "Sam Patel", "nina WALSH"]);
+assert.equal(ranked[2].score, 2, "Submitting under a starting alias keeps the real result");
+assert.equal(nameContext.rankPongScores([matchingPlayer, tiedPlayer], startingScores, 2).length, 2);
 let frame,lastBall,lastText,fonts=[],texts=[];
 function el(){return {style:{},events:{},setAttribute(){},addEventListener(k,f){this.events[k]=f},append(){},after(){},focus(){},setPointerCapture(){},getBoundingClientRect:()=>({left:0})};}
 const ctx={clearRect(){},setTransform(){},fillRect(){},beginPath(){},arc(x,y,r){lastBall={x,y,r}},fill(){},measureText:()=>({actualBoundingBoxLeft:0,actualBoundingBoxRight:720,actualBoundingBoxAscent:300,actualBoundingBoxDescent:0,width:720}),fillText(t,x,y){lastText={t,x,y};texts.push(t);fonts.push(this.font)}};
@@ -20,7 +27,7 @@ root.classList={
   toggle: (name,on)=>on?rootClasses.add(name):rootClasses.delete(name)
 };
 const doc={readyState:'complete',hidden:false,querySelector:()=>root,createElement:t=>t==='canvas'?canvas:status,addEventListener(){}};
-vm.runInNewContext(fs.readFileSync('assets/js/features/utility-pages.js','utf8'),{createPongLeaderboard:()=>({startRound(){},finishRound(){}}),document:doc,matchMedia:()=>({matches:false}),devicePixelRatio:1,ResizeObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({color:'#fff',fontFamily:'Delight'}),requestAnimationFrame:f=>frame=f,cancelAnimationFrame(){}});
+vm.runInNewContext(fs.readFileSync('assets/js/features/utility-pages.js','utf8'),{createPongLeaderboard:()=>({startRound(){},finishRound(){}}),setPongActionLabel:(control,label)=>{control.textContent=label;},document:doc,matchMedia:()=>({matches:false}),devicePixelRatio:1,ResizeObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({color:'#fff',fontFamily:'Delight'}),requestAnimationFrame:f=>frame=f,cancelAnimationFrame(){}});
 assert.ok(rootClasses.has('error_game_ready'),'The poster hands off after the first canvas draw');
 assert.ok(!rootClasses.has('error_game_in_progress'));
 frame(0);assert.equal(lastText.y,300,'Idle glyph begins at the viewport top without an 80px inset');assert.match(fonts[0],/^600 /);
@@ -33,5 +40,24 @@ for(let t=3040;t<=3504;t+=16)frame(t);
 assert.ok(lastBall.y-initial.y>300,'Opening ball speed must be immediately playable');assert.ok(lastBall.r>=10,'Ball remains visible');
 for(let t=3520;t<9000;t+=16){canvas.events.pointermove({clientX:lastBall.x});frame(t);}
 assert.equal(root.dataset.gameState,'playing');assert.ok(rootClasses.has('error_game_in_progress'));assert.match(status.textContent,/0[3-9] returns/,'Paddle hits increase the visible score');
+// Measure the actual outgoing ball after long rallies, beyond the previous
+// return-11 speed ceiling. Track the ball with the mouse to sustain each rally.
+const rallySpeeds = new Map();
+let lastScore = Number.parseInt(status.textContent, 10);
+let sampleAfterReturn = false;
+for (let t = 9008; t < 130000 && !rallySpeeds.has(50); t += 16) {
+  const previous = lastBall;
+  canvas.events.pointermove({clientX: previous.x});
+  frame(t);
+  const currentScore = Number.parseInt(status.textContent, 10);
+  if (sampleAfterReturn) {
+    rallySpeeds.set(lastScore, Math.hypot(lastBall.x - previous.x, lastBall.y - previous.y) / .016);
+  }
+  sampleAfterReturn = currentScore > lastScore;
+  lastScore = currentScore;
+}
+assert.ok(rallySpeeds.get(22) > rallySpeeds.get(12), 'Longer rounds should keep accelerating');
+assert.ok(rallySpeeds.get(50) > rallySpeeds.get(22), 'High scores should keep getting harder');
+assert.ok(rallySpeeds.get(50) < 900 * .73 * 2.75, 'Maximum pace must remain playable');
 assert.ok(texts.every(t=>['404','3','2','1'].includes(t)),'The score is never drawn behind the nav');
 console.log('404 edge bounds, display weight, opening speed, paddle rallies and visible score passed.');

@@ -6,8 +6,7 @@ JKProject.register((s => {
     ease: "expo.out",
     inactiveCardOpacity: .25,
     returnTopDuration: 1,
-    previewFadeIn: .3,
-    previewFadeOut: .3,
+    peerFadeDuration: .3,
     visibleProjects: 3,
     navFadeDuration: .3,
     navHideStart: "top 85%"
@@ -18,8 +17,9 @@ JKProject.register((s => {
   const items = [...(grid?.children || [])];
   const featured = s.related.slice(0, SETTINGS.visibleProjects);
   for (const { item } of featured) {
-    const image = item.querySelector('img.case_index_image[loading="lazy"][sizes="100vw"]');
-    if (image) image.sizes = 'auto, (max-width: 47.9375rem) 100vw, 33vw';
+    item.querySelectorAll('.project_card_visual img[loading="lazy"][sizes="100vw"]').forEach(image => {
+      image.sizes = 'auto, (max-width: 47.9375rem) 100vw, 33vw';
+    });
   }
   if (!s.next) {
     // Without a CMS neighbour, keep ordinary links and omit the automatic handoff.
@@ -44,7 +44,6 @@ JKProject.register((s => {
   grid.replaceChildren(...featured.map(record => record.item));
   const fill = wrap.querySelector(".case_index_fill"), hint = wrap.querySelector(".case_index_hint"), nav = s.page.querySelector("[data-case-nav]");
   let fired = false, messageActive = false, messageTween;
-  const hovered = new Set, cache = JKProject.previewCache || (JKProject.previewCache = new Map);
   const idle = wrap.querySelector(".case_index_meta");
   const status = idle.closest(".case_index_status"), statusParent = status.parentNode, statusSibling = status.nextSibling, idleText = idle.textContent;
   function label(el, prompt, value) {
@@ -104,7 +103,7 @@ JKProject.register((s => {
     }, 0);
     if (!compact && !JKProject.reduced() && cards.length > 1) messageTween.to(cards.slice(1), {
       opacity: active ? SETTINGS.inactiveCardOpacity : 1,
-      duration: SETTINGS.previewFadeIn
+      duration: SETTINGS.peerFadeDuration
     }, 0);
   }
   function go(card, e) {
@@ -125,84 +124,10 @@ JKProject.register((s => {
     s.handoffCard = card;
     Promise.resolve(barba.go(card.href, card, e)).catch(() => location.assign(card.href));
   }
-  function preview(card) {
-    if (card.querySelector("video")) return Promise.resolve(card.querySelector("video"));
-    if (!cache.has(card.href)) cache.set(card.href, fetch(card.href).then((r => {
-      if (!r.ok) throw Error(r.status);
-      return r.text();
-    })).then((html => {
-      const doc = (new DOMParser).parseFromString(html, "text/html"), v = doc.querySelector(".case_featured .media_preview video") || doc.querySelector(".case_featured video") || doc.querySelector(".case_media_wrap video");
-      return v ? {
-        src: portfolioPreviewSource(v),
-        poster: portfolioPreviewPoster(v)
-      } : null;
-    })).catch((() => null)));
-    return cache.get(card.href).then((data => {
-      if (!data?.src || s.abort.signal.aborted) return null;
-      let video = card.querySelector("video");
-      if (video) return video;
-      video = document.createElement("video");
-      video.className = "case_index_video";
-      video.muted = true;
-      video.loop = true;
-      video.playsInline = true;
-      video.preload = "none";
-      video.src = data.src;
-      if (data.poster) video.poster = data.poster;
-      card.querySelector(".case_index_media").prepend(video);
-      return video;
-    }));
-  }
   cards.forEach(((card, i) => {
     card.dataset.caseTransition = "continuation";
     if (!i) card.dataset.caseSuggested = "";
-    card.querySelector(".case_index_media").dataset.nextMedia = "";
     card.addEventListener("click", (e => go(card, e)), {
-      signal: s.abort.signal
-    });
-    const image = card.querySelector("img");
-    const enter = async () => {
-      hovered.add(card);
-      if (JKProject.reduced()) return;
-      const video = await preview(card);
-      if (!video || !hovered.has(card)) return;
-      try {
-        await video.play();
-        if (hovered.has(card) && !s.abort.signal.aborted) gsap.to(image, {
-          opacity: 0,
-          duration: SETTINGS.previewFadeIn,
-          ease: SETTINGS.ease,
-          overwrite: true
-        });
-      } catch {}
-    };
-    const leave = () => {
-      hovered.delete(card);
-      gsap.to(image, {
-        opacity: 1,
-        duration: SETTINGS.previewFadeOut,
-        ease: SETTINGS.ease,
-        overwrite: true,
-        onComplete: () => {
-          if (!hovered.has(card)) {
-            const video = card.querySelector("video");
-            video?.pause();
-          }
-        }
-      });
-    };
-    card.addEventListener("pointerenter", (e => {
-      if (e.pointerType !== "touch") enter();
-    }), {
-      signal: s.abort.signal
-    });
-    card.addEventListener("pointerleave", leave, {
-      signal: s.abort.signal
-    });
-    card.addEventListener("focus", enter, {
-      signal: s.abort.signal
-    });
-    card.addEventListener("blur", leave, {
       signal: s.abort.signal
     });
   }));
@@ -297,11 +222,6 @@ JKProject.register((s => {
       nav.inert = self.isActive;
     }
   });
-  document.addEventListener("visibilitychange", (() => {
-    if (document.hidden) cards.forEach((card => card.querySelector("video")?.pause()));
-  }), {
-    signal: s.abort.signal
-  });
   s.cleanups.push((() => {
     suggestedTitle.classList.remove("case_index_title_suggested");
     status.classList.remove("case_index_status_attached");
@@ -314,12 +234,8 @@ JKProject.register((s => {
     navST?.kill();
     items.forEach((item => grid.append(item)));
     cards.forEach((card => {
-      card.querySelector("video")?.remove();
       delete card.dataset.caseSuggested;
       gsap.set(card, {
-        clearProps: "opacity"
-      });
-      gsap.set(card.querySelector("img"), {
         clearProps: "opacity"
       });
     }));

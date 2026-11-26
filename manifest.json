@@ -14,6 +14,7 @@
     "assets/js/features/text-reveals.js",
     "assets/js/features/inline-video.js",
     "assets/js/features/marquees.js",
+    "assets/js/features/media-edges.js",
     "assets/js/features/footer-parallax.js",
     "assets/js/features/editorial.js",
     "assets/js/core/video-playback.js",
@@ -42,6 +43,7 @@
     "assets/css/components/navigation.css",
     "assets/css/components/bunny-player.css",
     "assets/css/components/projects.css",
+    "assets/css/components/media-edges.css",
     "assets/css/components/interactions.css",
     "assets/css/components/portfolio-controls.css"
   ]

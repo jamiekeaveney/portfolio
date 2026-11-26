@@ -1,16 +1,16 @@
 const fs = require("node:fs");
 
 const {minify} = require("terser");
-const {isTokenComment, tokenize} = require("@csstools/css-tokenizer");
+const {transformSync} = require("esbuild");
 
-function productionStylesheet(file) {
-  const css = fs.readFileSync(file, "utf8");
-  const tokens = tokenize({css});
-  return tokens
-    .filter(token => !isTokenComment(token) || /^\/\*!|@license|@preserve|copyright|SPDX-License-Identifier|\blicen[sc]e\b/i.test(token[1]))
-    .map(token => token[1])
-    .join("")
-    .trim();
+function productionStylesheet(files) {
+  const source = files.map(file => fs.readFileSync(file, "utf8")).join("\n");
+  return transformSync(source, {
+    loader: "css",
+    minifyWhitespace: true,
+    legalComments: "inline",
+    charset: "utf8"
+  }).code;
 }
 
 (async () => {
@@ -39,8 +39,8 @@ function productionStylesheet(file) {
   });
   fs.writeFileSync("dist/js/app.min.js", result.code + "\n");
   fs.writeFileSync("dist/js/pong.min.js", game.code + "\n");
-  fs.writeFileSync("dist/css/pong.css", productionStylesheet("assets/css/components/utility-pages.css") + "\n");
-  fs.writeFileSync("dist/css/site.css", manifest.css.map(productionStylesheet).join("\n") + "\n");
+  fs.writeFileSync("dist/css/pong.css", productionStylesheet(["assets/css/components/utility-pages.css"]));
+  fs.writeFileSync("dist/css/site.css", productionStylesheet(manifest.css));
   console.log("Built " + manifest.js.length + " scripts and " + manifest.css.length + " stylesheets.");
 })().catch((e => {
   console.error(e);

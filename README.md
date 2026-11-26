@@ -1,6 +1,6 @@
 # Jamie Keaveney — portfolio runtime
 
-The Webflow Designer owns the HTML, CMS bindings, responsive layout, grid, typography and component variants. This repository owns the shared interaction CSS and JavaScript. Every page shares one compiled stylesheet and one compiled script. Keep the feature sources out of individual Webflow embeds.
+Webflow owns the HTML, CMS bindings, layout, typography and component variants. One native Global Styles embed supplies shared Lumos rules to Designer and published pages. GitHub supplies the versioned CSS and JavaScript for the portfolio’s custom behaviour.
 
 ## Build
 
@@ -12,7 +12,7 @@ npm run check
 npm run build
 ```
 
-`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. The 404 page loads its own `dist/js/pong.min.js` and `dist/css/pong.css` from the same version. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
+`manifest.json` is the explicit loading order. `dist/css/site.css` and `dist/js/app.min.js` are the deployable outputs. The Projects head snippet gives its first CMS gallery poster high fetch priority. The 404 page loads its own `dist/js/pong.min.js` and `dist/css/pong.css` from the same version. Commit the outputs with their source changes so that jsDelivr can serve an immutable Git commit or release tag.
 
 ## Structure
 
@@ -30,7 +30,9 @@ The empty CSS/JS placeholders and checked-in `node_modules` from the previous st
 
 Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, SplitText and CustomEase. Webflow loads those before the custom footer. Barba and Lenis are pinned in the footer snippet. The app includes the Dublin clock and the site’s shared interaction scripts. Font smoothing is in the shared CSS.
 
-Project Card Visual owns each card’s backdrop, preview frame and project thumbnail. Project Card Details supplies the project and client fields for Home and the Projects gallery and list. The list loops copies of its authored CMS rows.
+Project Card Visual has Gallery (base), Home, List and Related variants with Thumbnail, Film poster, Film slug and Project slug properties. The List takes media bindings from each CMS gallery item. Related cards use the destination project’s opening film for hover and keyboard focus when one is available. Project Card Details supplies the project and client fields.
+
+Media / Editorial Image provides a native responsive image with Cover and Panel variants for portfolio portraits, the Approach marquee and the Process panels. Set the source and alt text on each instance.
 
 The native Media Preview component binds a responsive poster, film slug and optional project slug in Webflow. Its shared playback helper resolves the Bunny video URL when playback is requested. Service previews use the service slug, and project previews use the referenced project and film slugs.
 
@@ -42,9 +44,9 @@ Run `./release.sh` from a clean `main` checkout. It checks and builds the source
 
 ## Motion and responsive behaviour
 
-Desktop uses Lenis and subtle Expo sticky landings. Scroll-driven media uses one viewport-coordinate playhead with a 0.18-second catch-up. Scroll compensation is immediate, avoiding a second vertical lag. The related-project footer eases only on entry; its final progress window remains pinned. The Approach horizontal section has no extra sticky easing.
+Desktop uses Lenis and Expo sticky landings. The Home showreel and About portrait take their position directly from scroll progress. Both endpoints use viewport coordinates, keeping the media aligned during scrolling and resizing. The related-project footer eases only on entry; its final progress window remains pinned. The Approach horizontal section has no extra sticky easing.
 
-The Home showreel and About portrait share `assets/js/core/scroll-media-motion.js`: a 32-degree ceiling, velocity gain `.015`, `43.75rem` perspective, `.6` pitch ratio, response `10` and `.18` scrub. Their existing placement paths and edge attenuation stay with their respective sections.
+The Home showreel and About portrait share `assets/js/core/scroll-media-motion.js`: a 32-degree ceiling, velocity gain `.015`, `43.75rem` perspective, `.6` pitch ratio and response `10` for the velocity-based tilt. Their existing placement paths and edge attenuation stay with their respective sections.
 
 Mobile and tablet use native scrolling and ordinary stacked footer panels. Project-card entry and return use the standard page-parallax transition; media FLIP is reserved for desktop with a fine pointer and hover support. Cursor-follow UI and pointer hover motion are disabled on compact/touch layouts. The menu fits its content, leaving an outside dismissal area.
 
@@ -90,4 +92,6 @@ The critical first-paint cover is inline in `webflow/head.html`, independent of 
 
 Light secondary text uses neutral RGB values, with separate lighter large labels. The About client list has 3rem native top margin.
 
-The 404 idle glyph uses weight 600 and measured ink bounds at viewport edges. Pong starts at 520–900px/s (viewport dependent), gets faster after each return, and uses a larger ball and paddle. Its score and controls sit on the 12-column perimeter rather than behind the navigation.
+The 404 uses measured glyph bounds and a 12-column control layout. Pong sets its base speed from the court height (455–780 CSS pixels per second). Each return increases ball speed as a function of the score and active rally time, approaching a cap of 2.75 times the base speed.
+
+The leaderboard ranks up to ten players against ten fictional starting scores. A submitted alias replaces its fictional namesake, and submitted scores win ties with starting scores. Short displays scroll the list inside the dialog. The score service keeps the best result per player and the client keeps a local fallback. The dialog closes with its Close control, Escape or a press on the backdrop.
