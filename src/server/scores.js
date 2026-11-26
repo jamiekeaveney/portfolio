@@ -3,8 +3,22 @@ const origins = new Set([
   "https://jamiekeaveneyportfolio.com",
   "https://www.jamiekeaveneyportfolio.com"
 ]);
-const firstNames = new Set("Amber Cobalt Copper Crimson Golden Indigo Lunar Neon Silver Solar Velvet Violet".split(" "));
-const lastNames = new Set("Arc Comet Echo Finch Fox Lynx Orbit Otter Pixel Ray Star Wolf".split(" "));
+/* Keep the public handle policy identical in the 404 bundle and the score service. */
+function pongPlayerName(value) {
+  if (typeof value !== "string" || value.length > 96) return "";
+  const name = value.normalize("NFC").replace(/\p{Zs}+/gu, " ").replace(/^ | $/g, "");
+  const words = /^[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:[ '_’·・‐‑-][\p{L}\p{N}][\p{L}\p{M}\p{N}]*)*$/u;
+  if (!words.test(name) || [...name].length > 24 || /\p{Default_Ignorable_Code_Point}/u.test(name)) return "";
+
+  // Match complete words to avoid rejecting names such as Scunthorpe or Cassidy.
+  const folded = name.replace(/([a-z])([A-Z])/g, "$1 $2").normalize("NFKD")
+    .toLowerCase().replace(/\p{M}/gu, "").replace(/[013457]/g, ch => ({"0":"o", "1":"i", "3":"e", "4":"a", "5":"s", "7":"t"})[ch]);
+  const tokens = folded.split(/[^\p{L}\p{N}]+/u);
+  const blocked = /^(?:fuck(?:s|ed|er|ers|ing|head|face)?|motherfuck(?:er|ers|ing)?|shit(?:s|ty|head|heads)?|bullshit|assholes?|arseholes?|bitch(?:es)?|bastards?|cunts?|dickheads?|wankers?|nigg(?:er|ers|a|as)|faggots?|kikes?)$/;
+  if (tokens.some(token => blocked.test(token)) || blocked.test(tokens.join(""))) return "";
+  return name;
+}
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const hour = 3600;
 
@@ -71,9 +85,9 @@ async function startRound(db, input, ip, now, origin) {
 }
 
 async function saveScore(db, input, now, origin) {
-  const [first,last,extra] = typeof input.name === "string" ? input.name.split(" ") : [];
-  if (extra !== undefined || !firstNames.has(first) || !lastNames.has(last) ||
-      (typeof input.token !== "string" || !uuid.test(input.token)) || !Number.isSafeInteger(input.score) || input.score < 1 || input.score > 9999) {
+  const name = pongPlayerName(input.name);
+  if (!name) return response(422, {code:"invalid_name", error:"Choose another player name."}, origin);
+  if ((typeof input.token !== "string" || !uuid.test(input.token)) || !Number.isSafeInteger(input.score) || input.score < 1 || input.score > 9999) {
     return response(400, {error:"Invalid score or player name."}, origin);
   }
   const salt = await db.prepare("SELECT value FROM settings WHERE key='salt'").first("value");
@@ -87,7 +101,7 @@ async function saveScore(db, input, now, origin) {
       ON CONFLICT(player) DO UPDATE SET
         name=CASE WHEN excluded.score>=players.score THEN excluded.name ELSE players.name END,
         achieved_at=CASE WHEN excluded.score>players.score THEN excluded.achieved_at ELSE players.achieved_at END,
-        score=MAX(players.score,excluded.score)`).bind(input.name,input.score,now,input.token,player,earliestStart,now),
+        score=MAX(players.score,excluded.score)`).bind(name,input.score,now,input.token,player,earliestStart,now),
     db.prepare("DELETE FROM rounds WHERE token=? AND player=?").bind(input.token,player),
     db.prepare(`DELETE FROM players WHERE player IN
       (SELECT player FROM players ORDER BY score DESC, achieved_at, player LIMIT -1 OFFSET 100)`)

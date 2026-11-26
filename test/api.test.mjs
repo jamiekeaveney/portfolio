@@ -66,7 +66,11 @@ test("ranked scores persist for a second visitor, respect personal best, validat
   let token = await ticket(player);
   now += 8;
   const submit = (score,name,who = player,round = token) => call("scores","POST",{player:who,token:round,score,name});
-  assert.equal((await submit(3,"Not Allowed")).status,400);
+  for (const name of ["", "@bad", "x".repeat(25), "a\u200bb", "a\u202eb", "bullshit", "f u c k", "Sh1t", "a.b"]) {
+    const rejected = await submit(3,name);
+    assert.equal(rejected.status,422);
+    assert.equal((await rejected.json()).code,"invalid_name");
+  }
   assert.equal((await submit(3.5,"Lunar Fox")).status,400);
   assert.equal((await submit(0,"Lunar Fox")).status,400);
   assert.equal((await submit(3,"Lunar Fox",second)).status,409);
@@ -79,9 +83,13 @@ test("ranked scores persist for a second visitor, respect personal best, validat
   assert.deepEqual((await (await call("scores","GET")).json()).scores,[{name:"Lunar Fox",score:3}]);
   token = await ticket(second);
   now += 10;
-  assert.equal((await submit(5,"Solar Arc",second)).status,200);
+  assert.equal((await submit(5,"  Ma\u0301ire  O’Rourke  ",second)).status,200);
   const ranked = (await (await call("scores","GET")).json()).scores;
-  assert.deepEqual(ranked,[{name:"Solar Arc",score:5},{name:"Lunar Fox",score:3}]);
+  assert.deepEqual(ranked,[{name:"Máire O’Rourke",score:5},{name:"Lunar Fox",score:3}]);
+  token = await ticket(second);
+  now += 8;
+  assert.equal((await submit(6, "李小龍", second)).status,200);
+  assert.equal((await (await call("scores","GET")).json()).scores[0].name,"李小龍");
   token = await ticket(player);
   assert.equal((await submit(99,"Lunar Fox")).status,409);
   token = await ticket(player);
