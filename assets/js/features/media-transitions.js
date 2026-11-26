@@ -539,7 +539,7 @@
     }
     const card = target?.closest(".work_card_wrap,.home_card_wrap") || target?.closest("[data-work-list-center]") || target;
     const touch = matchMedia("(max-width:61.9375rem),(hover:none)").matches;
-    const targetMedia = (touch ? target?.matches(".work_card_thumb,.home_card_visual") ? target : target?.querySelector(".work_card_thumb,.home_card_visual") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work_card_poster,.home_card_thumbnail") || target;
+    const targetMedia = (touch ? target?.matches(".work_card_thumb,.home_card_visual") ? target : target?.querySelector(".work_card_thumb,.home_card_visual") : null) || target?.querySelector("[data-next-media]") || target?.querySelector(".work_card_poster") || target;
     const sources = [ ...current.querySelectorAll(".case_media_wrap,.case_index_media") ].filter((el => {
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;

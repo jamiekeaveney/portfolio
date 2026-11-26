@@ -30,6 +30,8 @@ The empty CSS/JS placeholders and checked-in `node_modules` from the previous st
 
 Keep Webflow's native GSAP integrations enabled: GSAP, ScrollTrigger, Flip, SplitText and CustomEase. Webflow loads those before the custom footer. Barba and Lenis are pinned in the footer snippet. The app includes the Dublin clock and the site’s shared interaction scripts. Font smoothing is in the shared CSS.
 
+Project Card Visual owns each card’s backdrop, preview frame and project thumbnail. Project Card Details supplies the project and client fields for Home and the Projects gallery and list. The list loops copies of its authored CMS rows.
+
 The native Media Preview component binds a responsive poster, film slug and optional project slug in Webflow. Its shared playback helper resolves the Bunny video URL when playback is requested. Service previews use the service slug, and project previews use the referenced project and film slugs.
 
 Edit layout and Button variants in Webflow. Footer Navigation, Copy Email Footer and Footer Back To Top share the Button component. The native variants own the label and arrow motion and interaction colours. Global Styles supplies the hover, keyboard and status values that those styles consume.
@@ -84,7 +86,7 @@ Run `npm run check` and `npm run build`. Check desktop and compact widths, dark/
 
 ## Loader and utility details
 
-The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .45s with `expo.out`, using the current Theme / Color / Border value, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
+The critical first-paint cover is inline in `webflow/head.html`, independent of the CDN bundle. It also sets manual scroll restoration early. Font metrics, footer geometry and restored scroll settle beneath the opaque curtain. Marquees stay paused until the reveal finishes; footer parallax ignores the page-level loader pull. The white progress bar contracts from 8px to `--loader-border-width` (default 1px) over .8s with `expo.out`, using Theme / Neutral / 600, then shares the 1.2s page-parallax curve and .8 neutral-700 wash. Loader characters match the hero's .025 stagger, capped at .16s across the word, and 1.25s masked reveal. Navigation waits for the reveal edge.
 
 Light secondary text uses neutral RGB values, with separate lighter large labels. The About client list has 3rem native top margin.
 

@@ -131,9 +131,36 @@
 }
 .button_wrap[data-copy-status="copied"] { --copy-confirmed: 1; }
 .is-alternate-text:not(.w-condition-invisible) + .is-alternate-text { display: none; }
+/* Clients and the footer email share one underline driven by their Lumos trigger. */
+[data-underline-link="alt"] {
+  display: inline-block;
+  position: relative;
+  width: fit-content;
+}
+[data-underline-link="alt"]::before,
+[data-underline-link="alt"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -.0625em;
+  height: .0625em;
+  background: currentColor;
+  pointer-events: none;
+  transition: transform calc(.735s * var(--_trigger---off, 0)) cubic-bezier(.625,.05,0,1);
+}
+[data-underline-link="alt"]::before {
+  transform-origin: right;
+  transform: scaleX(var(--_trigger---on, 1));
+}
+[data-underline-link="alt"]::after {
+  transform-origin: left;
+  transform: scaleX(var(--_trigger---off, 0));
+  transition-delay: calc(.3s * var(--_trigger---off, 0));
+}
 @media (prefers-reduced-motion: reduce) {
   .button_wrap, .button_text, .button_copy_confirmation, .button_icon_up, .button_icon_glyph,
-  .nav_menu_label, .nav_menu_close {
+  .nav_menu_label, .nav_menu_close,
+  [data-underline-link="alt"]::before, [data-underline-link="alt"]::after {
+    transition-delay: 0s !important;
     transition-duration: 0s !important;
   }
 }

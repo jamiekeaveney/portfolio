@@ -5,8 +5,7 @@
     velocityGain: .015,
     perspectiveRem: 43.75,
     pitchRatio: .6,
-    response: 10,
-    scrub: .18
+    response: 10
   });
 
   function edgeRamp(distance, span) {
@@ -14,18 +13,24 @@
     return t * t * (3 - 2 * t);
   }
 
-  // The middle follows the original sine path. Both handoffs start with
-  // zero acceleration, including when the scroll direction reverses.
-  function flightEase(progress) {
-    const edge = Math.min(progress, 1 - progress);
-    const distance = Math.sin(Math.PI * edge / 2) ** 2 * edgeRamp(edge, .2);
-    return progress <= .5 ? distance : 1 - distance;
+  function mix(from, to, progress) {
+    return from + (to - from) * progress;
+  }
+
+  // Both anchors and the containing block are measured in the same viewport frame.
+  function place(element, from, to, container, progress) {
+    const style = element.style;
+    style.left = (mix(from.left, to.left, progress) - container.left) + 'px';
+    style.top = (mix(from.top, to.top, progress) - container.top) + 'px';
+    style.width = mix(from.width, to.width, progress) + 'px';
+    style.height = mix(from.height, to.height, progress) + 'px';
   }
 
   window.JKScrollMediaMotion = Object.freeze({
     settings,
     edgeRamp,
-    flightEase,
+    mix,
+    place,
     approach(angle, velocity, deltaMs = 16.667) {
       const target = Math.max(-settings.maximumDegrees, Math.min(settings.maximumDegrees, velocity * settings.velocityGain));
       return angle + (target - angle) * (1 - Math.exp(-settings.response * Math.min(deltaMs, 50) / 1000));

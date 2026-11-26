@@ -10,7 +10,10 @@
   const easing = x => x < .5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
   function go(el, event) {
     const selector = el.getAttribute("data-anchor-target") || (el.getAttribute("href") === "#back-to-top" ? "top" : null);
-    let target = selector === "top" ? null : selector === "self" ? el : document.querySelector(selector);
+    let target = null;
+    if (selector === "self") target = el;
+    else if (selector === "parent") target = el.parentElement;
+    else if (selector !== "top") target = document.querySelector(selector);
     if (selector !== "top" && !target) return;
     event.preventDefault();
     event.stopImmediatePropagation();

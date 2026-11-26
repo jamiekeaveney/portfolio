@@ -24,47 +24,46 @@
       face.className = 'portrait_flight_image';
       face.removeAttribute('style'); face.alt = '';
       flight.append(face); page.append(flight);
-      const coordinateRoot = flight.offsetParent || page;
-      const progress = {value:0};
-      let tween, tilt = 0;
-      const mix = (a,b,t) => a + (b-a)*t;
-      function paint() {
-        if (frozen) return;
-        const p = progress.value;
-        const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-        const rem = value => (value / remSize) + 'rem';
+      let track, frame, tilt = 0;
+      function paint(trigger) {
+        if (frozen || !trigger) return;
+        const p = trigger.progress;
         const inFlight = p>0 && p<1;
-        const from = origin.getBoundingClientRect();
         const remaining = Math.max(0, 1 - p / .65);
         const slotScale = remaining * motion.edgeRamp(remaining, .15);
-        slot.style.width = p>0 ? rem((from.width + parseFloat(getComputedStyle(origin).marginRight || 0)) * slotScale) : '';
+        slot.style.width = p>0 ? ((origin.getBoundingClientRect().width + (parseFloat(getComputedStyle(origin).marginRight) || 0)) * slotScale) + 'px' : '';
         image.style.visibility = p>0 ? 'hidden' : '';
         destination.style.visibility = p<1 ? 'hidden' : '';
         flight.hidden = !inFlight;
         flight.style.visibility = inFlight ? 'visible' : 'hidden';
         if (!inFlight) return;
-        const to = target.getBoundingClientRect(), root = coordinateRoot.getBoundingClientRect();
+        const from = origin.getBoundingClientRect(), to = target.getBoundingClientRect();
+        const root = (flight.offsetParent || page).getBoundingClientRect();
         const style = getComputedStyle(origin);
-        Object.assign(flight.style,{
-          left:rem(mix(from.left,to.left,p)-root.left),top:rem(mix(from.top,to.top,p)-root.top),
-          width:rem(mix(from.width,to.width,p)),height:rem(mix(from.height,to.height,p)),
-          opacity:String(mix(Number(style.opacity),1,p)),
-          borderRadius:rem(mix(parseFloat(style.borderTopLeftRadius)||0,parseFloat(getComputedStyle(target).borderTopLeftRadius)||0,p))
-        });
+        motion.place(flight, from, to, root, p);
+        flight.style.opacity = String(motion.mix(Number(style.opacity), 1, p));
+        flight.style.borderRadius = motion.mix(parseFloat(style.borderTopLeftRadius) || 0,
+          parseFloat(getComputedStyle(target).borderTopLeftRadius) || 0, p) + 'px';
       }
-      tween=gsap.to(progress,{value:1,ease:motion.flightEase,onUpdate:paint,scrollTrigger:{
-        trigger:slot,start:'center center',endTrigger:target,end:'center center',scrub:motion.settings.scrub,
-        onRefresh:paint,invalidateOnRefresh:true
-      }});
+      function afterLayout() {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => paint(track));
+      }
+      track = ScrollTrigger.create({trigger:slot,start:'center center',endTrigger:target,end:'center center',
+        onUpdate:paint,onRefresh:afterLayout});
       function momentum(_,dt) {
         if (frozen) return;
-        tilt=motion.updateTilt(face,tilt,tween.scrollTrigger.getVelocity(),dt,progress.value);
+        tilt=motion.updateTilt(face,tilt,track.getVelocity(),dt,track.progress);
       }
-      const size = new ResizeObserver(paint);
+      const size = new ResizeObserver(afterLayout);
       size.observe(origin);size.observe(target);
-      gsap.ticker.add(momentum);paint();
+      size.observe(origin.closest('.section_wrap') || slot);
+      size.observe(target.parentElement);
+      window.addEventListener('resize', afterLayout);
+      gsap.ticker.add(momentum);paint(track);
       release=()=>{
-        size.disconnect();gsap.ticker.remove(momentum);tween.scrollTrigger?.kill();tween.kill();flight.remove();
+        size.disconnect();window.removeEventListener('resize', afterLayout);cancelAnimationFrame(frame);
+        gsap.ticker.remove(momentum);track.kill();flight.remove();
         slot.style.removeProperty('width');image.style.removeProperty('visibility');destination.style.removeProperty('visibility');
       };
     }

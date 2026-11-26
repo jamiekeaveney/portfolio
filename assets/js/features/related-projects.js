@@ -5,7 +5,6 @@ JKProject.register((s => {
     messageDuration: 1,
     ease: "expo.out",
     inactiveCardOpacity: .25,
-    idleDelayMs: 450,
     returnTopDuration: 1,
     previewFadeIn: .3,
     previewFadeOut: .3,
@@ -44,7 +43,7 @@ JKProject.register((s => {
   const compact = !matchMedia("(min-width:62rem)").matches;
   grid.replaceChildren(...featured.map(record => record.item));
   const fill = wrap.querySelector(".case_index_fill"), hint = wrap.querySelector(".case_index_hint"), nav = s.page.querySelector("[data-case-nav]");
-  let fired = false, forwardIntent = false, progress = 0, idleTimer, messageActive = false, messageTween;
+  let fired = false, messageActive = false, messageTween;
   const hovered = new Set, cache = JKProject.previewCache || (JKProject.previewCache = new Map);
   const idle = wrap.querySelector(".case_index_meta");
   const status = idle.closest(".case_index_status"), statusParent = status.parentNode, statusSibling = status.nextSibling, idleText = idle.textContent;
@@ -59,7 +58,12 @@ JKProject.register((s => {
     return detail;
   }
   label(idle, "Up next", cards[0].querySelector(".case_index_title").textContent.trim());
-  const percent = label(hint, "Scroll to next project", "(0%)");
+  const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
+  const progressPrompt = () => motionPreference.matches ? "Open next project" : "Scroll to next project";
+  const percent = label(hint, progressPrompt(), "(0%)");
+  motionPreference.addEventListener("change", () => {
+    hint.firstElementChild.textContent = progressPrompt() + " ";
+  }, {signal: s.abort.signal});
   const suggestedTitle = cards[0].querySelector(".case_index_title");
   let compactLink;
   if (compact) {
@@ -98,38 +102,11 @@ JKProject.register((s => {
     }, 0).to(hint, {
       yPercent: active ? 0 : 100
     }, 0);
-    if (!compact && cards.length > 1) messageTween.to(cards.slice(1), {
+    if (!compact && !JKProject.reduced() && cards.length > 1) messageTween.to(cards.slice(1), {
       opacity: active ? SETTINGS.inactiveCardOpacity : 1,
       duration: SETTINGS.previewFadeIn
     }, 0);
   }
-  function scrolling() {
-    if (progress <= 0 || fired) return;
-    message(true);
-    clearTimeout(idleTimer);
-    if (!compact) idleTimer = setTimeout((() => message(false)), SETTINGS.idleDelayMs);
-  }
-  const passive = {passive: true, signal: s.abort.signal};
-  function noteDirection(forward) {
-    forwardIntent = forward;
-    if (forward && progress >= .999 && !JKProject.reduced()) go(cards[0]);
-  }
-  window.addEventListener("scroll", scrolling, passive);
-  window.addEventListener("wheel", event => {
-    if (event.deltaY) noteDirection(event.deltaY > 0);
-  }, passive);
-  let touchY = 0;
-  window.addEventListener("touchstart", event => { touchY = event.touches[0].clientY; }, passive);
-  window.addEventListener("touchmove", event => {
-    const y = event.touches[0].clientY;
-    if (y !== touchY) noteDirection(y < touchY);
-    touchY = y;
-  }, passive);
-  window.addEventListener("keydown", event => {
-    if (event.defaultPrevented || event.target.closest("input,textarea,select,[contenteditable=true]")) return;
-    if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) noteDirection(!event.shiftKey);
-    else if (["ArrowUp", "PageUp", "Home"].includes(event.key)) noteDirection(false);
-  }, {signal: s.abort.signal});
   function go(card, e) {
     if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0)) return;
     e?.preventDefault();
@@ -146,7 +123,7 @@ JKProject.register((s => {
     }
     fired = true;
     s.handoffCard = card;
-    barba.go(card.href, card, e);
+    Promise.resolve(barba.go(card.href, card, e)).catch(() => location.assign(card.href));
   }
   function preview(card) {
     if (card.querySelector("video")) return Promise.resolve(card.querySelector("video"));
@@ -229,20 +206,54 @@ JKProject.register((s => {
       signal: s.abort.signal
     });
   }));
-  const endOfSection = () => Math.max(1, Math.min(wrap.getBoundingClientRect().bottom + scrollY - innerHeight, ScrollTrigger.maxScroll(window)) - 2);
-  const st = ScrollTrigger.create({
-    trigger: wrap,
-    start: compact ? () => Math.max(0, Math.min(endOfSection() - 1, status.getBoundingClientRect().bottom + scrollY - innerHeight + 16)) : "top top",
-    end: endOfSection,
-    onUpdate(self) {
-      progress = self.progress;
+  // Measure the real document end after Barba, the loader and CMS media have laid out.
+  // A native scrollbar drag produces scroll events without any wheel, touch or key event.
+  const scroller = document.scrollingElement;
+  const passive = {passive: true, signal: s.abort.signal};
+  let lastY = scroller.scrollTop, lastEnd = scroller.scrollHeight - scroller.clientHeight;
+  let travellingForward = false, lastProgress = -1, frame = 0, scrolled = false, focusScrollUntil = 0;
+  s.page.addEventListener("focusin", () => {
+    travellingForward = false;
+    focusScrollUntil = performance.now() + 350;
+  }, {signal: s.abort.signal});
+  function paintProgress() {
+    frame = 0;
+    const y = scroller.scrollTop;
+    const end = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    const atEnd = end > 0 && end - y <= 2;
+    const interactive = !document.documentElement.matches("[data-loader-active],[data-transitioning]") &&
+      performance.now() >= focusScrollUntil;
+    // Shorter CMS media can clamp scrollTop backwards at the new end while the
+    // visitor is still travelling forwards. That layout change is not a reversal.
+    if (!interactive) travellingForward = false;
+    else if (scrolled && y !== lastY && !(atEnd && end < lastEnd && y < lastY)) {
+      travellingForward = y > lastY;
+    }
+    scrolled = false;
+    lastY = y;
+    lastEnd = end;
+    const position = compact
+      ? status.getBoundingClientRect().bottom + y - scroller.clientHeight + 16
+      : wrap.getBoundingClientRect().top + y;
+    const start = Math.max(0, Math.min(position, end - 1));
+    const progress = atEnd ? 1 : Math.max(0, Math.min(1, (y - start) / Math.max(1, end - start)));
+    if (progress !== lastProgress) {
       gsap.set(fill, {scaleX: progress, transformOrigin: "0 50%"});
       percent.textContent = "(" + Math.round(progress * 100) + "%)";
-      if (progress === 0) message(false);
-      else if (compact) message(true);
-      if (progress >= .999 && forwardIntent && !JKProject.reduced()) go(cards[0]);
+      message(progress > 0);
+      lastProgress = progress;
     }
-  });
+    if (atEnd && travellingForward && !JKProject.reduced()) go(cards[0]);
+  }
+  function scheduleProgress() {
+    if (!frame) frame = requestAnimationFrame(paintProgress);
+  }
+  window.addEventListener("scroll", () => {
+    scrolled = true;
+    scheduleProgress();
+  }, passive);
+  ScrollTrigger.addEventListener("refresh", scheduleProgress);
+  scheduleProgress();
   // Entry easing ends well before the progress window reaches its final fifth.
     const sticky = source.closest(".case_next_sticky") || source;
   const entry = ScrollTrigger.create({
@@ -297,9 +308,9 @@ JKProject.register((s => {
     statusParent.insertBefore(status, statusSibling?.parentNode === statusParent ? statusSibling : null);
     compactLink?.remove();
     idle.textContent = idleText;
-    clearTimeout(idleTimer);
     messageTween?.kill();
-    st.kill();
+    ScrollTrigger.removeEventListener("refresh", scheduleProgress);
+    cancelAnimationFrame(frame);
     navST?.kill();
     items.forEach((item => grid.append(item)));
     cards.forEach((card => {

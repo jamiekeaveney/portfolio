@@ -25,6 +25,7 @@
     if (!s) return;
     s.abort.abort();
     s.observer?.disconnect();
+    cancelAnimationFrame(s.layoutFrame);
     s.context?.revert();
     s.cleanups.reverse().forEach((f => f()));
     states.delete(page);
@@ -68,6 +69,24 @@
     s.context = gsap.context((() => modules.forEach((fn => fn(s)))), page);
     api.lenis()?.resize();
     ScrollTrigger.refresh();
+    let measuredHeight = page.offsetHeight, forceRefresh = false;
+    s.refreshLayout = (force = false) => {
+      forceRefresh ||= force;
+      if (s.layoutFrame) return;
+      s.layoutFrame = requestAnimationFrame(() => {
+        s.layoutFrame = 0;
+        if (!page.isConnected || s.busy || document.documentElement.hasAttribute("data-transitioning")) return;
+        const height = page.offsetHeight;
+        if (!forceRefresh && measuredHeight === height) return;
+        measuredHeight = height;
+        forceRefresh = false;
+        api.lenis()?.resize();
+        ScrollTrigger.refresh();
+      });
+    };
+    // Metadata and CMS media can settle after the outgoing Barba container is gone.
+    s.observer = new ResizeObserver(() => s.refreshLayout());
+    s.observer.observe(page);
   }
   api.init = init;
   api.dispose = dispose;
@@ -77,7 +96,10 @@
     init(document.querySelector("[data-case-page]"));
     barba.hooks.afterOnce((d => {if(!states.has(d.next.container))init(d.next.container);}));
     barba.hooks.afterEnter((d => init(d.next.container)));
-    barba.hooks.after((d => dispose(d.current.container)));
+    barba.hooks.after(d => {
+      dispose(d.current.container);
+      states.get(d.next.container)?.refreshLayout(true);
+    });
     let width = innerWidth, timer;
     window.addEventListener("resize", (() => {
       clearTimeout(timer);
