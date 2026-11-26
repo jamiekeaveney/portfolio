@@ -3,10 +3,6 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
 .page_shell_transitioning { cursor: progress; }
 .loader_bar{min-height:0;transition:none;will-change:transform,height;overflow:hidden}
 .loader_brand{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:inherit;color:var(--loader-ink,#fff)}
-.loader_logo{position:relative;width:max-content;height:max-content}
-.loader_logo_wordmark{color:var(--loader-ink,#fff);font-size:var(--font-size--2xl,2.5rem)}
-.loader_logo_base{opacity:.2}
-.loader_logo_fill{position:absolute;inset:0;clip-path:inset(0 100% 0 0)}
 .loader_messages{position:absolute;bottom:3.5rem;left:0;width:100%;display:flex;justify-content:center;align-items:center;color:var(--loader-ink,#fff)}
 .loader_messages_message{position:absolute;white-space:nowrap;text-transform:none;padding-bottom:.25em;margin-bottom:-.25em;font-family:var(--_typography---font--primary-family);font-size:var(--_typography---font-size--text-main,1rem);letter-spacing:var(--_typography---letter-spacing--main)}
 .loader_messages_mask{padding-bottom:.25em;margin-bottom:-.25em}
@@ -17,8 +13,6 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
 .loader_panel{z-index:1}
 .loader_bar{z-index:3}
 .loader_brand{z-index:2}
-
-@media(max-width:47.9375rem){.loader_logo{max-width:calc(100vw - 2 * var(--site--margin,1.5rem))}.loader_logo_wordmark{color:var(--loader-ink,#fff);font-size:clamp(1.5rem,6vw,2rem)}}
 
 .page_shell[data-theme-status="light"] .loader_reveal_overlay { background: #dadad7; }
 .page_shell{--motion-ease:expo.out;--motion-counter-ease:power2.out;--motion-lightbox-ease:expo.inOut;--motion-media-duration:var(--_motion---media-duration,1.5);--motion-nav-duration:var(--_motion---nav-duration,.3);--motion-nav-stagger:var(--_motion---nav-stagger,.06);--motion-text-duration:var(--_motion---text-duration,1.25);--motion-fade-duration:var(--_motion---fade-duration,.8);--motion-line-stagger:var(--_motion---line-stagger,.1);--motion-cursor-duration:var(--_motion---cursor-duration,.35);--motion-lightbox-duration:var(--_motion---lightbox-duration,1);--motion-cursor-offset-x:18;--motion-cursor-offset-y:22}

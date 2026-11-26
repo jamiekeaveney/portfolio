@@ -206,16 +206,16 @@ function runPageOnceAnimation(page) {
     finishLoaderCover();return gsap.timeline().call(()=>resetPage(page,y));
   }
   const bar=wrap.querySelector('[data-load-progress]'),content=wrap.querySelector('[data-load-container]'),bg=wrap.querySelector('[data-load-bg]')||wrap.querySelector('.loader_panel');
-  if(!bar||!content||!bg){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
+  const base=content?.querySelector(':scope > .nav_wordmark');
+  const fill=content?.querySelector(':scope > [data-load-logo]');
+  if(!bar||!content||!bg||!base||!fill){finishLoaderCover();return gsap.timeline().set(wrap,{display:'none'}).call(()=>resetPage(page,y));}
   CustomEase.create('loader','0.65, 0.01, 0.05, 0.99');
-  content.replaceChildren();bar.replaceChildren();
-  const logoWrap=document.createElement('div');logoWrap.className='loader_logo';
-  const base=document.createElement('div'),fill=document.createElement('div');
-  base.className='nav_wordmark loader_logo_wordmark loader_logo_base';fill.className='nav_wordmark loader_logo_wordmark loader_logo_fill';fill.dataset.loadLogo='';
-  base.textContent=fill.textContent='Jamie Keaveney';logoWrap.append(base,fill);
+  // Animate the Designer's two wordmarks in place, preserving their first paint.
+  fill.classList.add('nav_wordmark');
+  fill.setAttribute('aria-hidden','true');
   const texts=document.createElement('div');texts.className='loader_messages';
   ['Hold tight','Hi there!'].forEach(label=>{const text=document.createElement('span');text.textContent=label;text.className='loader_messages_message';text.dataset.loadText='';text.dataset.loadReset='';texts.append(text);});
-  content.append(logoWrap,texts);
+  content.append(texts);
   const overlay=document.createElement('div');overlay.className='loader_reveal_overlay';
   overlay.setAttribute('aria-hidden','true');wrap.prepend(overlay);wrap.append(bar);
   const splits=[...texts.children].map(el=>new SplitText(el,{type:'lines',mask:'lines',aria:'none'}));
