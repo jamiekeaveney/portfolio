@@ -250,7 +250,8 @@ function runPageOnceAnimation(page) {
   const sweepHeight=8;
   gsap.set(bar,{scaleX:0,scaleY:1,height:sweepHeight,y:0,yPercent:0,clipPath:'none',backgroundColor:getComputedStyle(wrap).getPropertyValue('--loader-ink').trim() || '#fff',transformOrigin:'left bottom'});
   gsap.set(content,{autoAlpha:1,y:0});gsap.set(fill,{clipPath:'inset(0% 100% 0% 0%)'});
-  gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});gsap.set(texts.children,{autoAlpha:1});
+  gsap.set(splits.flatMap(s=>s.lines),{yPercent:125});
+  gsap.set(texts.children[1],{visibility:'hidden'});
   document.documentElement.setAttribute('data-loader-active','');
   document.documentElement.removeAttribute('data-loader-pending');
   lenis?.stop();document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';
@@ -263,7 +264,7 @@ function runPageOnceAnimation(page) {
     .to(bar,{scaleY:border/sweepHeight,duration:.8,ease:'expo.out'},'collapse')
     .to(bar,{backgroundColor:getComputedStyle(bar).getPropertyValue('--_theme---neutral--600').trim(),duration:.8,ease:'none'},'collapse')
     .add('revealPage')
-    .to(content,{y:'-25vh',autoAlpha:0,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
+    .to(content,{y:'-25vh',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bg,{clipPath:'inset(0% 0% 100% 0%)',duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bar,{y:()=>-innerHeight+border,duration:PARALLAX_MOTION.duration,ease:PARALLAX_MOTION.ease},'revealPage')
     .to(bar,{scaleY:0,opacity:0,duration:.4,ease:'sine.inOut'},'revealPage+='+PARALLAX_MOTION.duration)
@@ -272,8 +273,12 @@ function runPageOnceAnimation(page) {
   tl.call(()=>document.dispatchEvent(new Event('jk:nav-reveal')),null,'revealPage+=.85');
   tl.to(splits[0].lines,{yPercent:0,duration:1,ease:'expo.out'},0)
     .to(splits[0].lines,{yPercent:-125,duration:1,ease:'expo.out'},1.45)
-    .to(splits[1].lines,{yPercent:0,duration:1,ease:'expo.out'},1.6)
-    .to(splits[1].lines,{yPercent:-125,duration:1,ease:'expo.out'},'revealPage-=.2');
+    .add('changeGreeting',1.75)
+    .set(texts.children[0],{visibility:'hidden'},'changeGreeting')
+    .set(texts.children[1],{visibility:'visible'},'changeGreeting')
+    .to(splits[1].lines,{yPercent:0,duration:1,ease:'expo.out'},'changeGreeting')
+    .to(splits[1].lines,{yPercent:-125,duration:1,ease:'expo.out'},'revealPage-=.2')
+    .set(texts.children[1],{visibility:'hidden'},'revealPage+=.15');
   return tl;
 }
 

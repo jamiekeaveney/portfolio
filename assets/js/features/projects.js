@@ -149,10 +149,6 @@ const initWorkSlider = (() => {
     }, sig);
     originals.forEach((function(item, i) {
       item.setAttribute("data-work-index", i);
-      const link = item.querySelector("a[href]");
-      const title = item.querySelector("[data-work-name]")?.textContent.trim();
-      const client = item.querySelector("[data-work-client]")?.textContent.trim();
-      if (link && title) link.setAttribute("aria-label", [title, client].filter(Boolean).join(", "));
     }));
     /* Block native image/link ghost-drag in both modes. */    root.addEventListener("dragstart", (function(event) {
       event.preventDefault();
@@ -639,7 +635,9 @@ const initWorkSlider = (() => {
       var link = originals[index] && originals[index].querySelector("a[href]");
       if (link) {
         listCenter.setAttribute("href", link.getAttribute("href"));
-        const label = link.getAttribute("aria-label");
+        const title = link.querySelector("[data-work-name]")?.textContent.trim();
+        const client = link.querySelector("[data-work-client]")?.textContent.trim();
+        const label = [title, client].filter(Boolean).join(" ");
         if (label) listCenter.setAttribute("aria-label", label);
       }
     }

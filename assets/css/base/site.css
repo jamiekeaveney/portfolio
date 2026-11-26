@@ -95,7 +95,7 @@ transition-duration:.3s!important;transition-timing-function:ease!important;
 .faq_toggle:focus-visible{outline:0.125rem solid currentColor;outline-offset:0.25rem}
 .education_timeline_step:last-child{padding-bottom:0}
 [data-step-timeline-item][data-status="active"] .education_timeline_marker{color:var(--_theme---color--text)}
-[data-step-timeline-item][data-status] .education_timeline_content{opacity:.45}
+[data-step-timeline-item][data-status] .education_timeline_content{opacity:.60}
 [data-step-timeline-item][data-current] .education_timeline_content{opacity:1}
 @media(max-width:61.9375rem){
 .editorial_section,.editorial_overlap{padding-top:7rem;padding-bottom:7rem}
