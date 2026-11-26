@@ -18,6 +18,10 @@ JKProject.register((s => {
   const grid = source.querySelector(".case_index_grid");
   const items = [...(grid?.children || [])];
   const featured = s.related.slice(0, SETTINGS.visibleProjects);
+  for (const { item } of featured) {
+    const image = item.querySelector('img.case_index_image[loading="lazy"][sizes="100vw"]');
+    if (image) image.sizes = 'auto, (max-width: 47.9375rem) 100vw, 33vw';
+  }
   if (!s.next) {
     // Without a CMS neighbour, keep ordinary links and omit the automatic handoff.
     const status = wrap.querySelector(".case_index_status");
