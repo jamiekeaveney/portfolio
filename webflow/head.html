@@ -47,13 +47,13 @@
   visibility: hidden;
 }
 
-.loader_brand > .nav_wordmark {
+.loader_brand > :is(.nav_wordmark, [data-load-logo]) {
   color: var(--loader-ink);
   font-size: var(--font-size--2xl, 2.5rem);
 }
 
 .loader_brand > .nav_wordmark:first-child {
-  opacity: .2;
+  color: color-mix(in srgb, var(--loader-ink) 60%, var(--loader-surface));
 }
 
 @media (max-width: 47.9375rem) {
@@ -123,6 +123,17 @@
   const chrome = document.querySelector('meta[name="theme-color"]');
   if (chrome) chrome.classList.add("u-theme-light");
   let palette;
+  let chromeUpdatePending = false;
+
+  function syncBrowserChrome() {
+    if (!chrome || chromeUpdatePending) return;
+    chromeUpdatePending = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      chromeUpdatePending = false;
+      const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
+      if (background) chrome.content = background;
+    }));
+  }
 
   function applyTheme() {
     const body = document.body;
@@ -144,10 +155,7 @@
         else root.style.removeProperty(name);
       }
     }
-    if (chrome) {
-      const background = getComputedStyle(root).getPropertyValue("--_theme---color--background").trim();
-      if (background) chrome.content = background;
-    }
+    syncBrowserChrome();
   }
 
   function syncLoader() {
@@ -186,4 +194,4 @@
   }, 12000);
 })();
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@2e6f2951ada1352c7cbd68b1f9a5004ba9e6c0b1/dist/css/site.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@fdf04660251b64ff2f2a7d9b982833e2a04b979f/dist/css/site.css">
