@@ -56,6 +56,13 @@ test("ranked scores persist for a second visitor, respect personal best, validat
   assert.equal(preflight.headers.get("Access-Control-Allow-Origin"),production);
   assert.equal((await call("rounds","POST",{player},"https://example.org")).status,403);
   assert.equal((await call("rounds","POST",{player:"invalid"})).status,400);
+  const sameOriginHeaders = {"Content-Type":"application/json", "Sec-Fetch-Site":"same-origin"};
+  const sameOriginRequest = headers => new Request(staging + "/v1/rounds", {
+    method: "POST", headers, body: JSON.stringify({player})
+  });
+  assert.equal((await service.fetch(sameOriginRequest(sameOriginHeaders), {DB})).status,201);
+  assert.equal((await service.fetch(sameOriginRequest({...sameOriginHeaders, Origin:"null"}), {DB})).status,403);
+  assert.equal((await service.fetch(sameOriginRequest({...sameOriginHeaders, "Sec-Fetch-Site":"cross-site"}), {DB})).status,403);
   let token = await ticket(player);
   now += 8;
   const submit = (score,name,who = player,round = token) => call("scores","POST",{player:who,token:round,score,name});

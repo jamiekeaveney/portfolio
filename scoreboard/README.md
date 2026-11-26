@@ -2,7 +2,7 @@
 
 This Webflow Cloud app stores submitted 404 game high scores. Use the same deployed API for all portfolio domains so visitors see one board. A player chooses a name from two lists, and each anonymous browser keeps a private player ID. The leaderboard only returns arcade names and scores.
 
-Deploy from the `score-service` branch with the app root `scoreboard` and mount path `/pong-scores`. Webflow Cloud assigns the real database ID, provisions the `DB` binding, and applies the versioned SQL in `migrations/`. The placeholder in `wrangler.json` identifies a local development database. Check `GET /pong-scores/v1/scores` for a successful JSON response after deployment.
+The live app deploys from the `score-service-deploy` branch (repository root) at `/pong-scores`. This directory mirrors its source for the portfolio. Update the deployment branch when shipping service changes. Webflow Cloud assigns the real database ID, provisions the `DB` binding, and applies the versioned SQL in `migrations/`. The placeholder in `wrangler.json` identifies a local development database. Check `GET /pong-scores/v1/scores` for a successful JSON response after deployment.
 
 Run `npm ci`, `npm test` and `npm run build` from this directory using Node 24. To test the Cloudflare binding locally run `npx wrangler d1 migrations apply DB --local`, then `npm run dev`. The local database is separate from hosted player records.
 
