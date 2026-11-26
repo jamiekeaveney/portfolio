@@ -255,10 +255,7 @@
     prepare(page);
     const s = pages.get(page);
     if (!s || s.started) return;
-    if (navIntro && !document.documentElement.hasAttribute('data-loader-active')) {
-      navIntro.delay(document.documentElement.hasAttribute('data-loader-active')?.55:0).play();
-      navIntro = null;
-    }
+    if (!document.documentElement.hasAttribute('data-loader-active')) navIntro?.play();
     page.dataset.pageIntroStarted = "true";
     page.dispatchEvent(new CustomEvent("jk:page-intro", {
       bubbles: true
@@ -318,20 +315,30 @@
     gsap.registerPlugin(SplitText, ScrollTrigger);
     const page = document.querySelector('[data-barba="container"]');
     prepare(page);
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const nav = [ ...document.querySelectorAll(".nav_layout") ].filter((el => el.getClientRects().length));
-      document.addEventListener('jk:nav-reveal',()=>{
-        navIntro?.restart(true);
-        navIntro=null;
-      },{once:true});
-      navIntro = gsap.from(nav, {
-        autoAlpha: 0,
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    const navBar = document.querySelector(".nav_layout > .nav_bar");
+    if (navBar && !motion.matches) {
+      const startNav = () => navIntro?.play();
+      const settleNav = () => { if (motion.matches) navIntro?.progress(1); };
+      // Clip the shared bar, leaving its wordmark glyphs and link rollover masks intact.
+      navIntro = gsap.fromTo(navBar, {
+        clipPath: "inset(0% 0% 100% 0%)",
+        visibility: "hidden"
+      }, {
+        clipPath: "inset(0% 0% 0% 0%)",
+        visibility: "visible",
         duration: .6,
-        stagger: 0,
         ease: "sine.inOut",
         paused: true,
-        clearProps: "opacity,visibility"
+        clearProps: "clipPath,visibility",
+        onComplete() {
+          document.removeEventListener("jk:nav-reveal", startNav);
+          motion.removeEventListener("change", settleNav);
+          navIntro = null;
+        }
       });
+      document.addEventListener("jk:nav-reveal", startNav, {once: true});
+      motion.addEventListener("change", settleNav);
     }
     barba.hooks.beforeEnter((d => {
       const historyVisit = ["popstate", "back", "forward"].includes(d.trigger);

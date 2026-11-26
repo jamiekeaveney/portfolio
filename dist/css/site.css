@@ -442,7 +442,7 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
   --nav-row-offset: 0%;
   --nav-row-delay: .12s;
   --nav-row-step: .09s;
-  --nav-details-opacity: 1;
+  --nav-details-clip: 0%;
   --nav-details-delay: .35s;
   --nav-panel-delay: 0s;
   --nav-group-step: .1s;
@@ -541,8 +541,8 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
     transition-delay: calc(var(--nav-row-delay, .21s) + var(--i, 0) * var(--nav-row-step, -.07s));
   }
   .nav_mobile_details {
-    opacity: var(--nav-details-opacity, 0);
-    transition: opacity .3s ease;
+    clip-path: inset(0 0 var(--nav-details-clip, 100%) 0);
+    transition: clip-path .3s ease;
     transition-delay: var(--nav-details-delay, 0s);
   }
 }
@@ -560,7 +560,11 @@ html[data-theme-status="light"] :is(.is-large-display[data-current-year]){color:
 }
 @media (prefers-reduced-motion: reduce) {
   .nav_logo_glyph,
-  .theme_toggle_dot { transition: none; }
+  .theme_toggle_dot,
+  .nav_mobile_panel,
+  .nav_mobile_row,
+  .nav_mobile_details,
+  .nav_mobile_group { transition: none; }
 }
 .player_wrap[data-player-status="playing"],
 .player_wrap[data-player-status="paused"],

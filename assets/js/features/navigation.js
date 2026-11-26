@@ -30,11 +30,32 @@
     const nav = document.querySelector(".nav_wrap");
     if (!nav) return;
     const toggle = nav.querySelector("#nav-toggle");
-    document.addEventListener("click", event => {
-      if (!toggle?.checked || event.target.closest('.nav_mobile_wrap,label[for="nav-toggle"],#nav-toggle')) return;
+    const panel = nav.querySelector(".nav_mobile_wrap");
+    function syncMenu() {
+      if (!toggle || !panel) return;
+      const mobile = innerWidth < SETTINGS.desktopWidth;
+      const open = mobile && toggle.checked;
+      if (!open && panel.contains(document.activeElement)) {
+        (mobile ? toggle : nav.querySelector(".nav_brand"))?.focus({preventScroll:true});
+      }
+      panel.inert = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    }
+    function closeMenu() {
+      if (!toggle?.checked) return;
       toggle.checked = false;
-      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      toggle.dispatchEvent(new Event("change", {bubbles:true}));
+    }
+    syncMenu();
+    toggle?.addEventListener("change", syncMenu);
+    document.addEventListener("click", event => {
+      if (!event.target.closest('.nav_mobile_wrap,label[for="nav-toggle"],#nav-toggle')) closeMenu();
     }, true);
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape" || !toggle?.checked) return;
+      closeMenu();
+      toggle.focus({preventScroll:true});
+    });
     nav.querySelectorAll(".nav_project_count").forEach(count => {
       const button = count.closest(".nav_item")?.querySelector(".button_wrap");
       if (button) button.append(count);
@@ -44,7 +65,8 @@
     const mobileVariant = "w-variant-0f7d95bf-3fe7-c346-459f-79ff0521e166";
     const layoutNodes = [ nav, ...nav.querySelectorAll("*") ];
     nav.querySelectorAll(".nav_project_count").forEach(el => el.removeAttribute("data-nav-fade"));
-    const fading = [ ...nav.querySelectorAll("[data-nav-fade]") ];
+    const compactGroups = [ ...nav.querySelectorAll("[data-nav-fade]") ];
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const moving = [ ...nav.querySelectorAll("[data-nav-flip]") ];
     const wordmark = nav.querySelector(".nav_wordmark");
     if (wordmark) {
@@ -109,30 +131,31 @@
       moveHeroArrow(hidden, immediate);
     }
     let routeY = null;
-    let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, fade, locked = false;
-    function applyLayout(preserveFading = false) {
+    let compact = scrollY > SETTINGS.compactAfter, desktop = innerWidth >= SETTINGS.desktopWidth, tween, groupReveal, locked = false;
+    function applyLayout(preserveGroups = false) {
       const brand = nav.querySelector(".nav_brand");
       if (brand) brand.setAttribute("aria-label", "Jamie Keaveney — home");
       const id = desktop ? compact ? scrolledVariant : null : mobileVariant;
       layoutNodes.forEach((el => {
-        if (preserveFading && el.closest("[data-nav-fade]")) return;
+        if (preserveGroups && el.closest("[data-nav-fade]")) return;
         el.classList.remove(scrolledVariant, mobileVariant);
         if (id) el.classList.add(id);
       }));
       nav.dataset.navCompact = String(compact);
       nav.setAttribute("data-wf--navigation--variant", desktop ? compact ? "scrolled" : "top-of-page" : "mobile");
-      fading.forEach((el => el.inert = compact || !desktop));
+      compactGroups.forEach((el => el.inert = compact || !desktop));
     }
     function finish() {
       tween?.progress(1);
       tween?.kill();
-      fade?.progress(1);
-      fade?.kill();
+      groupReveal?.progress(1);
+      groupReveal?.kill();
     }
+    motion.addEventListener("change", () => { if (motion.matches) finish(); });
     function change(next, immediate = false, options = {}) {
       if (next === compact) return;
       finish();
-      const animate = !immediate && window.gsap && window.Flip && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const animate = !immediate && window.gsap && window.Flip && !motion.matches;
       const state = animate ? Flip.getState(moving) : null;
       document.dispatchEvent(new CustomEvent('jk:nav-layout',{detail:{compact:next,fadeDuration:SETTINGS.fadeDuration,duration:animate?(options.duration??SETTINGS.layoutDuration):0,ease:options.ease??SETTINGS.layoutEase}}));
       compact = next;
@@ -151,22 +174,16 @@
         scale: false,
         prune: true
       });
-      const clear = () => {
-        gsap.set(fading, {
-          clearProps: "opacity,visibility"
-        });
-        applyLayout();
-      };
-      fade = compact ? gsap.to(fading, {
-        autoAlpha: 0,
-        duration: SETTINGS.fadeDuration,
-        onComplete: clear
-      }) : gsap.fromTo(fading, {
-        autoAlpha: 0
+      const hidden = "inset(0% 0% 100% 0%)", shown = "inset(0% 0% 0% 0%)";
+      groupReveal = gsap.fromTo(compactGroups, {
+        clipPath: compact ? shown : hidden
       }, {
-        autoAlpha: 1,
+        clipPath: compact ? hidden : shown,
         duration: SETTINGS.fadeDuration,
-        onComplete: clear
+        onComplete() {
+          applyLayout();
+          gsap.set(compactGroups, {clearProps: "clipPath"});
+        }
       });
     }
     function syncPosition() {
@@ -182,15 +199,8 @@
       if (nextDesktop !== desktop) {
         finish();
         desktop = nextDesktop;
-        if (desktop) {
-          const toggle = nav.querySelector("#nav-toggle");
-          if (toggle?.checked) {
-            toggle.checked = false;
-            toggle.dispatchEvent(new Event("change", {
-              bubbles: true
-            }));
-          }
-        }
+        if (desktop) closeMenu();
+        syncMenu();
         compact = y > SETTINGS.compactAfter;
         applyLayout();
         moveHero(compact, true);
@@ -252,6 +262,7 @@
       passive: true
     });
     window.addEventListener("pageshow", (() => {
+      syncMenu();
       applyTheme(root.dataset.themeStatus);
       update(true);
     }));
