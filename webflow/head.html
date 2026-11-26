@@ -32,6 +32,36 @@
   background: var(--loader-surface);
 }
 
+/* Paint the authored wordmark over the first-load cover as soon as it exists. */
+@media (prefers-reduced-motion: no-preference) {
+  .page_shell_intro.page_shell_covered .loader_wrap:has(.loader_brand > .nav_wordmark) {
+    z-index: 2147483001;
+  }
+}
+
+.page_shell_covered .loader_panel {
+  background: var(--loader-surface);
+}
+
+.page_shell_covered .loader_bar {
+  visibility: hidden;
+}
+
+.loader_brand > .nav_wordmark {
+  color: var(--loader-ink);
+  font-size: var(--font-size--2xl, 2.5rem);
+}
+
+.loader_brand > .nav_wordmark:first-child {
+  opacity: .2;
+}
+
+@media (max-width: 47.9375rem) {
+  .loader_brand > .nav_wordmark {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+}
+
 .wf-design-mode,
 .wf-editor {
   --loader-display: none;
@@ -76,6 +106,9 @@
   } catch {}
 
   root.classList.add("page_shell", "page_shell_covered", "page_shell_loading");
+  if (performance.getEntriesByType("navigation")[0]?.type !== "back_forward") {
+    root.classList.add("page_shell_intro");
+  }
   root.classList.toggle("page_shell_light", light);
   root.dataset.themeStatus = light ? "light" : "dark";
   root.setAttribute("data-loader-pending", "");
@@ -120,6 +153,7 @@
   function syncLoader() {
     root.classList.toggle("page_shell_covered", root.hasAttribute("data-loader-pending"));
     root.classList.toggle("page_shell_loading", root.hasAttribute("data-loader-active"));
+    if (!root.hasAttribute("data-loader-pending")) root.classList.remove("page_shell_intro");
   }
 
   const attributes = {
@@ -152,4 +186,4 @@
   }, 12000);
 })();
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@d059cd276a7617142606d0c0a322eeb45340d0a2/dist/css/site.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jamiekeaveney/portfolio@2e6f2951ada1352c7cbd68b1f9a5004ba9e6c0b1/dist/css/site.css">
