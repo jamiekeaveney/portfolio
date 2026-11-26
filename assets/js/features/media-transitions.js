@@ -718,7 +718,7 @@
     };
     if (leave && enter) {
       window.runPageLeaveAnimation = current => pair && !JKProject.reduced() ? pair.contextReturn ? active = fallbackReturn(current, pair.next, 0) : pair.returning ? returnToWork(current, pair.next, pair.href) : pair.continuation ? continuation(current, pair.next) : swap(current, pair.next, pair.trigger) : leave(current);
-      window.runPageEnterAnimation = next => pair && !JKProject.reduced() ? active || Promise.resolve() : enter(next);
+      window.runPageEnterAnimation = (next, restoreY) => pair && !JKProject.reduced() ? active || Promise.resolve() : enter(next, restoreY);
     }
     document.addEventListener("click", (e => {
       if (e.defaultPrevented || e.button > 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

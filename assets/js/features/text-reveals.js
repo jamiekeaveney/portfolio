@@ -32,11 +32,34 @@
     if (!s) return;
     s.triggers.forEach((t => t.kill()));
     s.observers?.forEach(o=>o.disconnect());
+    s.pendingSplits?.clear();
     s.tweens.forEach((t => t.kill()));
     s.splits.forEach((t => t.revert()));
     pages.delete(page);
   }
+  // Split distant text before it reaches the viewport. Fast jumps and history
+  // restoration can also prepare the exact same reveal synchronously.
+  function deferScrollSplit(state, entry, split) {
+    if (!state.splitObserver) {
+      state.pendingSplits = new Map();
+      state.splitObserver = new IntersectionObserver(items => {
+        items.forEach(({target, isIntersecting}) => {
+          if (isIntersecting) state.pendingSplits.get(target)?.();
+        });
+      }, {rootMargin: "100% 0px"});
+      state.observers.push(state.splitObserver);
+    }
+    entry.prepareSplit = () => {
+      state.splitObserver.unobserve(entry.el);
+      state.pendingSplits.delete(entry.el);
+      entry.prepareSplit = null;
+      split();
+    };
+    state.pendingSplits.set(entry.el, entry.prepareSplit);
+    state.splitObserver.observe(entry.el);
+  }
   function prepare(page, handoff = false, responsive = false) {
+    if (!page || pages.has(page) && !responsive || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const motion = getComputedStyle(document.documentElement);
     SETTINGS.ease = motion.getPropertyValue("--motion-ease").trim() || "expo.out";
     SETTINGS.mediaRevealDuration = parseFloat(motion.getPropertyValue("--motion-media-duration")) || 1.5;
@@ -45,7 +68,6 @@
     SETTINGS.textDuration = parseFloat(motion.getPropertyValue("--motion-text-duration")) || 1.25;
     SETTINGS.dissolveDuration = parseFloat(motion.getPropertyValue("--motion-fade-duration")) || .8;
     SETTINGS.lineStagger = parseFloat(motion.getPropertyValue("--motion-line-stagger")) || .1;
-    if (!page || pages.has(page) && !responsive || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     window.JKLightbox?.mount(page);
     const restoring = page.dataset.restoreScroll === "true";
     const mobileCards = !matchMedia("(min-width:62rem)").matches;
@@ -77,56 +99,61 @@
       s.entries.push(entry);
       const mode = el.dataset.split, effect = el.dataset.revealEffect || "fade";
       if (mode && window.SplitText) {
-        s.splits.push(SplitText.create(el, {
-          type: mode === "letters" ? "lines,words,chars" : mode === "words" ? "lines,words" : "lines",
-          // Only headings receive a replacement accessible name. Generic
-          // phrases and paragraphs keep their real text in the accessibility tree.
-          aria: el.matches("h1,h2,h3,h4,h5,h6,[role='heading']") ? "auto" : "none",
-          // Keep SplitText's default block line/mask and inline-block glyph layout.
-          mask: "lines",
-          linesClass: "reveal_line",
-          autoSplit: true,
-          onSplit(split) {
-            if (el.hasAttribute("data-home-scroll")) split.chars.forEach(((ch, index) => {
-              const wrap = document.createElement("span");
-              wrap.className = "hero_scroll_char";
-              ch.before(wrap);
-              wrap.append(ch);
-              if (index === split.chars.length - 1) ch.setAttribute("data-wordmark-end", "");
-            }));
-            split.lines.forEach((l => {
-              l.parentElement.classList.add("reveal_line_mask");
-              if (el.hasAttribute("data-home-intro-exit")) {
+        const prepareSplit = () => {
+          s.splits.push(SplitText.create(el, {
+            type: mode === "letters" ? "lines,words,chars" : mode === "words" ? "lines,words" : "lines",
+            // Only headings receive a replacement accessible name. Generic
+            // phrases and paragraphs keep their real text in the accessibility tree.
+            aria: el.matches("h1,h2,h3,h4,h5,h6,[role='heading']") ? "auto" : "none",
+            // Keep SplitText's default block line/mask and inline-block glyph layout.
+            mask: "lines",
+            linesClass: "reveal_line",
+            autoSplit: true,
+            onSplit(split) {
+              if (el.hasAttribute("data-home-scroll")) split.chars.forEach(((ch, index) => {
                 const wrap = document.createElement("span");
-                wrap.className = "hero_scroll_line";
-                wrap.style.display = "block";
-                l.before(wrap);
-                wrap.append(l);
-              }
-            }));
-            gsap.set(el, {
-              autoAlpha: 1
-            });
-            const targets = mode === "letters" ? split.chars : mode === "words" ? split.words : split.lines;
-            const stagger = mode === "letters" ? Math.min(SETTINGS.letterStagger, SETTINGS.letterStaggerTotal / Math.max(1, targets.length - 1)) : mode === "words" ? Math.min(SETTINGS.wordStagger, SETTINGS.wordStaggerTotal / Math.max(1, targets.length - 1)) : SETTINGS.lineStagger;
-            const elapsed = entry.tween?.totalTime() || 0;
-            const t = gsap.fromTo(targets, {
-              yPercent: SETTINGS.maskedTravelPercent
-            }, {
-              yPercent: 0,
-              duration: Number.parseFloat(el.dataset.revealDuration) || SETTINGS.textDuration,
-              stagger: stagger,
-              ease: mode === "letters" ? SETTINGS.ease : "power3.out",
-              paused: true,
-              onComplete: () => entry.completed = true
-            });
-            entry.tween = t;
-            s.tweens.push(t);
-            if (entry.completed) t.progress(1); else if (entry.started) t.totalTime(elapsed).play();
-            if (entry.completed && (el.hasAttribute("data-home-scroll") || el.hasAttribute("data-home-intro-exit"))) requestAnimationFrame((() => window.JKHeader?.refreshHero()));
-            return t;
-          }
-        }));
+                wrap.className = "hero_scroll_char";
+                ch.before(wrap);
+                wrap.append(ch);
+                if (index === split.chars.length - 1) ch.setAttribute("data-wordmark-end", "");
+              }));
+              split.lines.forEach((l => {
+                l.parentElement.classList.add("reveal_line_mask");
+                if (el.hasAttribute("data-home-intro-exit")) {
+                  const wrap = document.createElement("span");
+                  wrap.className = "hero_scroll_line";
+                  wrap.style.display = "block";
+                  l.before(wrap);
+                  wrap.append(l);
+                }
+              }));
+              gsap.set(el, {
+                autoAlpha: 1
+              });
+              const targets = mode === "letters" ? split.chars : mode === "words" ? split.words : split.lines;
+              const stagger = mode === "letters" ? Math.min(SETTINGS.letterStagger, SETTINGS.letterStaggerTotal / Math.max(1, targets.length - 1)) : mode === "words" ? Math.min(SETTINGS.wordStagger, SETTINGS.wordStaggerTotal / Math.max(1, targets.length - 1)) : SETTINGS.lineStagger;
+              const elapsed = entry.tween?.totalTime() || 0;
+              const t = gsap.fromTo(targets, {
+                yPercent: SETTINGS.maskedTravelPercent
+              }, {
+                yPercent: 0,
+                duration: Number.parseFloat(el.dataset.revealDuration) || SETTINGS.textDuration,
+                stagger: stagger,
+                ease: mode === "letters" ? SETTINGS.ease : "power3.out",
+                paused: true,
+                onComplete: () => entry.completed = true
+              });
+              entry.tween = t;
+              s.tweens.push(t);
+              if (entry.completed) t.progress(1); else if (entry.started) t.totalTime(elapsed).play();
+              if (entry.completed && (el.hasAttribute("data-home-scroll") || el.hasAttribute("data-home-intro-exit"))) requestAnimationFrame((() => window.JKHeader?.refreshHero()));
+              return t;
+            }
+          }));
+        };
+        if (el.dataset.reveal === "scroll" && typeof IntersectionObserver === "function" && el.getBoundingClientRect().top > innerHeight * 1.5) {
+          deferScrollSplit(s, entry, prepareSplit);
+        } else prepareSplit();
       } else if (effect === "inline-media") {
         const bounds = el.getBoundingClientRect(), w = bounds.width;
         const slot=document.createElement('span');
@@ -263,6 +290,7 @@
     if (!early) s.started = true;
     const launch = (entry, delay = 0) => {
       if (entry.played) return;
+      entry.prepareSplit?.();
       entry.played = true;
       s.tweens.push(gsap.delayedCall(delay, (() => {
         entry.started = true;
@@ -301,7 +329,7 @@
     const s=pages.get(page);if(!s)return;
     s.entries.forEach(e=>{
       const top=e.el.getBoundingClientRect().top+window.scrollY;
-      if(e.el.dataset.reveal==='load'||top<y+innerHeight){e.played=e.started=e.completed=true;e.tween?.delay(0).progress(1);}
+      if(e.el.dataset.reveal==='load'||top<y+innerHeight){e.prepareSplit?.();e.played=e.started=e.completed=true;e.tween?.delay(0).progress(1);}
     });
   }
   window.JKReveals = {
